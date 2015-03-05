@@ -10,11 +10,11 @@ WORKDIR = "D:\Zichen_Projects\microtask_GEO\HGNC_and_MGI"
 conn = sqlite3.connect('gene_symbols.db')
 cursor = conn.cursor()
 # Create tables with schema defined in the sql script
-query = open('gene_symbols.sql', 'r').read()
+query = open('gene_symbols.schema.sql', 'r').read()
 cursor.executescript(query)
 conn.close()
 
-conn = sqlite3.connect('gene_symbols.schema.db')
+conn = sqlite3.connect('gene_symbols.db')
 cursor = conn.cursor()
 ## list all tables
 cursor.execute('''SELECT name FROM sqlite_master WHERE type='table';''')
@@ -53,6 +53,7 @@ with open ('MGI_EntrezGene.rpt') as f:
 		sl = line.split('\t')
 		status = sl[2]
 		if status != 'W':
+			mgi_id = sl[0]
 			symbol = sl[1]
 			if sl[8] != '': entrez_id = int(sl[8])
 			else: entrez_id = "NULL"
@@ -61,7 +62,7 @@ with open ('MGI_EntrezGene.rpt') as f:
 			
 			synonyms = filter(None, sl[9].split('|'))
 			for synonym in synonyms:
-				mgi_synonyms.append( (symbol, synonym) )
+				mgi_synonyms.append( (mgi_id, synonym) )
 
 d_id_symbols = {}
 with open ('HOM_MouseHumanSequence.rpt') as f:

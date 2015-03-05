@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS `hgnc` (
 
 CREATE TABLE IF NOT EXISTS `hgnc_synonyms` (
   `symbol` varchar(32) NOT NULL,
-  `synonym` text NOT NULL
+  `synonym` text NOT NULL,
+  FOREIGN KEY(symbol) REFERENCES hgnc(approved_symbol)
 );
 
 CREATE TABLE IF NOT EXISTS `homologene` (
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS `mgi` (
 );
 
 CREATE TABLE IF NOT EXISTS `mgi_synonyms` (
-  `mgi_symbol` varchar(32) NOT NULL,
-  `mgi_synonym` text NOT NULL
+  `id` varchar(32) NOT NULL,
+  `synonym` text NOT NULL,
+  FOREIGN KEY(id) REFERENCES mgi(mgi_id)
 );
