@@ -1,0 +1,12 @@
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\analyses.txt' into table analyses;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\analysis_comparisons.txt' into table analysis_comparisons;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\analysis_results.txt' into table analysis_results;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\comparison_methods.txt' into table comparison_methods;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\diseases.txtanalysis_results' into table diseases;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\experiment_sources.txt' into table experiment_sources;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\experiments.txt' into table experiments;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\samples.txt' into table samples;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\subset_comparisons.txt' into table subset_comparisons;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\subset_members.txt' into table subset_members;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\subsets.txt' into table subsets;
+load data local infile 'D:\\Zichen_Projects\\microtask_GEO\\nosology\\proj_nosology\\tissues.txt' into table tissues;
