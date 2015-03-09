@@ -3,6 +3,8 @@ import urllib2
 import json
 import numpy as np
 from scipy.stats import fisher_exact
+from Bio import Entrez
+Entrez.email = 'wangzc921@gmail.com'
 
 class GEOentry(object):
 	"""docstring for GEOentry"""
@@ -25,8 +27,8 @@ class GEOentry(object):
 		self.conversion_pct = None
 
 
-	def get_url(self):
-		url = 'http://amp.pharm.mssm.edu/g2e/full?'
+	def get_url(self, base_url="http://amp.pharm.mssm.edu/g2e/full?"):
+		url = base_url
 		## required args
 		url += 'accession=%s&'%self.geo_id
 		url += 'platform=%s&'%self.platform
@@ -143,3 +145,20 @@ def signed_jaccard(e1, e2):
 
 # def cosine_dist(e1, e2):
 # 	return
+
+## utils
+def geo_id2platform(geo_id):
+	if geo_id.startswith('GDS'):
+		geo_id = geo_id[3:]
+		handle = Entrez.esummary(db='gds', id=geo_id)
+		record = Entrez.read(handle)
+		platform = 'GPL'+record[0]['GPL']
+	else:
+		handle = Entrez.esearch(db='gds', term='%s[GEO Accession]'%geo_id)
+		records = Entrez.read(handle)
+		for uid in records['IdList']:
+			rec= Entrez.read(Entrez.esummary(db='gds', id=uid))[0]
+			if 'GSE'+rec['GSE'] == geo_id:
+				platform = 'GPL'+rec['GPL']
+				break
+	return platform

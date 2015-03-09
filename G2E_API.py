@@ -10,28 +10,12 @@ import MySQLdb
 import cPickle as pickle
 from pprint import pprint
 
-from GEOentry import GEOentry
+from GEOentry import GEOentry, geo_id2platform
 
 from Bio import Entrez
 Entrez.email = 'wangzc921@gmail.com'
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\maayanlab_utils')
 from fileIO import file2list
-
-def geo_id2platform(geo_id):
-	if geo_id.startswith('GDS'):
-		geo_id = geo_id[3:]
-		handle = Entrez.esummary(db='gds', id=geo_id)
-		record = Entrez.read(handle)
-		platform = 'GPL'+record[0]['GPL']
-	else:
-		handle = Entrez.esearch(db='gds', term='%s[GEO Accession]'%geo_id)
-		records = Entrez.read(handle)
-		for uid in records['IdList']:
-			rec= Entrez.read(Entrez.esummary(db='gds', id=uid))[0]
-			if 'GSE'+rec['GSE'] == geo_id:
-				platform = 'GPL'+rec['GPL']
-				break
-	return platform
 
 
 os.chdir('D:\Zichen_Projects\microtask_GEO')
