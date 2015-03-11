@@ -65,16 +65,16 @@ with open ('MGI_EntrezGene.rpt') as f:
 				mgi_synonyms.append( (mgi_id, synonym) )
 
 d_id_symbols = {}
-with open ('HOM_MouseHumanSequence.rpt') as f:
-	next(f)
+with open ('homologene.data.txt') as f:
 	for line in f:
 		sl = line.split('\t')
 		id = sl[0]
 		symbol = sl[3]
-		taxid = sl[2]
+		taxid = sl[1]
 		if id not in d_id_symbols:
 			d_id_symbols[id] = {'9606':None, '10090': None}
-		d_id_symbols[id][taxid] = symbol
+		if taxid in ['9606', '10090']:
+			d_id_symbols[id][taxid] = symbol
 
 homologene_entries = []
 for id in d_id_symbols:

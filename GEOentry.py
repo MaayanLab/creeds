@@ -25,6 +25,9 @@ class GEOentry(object):
 		self.uid = None
 		self.chdir = None 
 		self.conversion_pct = None
+		self.status = None
+		self.message = None
+		self.failed_to_download = None
 
 
 	def get_url(self, base_url="http://amp.pharm.mssm.edu/g2e/full?"):
@@ -61,8 +64,8 @@ class GEOentry(object):
 		self.up_genes = up_genes
 		time.sleep(1)
 
-	def get_json(self):
-		url = self.get_url()
+	def get_json(self, base_url="http://amp.pharm.mssm.edu/g2e/full?"):
+		url = self.get_url(base_url)
 		response = urllib2.urlopen(url)
 		data = json.load(response)
 		print 'API status:', data['status']
@@ -107,20 +110,41 @@ class GEOentry(object):
 			self.chdir = None # free the memory
 
 
-def json2entry(fn):
+def json2entry(fn, meta_only=False):
 	# retrieve entry from a json file
 	json_data = json.load(open(fn,'r'))
 	uid = int(fn.split('.')[0])
 	entry = GEOentry(json_data['geo_id'], json_data['ctrls'], json_data['perts'], json_data['gene'], json_data['pert_type'], json_data['platform'], json_data['organism'], json_data['cell'], json_data['curator'])
 	entry.uid = uid
-	entry.conversion_pct = float(json_data['conversion_pct'])
+	try:
+		entry.conversion_pct = float(json_data['conversion_pct'])
+	except:
+		pass
 	entry.time = json_data['time']
-	# entry.chdir = dict( json_data['up_genes'].items() + json_data['dn_genes'].items() )
-	chdir = {}
-	for key, val in json_data['up_genes'].items() + json_data['down_genes'].items():
-		chdir[key] = float(val)
-	entry.chdir = chdir
+	if not meta_only:
+		chdir = {}
+		for key, val in json_data['up_genes'].items() + json_data['down_genes'].items():
+			chdir[key] = float(val)
+		entry.chdir = chdir
+	else:
+		if 'up_genes' in json_data:
+			entry.chdir = len(json_data['up_genes']) + len(json_data['down_genes'])
+		else:
+			entry.chdir = 0
+		entry.status = json_data['status']
+		try:
+			entry.message = json_data['message']
+			entry.failed_to_download = json_data['failed_to_download']
+		except:
+			pass
 	return entry
+
+def json2genes(fn):
+	# retrieve genes measured in an entry
+	json_data = json.load(open(fn,'r'))
+	uid = int(fn.split('.')[0])
+	genes = json_data['up_genes'].keys() + json_data['down_genes'].keys()
+	return genes
 
 ## algorithms
 def fisher_exact_test(l1, l2, universe=22000):
