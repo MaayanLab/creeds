@@ -15,7 +15,7 @@ from pprint import pprint
 
 from GEOentry import *
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\maayanlab_utils')
-from fileIO import file2list, mysqlTable2dict, sqliteTable2dict
+from fileIO import file2list, mysqlTable2dict, sqliteTable2dict, read_gmt
 sys.path.append('C:\Users\Zichen\Documents\GitHub')
 from clustergram import clustergram
 
@@ -25,10 +25,65 @@ BASE_URL = 'http://127.0.0.1:8083/g2e/full?'
 HOMOLOGENE_DB = 'gene_symbols.db'
 
 ## get dicts from sqlite
-d_mm_hs = sqliteTable2dict(HOMOLOGENE_DB, 'SELECT * FROM homologene', 2,1) 
-d_hs_ = sqliteTable2dict(HOMOLOGENE_DB, 'SELECT * FROM hgnc', 1,2) 
-lm1000 = file2list('rid_lm1000.txt',1) # the L1000 genes
 
+d_mm_hs = sqliteTable2dict(HOMOLOGENE_DB, 'SELECT * FROM homologene', 2,1) 
+d_hs_ = sqliteTable2dict(HOMOLOGENE_DB, 'SELECT * FROM hgnc', 1,2) # all human symbols 
+d_syno_hs = sqliteTable2dict(HOMOLOGENE_DB, 'SELECT * FROM hgnc_synonyms', 1,0)
+lm1000 = file2list('rid_lm1000.txt',1) # the L1000 genes
+global GENE_SYMBOLS
+GENE_SYMBOLS = sqliteTable2dict(HOMOLOGENE_DB, """SELECT * FROM mgi WHERE type='Gene'""", 1,3).keys()
+GENE_SYMBOLS += d_hs_.keys()
+GENE_SYMBOLS = set(GENE_SYMBOLS)
+
+def clean_genes(genes): ## to split /// in genes and keep only valid symbols in HGNC and MGI
+	cleaned = []
+	for gene in genes:
+		if '///' in gene:
+			for g in gene.split('///'):
+				if g in GENE_SYMBOLS:
+					cleaned.append(g)
+		else:
+			if gene in GENE_SYMBOLS:
+				cleaned.append(gene)
+	return cleaned
+
+
+'''
+d_lm_hgnc = {
+'BRP44' : 'MPC2', 
+'HDGFRP3' : 'HDGF', 
+'B3GNT1' : 'B4GAT1', 
+'PHF15' : 'JADE2', 
+'GPER' : 'GPER1', 
+'CD97' : 'ADGRE5', 
+'PTPLAD1' : 'HACD3', 
+'KIAA0528' : 'C2CD5', 
+'CHP' : 'CHP1', 
+'CTSL1' : 'CTSL', 
+'KIAA0494' : 'EFCAB14', 
+'CCDC90A' : 'MCUR1', 
+'WDR67' : 'TBC1D31', 
+'MTERFD1' : 'MTERF3', 
+'GPR56' : 'ADGRG1', 
+}
+
+lm1000_parsed = []
+for lm in lm1000:
+	if lm in d_lm_hgnc:
+		lm1000_parsed.append( d_lm_hgnc[lm] )
+	else:
+		lm1000_parsed.append( lm )
+lm1000 = set(lm1000_parsed)
+
+def to_hgnc(name, d_syno_hs=d_syno_hs, lm1000=lm1000):
+	if name in lm1000:
+		return name
+	else:
+		if name in d_syno_hs:
+			return d_syno_hs[name]
+		else:
+			return name
+'''
 gene_entries = []
 os.chdir(DATADIR)
 
@@ -59,7 +114,7 @@ os.chdir(DATADIR)
 # print entry.get_url()
 
 ## get valid entries from `valid_microtask1` table and fill in data from json files
-d_uid_geoid = mysqlTable2dict('maaya0_crowdsourcing', 'valid_microtask1', 0, 1)
+# d_uid_geoid = mysqlTable2dict('maaya0_crowdsourcing', 'valid_microtask1', 0, 1)
 # for fn in fns:
 # 	if fn.endswith('.json'):
 # 		uid = int(fn.split('.')[0])
@@ -92,36 +147,57 @@ print 'number of valid gene entries:', len(gene_entries)
 
 
 ## find the minimum set of genes that are shared in all entries
-nums_homologenes = []
-nums_lmgenes = []
+# nums_homologenes = []
+# nums_lmgenes = []
 
-print len(set(lm1000) & set(d_hs_))
-print set(lm1000) - set(d_hs_)
+# print len(lm1000 & set(d_hs_))
+# # print set(lm1000) - set(d_hs_) # not HGNC symbols
 
-for e in gene_entries:
-	fn = str(e.uid)+'.json'
-	genes = json2genes(fn)
-	if e.organism not in ['human', 'Homo sapiens']:
-		# genes = [d_mm_hs[gene] for gene in genes if gene in d_mm_hs]
-		genes_humanize = []
-		for gene in genes:
-			if gene in d_mm_hs:
-				genes_humanize.append(d_mm_hs[gene])
-			else:
-				genes_humanize.append(gene.upper())
-		genes = genes_humanize
-# 	homologenes = max( len(set(genes) & set(d_mm_hs.keys())), len(set(genes) & set(d_mm_hs.values())) ) #
-# 	nums_homologenes.append(homologenes)
-	lmgenes = len(set(genes) & set(lm1000))
-	nums_lmgenes.append(lmgenes)
+# for e in gene_entries:
+# 	fn = str(e.uid)+'.json'
+# 	genes = json2genes(fn)
+# 	if e.organism not in ['human', 'Homo sapiens']:
+# 		# genes = [d_mm_hs[gene] for gene in genes if gene in d_mm_hs]
+# 		genes_humanize = []
+# 		for gene in genes:
+# 			if gene in d_mm_hs:
+# 				genes_humanize.append(d_mm_hs[gene])
+# 			else:
+# 				genes_humanize.append(gene.upper())
+# 		genes = genes_humanize
+# # 	homologenes = max( len(set(genes) & set(d_mm_hs.keys())), len(set(genes) & set(d_mm_hs.values())) ) #
+# # 	nums_homologenes.append(homologenes)
+# 	genes = map(to_hgnc, genes)
+# 	lmgenes = len(set(genes) & lm1000)
+# 	if lmgenes == 969:
+# 		print e.platform, e.organism, lm1000 - set(genes)
 
-print len(d_mm_hs)
-print len(set(d_mm_hs.values()) & set(lm1000))
+# 	nums_lmgenes.append(lmgenes)
 
-print set(lm1000) - set(d_mm_hs.values())
+# print nums_lmgenes.count(978)
+# print max(nums_lmgenes)
+
+# pprint(dict(Counter(nums_lmgenes)))
+
+# plt.hist(nums_lmgenes, bins=50)
+# plt.xlabel('Number of LM1000', fontsize=18)
+# plt.show()
+
+## take up/dn genes and write into gmt
 
 
-print max(nums_lmgenes)
-plt.hist(nums_lmgenes, bins=50)
-plt.xlabel('Number of LM1000', fontsize=18)
-plt.show()
+
+CUTOFF = 500
+with open ('microtask1_top%s_cutoff.gmt'%CUTOFF, 'w') as out:
+	i = 0
+	for e in gene_entries:
+		i += 1
+		if e.chdir > 5000:
+			fn = str(e.uid)+'.json'
+			entry = json2entry(fn, meta_only=False) # full entry
+			entry.get_lists_cutoff(CUTOFF)
+			out.write(str(entry.uid)+'_up\tna\t' + '\t'.join(clean_genes(entry.up_genes)) + '\n')
+			out.write(str(entry.uid)+'_dn\tna\t' + '\t'.join(clean_genes(entry.dn_genes)) + '\n')
+		if i % 200 == 0:
+			print i
+d_gmt = read_gmt('microtask1_top%s_cutoff.gmt'%CUTOFF)

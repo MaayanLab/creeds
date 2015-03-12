@@ -103,11 +103,12 @@ class GEOentry(object):
 		else:
 			chdir_values = np.array(self.chdir.values())
 			genes = np.array(self.chdir.keys())
+			self.chdir = None # free the memory
 			srt_idx = np.argsort(chdir_values)
 			genes = genes[srt_idx]
 			self.dn_genes = genes[0: cutoff]
 			self.up_genes = genes[-cutoff:]
-			self.chdir = None # free the memory
+			
 
 
 def json2entry(fn, meta_only=False):
