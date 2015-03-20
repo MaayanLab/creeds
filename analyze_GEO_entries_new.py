@@ -14,6 +14,8 @@ from collections import Counter
 from pprint import pprint
 
 from GEOentry import *
+from gene_convertion import *
+
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\maayanlab_utils')
 from fileIO import file2list, mysqlTable2dict, sqliteTable2dict, read_gmt
 sys.path.append('C:\Users\Zichen\Documents\GitHub')
@@ -21,32 +23,8 @@ from clustergram import clustergram
 
 
 DATADIR = 'output/annot_jsons/'
+# DATADIR = 'output/annot_dz_jsons/'
 BASE_URL = 'http://127.0.0.1:8083/g2e/full?'
-HOMOLOGENE_DB = 'gene_symbols.db'
-
-## get dicts from sqlite
-
-d_mm_hs = sqliteTable2dict(HOMOLOGENE_DB, 'SELECT * FROM homologene', 2,1) 
-d_hs_ = sqliteTable2dict(HOMOLOGENE_DB, 'SELECT * FROM hgnc', 1,2) # all human symbols 
-d_syno_hs = sqliteTable2dict(HOMOLOGENE_DB, 'SELECT * FROM hgnc_synonyms', 1,0)
-lm1000 = file2list('rid_lm1000.txt',1) # the L1000 genes
-global GENE_SYMBOLS
-GENE_SYMBOLS = sqliteTable2dict(HOMOLOGENE_DB, """SELECT * FROM mgi WHERE type='Gene'""", 1,3).keys()
-GENE_SYMBOLS += d_hs_.keys()
-GENE_SYMBOLS = set(GENE_SYMBOLS)
-
-def clean_genes(genes): ## to split /// in genes and keep only valid symbols in HGNC and MGI
-	cleaned = []
-	for gene in genes:
-		if '///' in gene:
-			for g in gene.split('///'):
-				if g in GENE_SYMBOLS:
-					cleaned.append(g)
-		else:
-			if gene in GENE_SYMBOLS:
-				cleaned.append(gene)
-	return cleaned
-
 
 '''
 d_lm_hgnc = {
@@ -85,21 +63,22 @@ def to_hgnc(name, d_syno_hs=d_syno_hs, lm1000=lm1000):
 			return name
 '''
 gene_entries = []
+dz_entries = []
 os.chdir(DATADIR)
 
 ## find invalid jsons and record them
-# fns = os.listdir(os.getcwd())
-# c = 0
-# error_log = open('no_genes_errors.log', 'w')
-# for fn in fns:
-# 	if fn.endswith('.json'):
-# 		entry = json2entry(fn, meta_only=True)
-# 		if entry.chdir == 0:
-# 			line = [entry.uid, entry.status, entry.message, entry.failed_to_download] 
-# 			error_log.write('\t'.join(map(str, line)) + '\n')
-# 			c += 1
-# print 'errors:', c
-# error_log.close()
+fns = os.listdir(os.getcwd())
+c = 0
+error_log = open('no_genes_errors.log', 'w')
+for fn in fns:
+	if fn.endswith('.json'):
+		entry = json2entry(fn, meta_only=True)
+		if entry.chdir == 0:
+			line = [entry.uid, entry.status, entry.message, entry.failed_to_download] 
+			error_log.write('\t'.join(map(str, line)) + '\n')
+			c += 1
+print 'errors:', c
+error_log.close()
 
 
 ## get platforms without annot files
@@ -131,6 +110,25 @@ os.chdir(DATADIR)
 
 gene_entries = pickle.load(open('valid_gene_entries_meta.p', 'rb'))
 print 'number of valid gene entries:', len(gene_entries)
+
+## get valid dz_entries from the DATADIR
+# for fn in fns:
+# 	if fn.endswith('.json'):
+# 		uid = int(fn.split('.')[0])
+# 		try:
+# 			entry = json2entry(fn, meta_only=True)
+# 			if entry.chdir ==5000: # not supported platforms
+# 				print entry.uid, entry.chdir
+# 			else:
+# 				dz_entries.append(entry)
+# 		except:
+# 			print fn
+
+# pickle.dump(dz_entries, open('valid_dz_entries_meta.p', 'wb'))
+
+# dz_entries = pickle.load(open('valid_dz_entries_meta.p', 'rb'))
+# print 'number of valid dz entries:', len(dz_entries)
+
 
 ## hist for number of genes measured
 # plt.hist([e.chdir for e in gene_entries])
@@ -185,17 +183,34 @@ print 'number of valid gene entries:', len(gene_entries)
 
 ## take up/dn genes and write into gmt
 
+CUTOFF = 500
+with open ('microtask1_top%s_cutoff_humanized.gmt'%CUTOFF, 'w') as out:
+	i = 0
+	for e in gene_entries:
+		i += 1
+		if e.chdir > 5000:
+			fn = str(e.uid)+'.json'
+			entry = json2entry(fn, meta_only=False) # full entry
+			entry.get_lists_cutoff(CUTOFF, to_human=True)
+			out.write(str(entry.uid)+'_up\tna\t' + '\t'.join(entry.up_genes) + '\n')
+			out.write(str(entry.uid)+'_dn\tna\t' + '\t'.join(entry.dn_genes) + '\n')
+		if i % 200 == 0:
+			print i
+# d_gmt = read_gmt('microtask1_top%s_cutoff.gmt'%CUTOFF)
+
 # CUTOFF = 500
-# with open ('microtask1_top%s_cutoff.gmt'%CUTOFF, 'w') as out:
+# with open ('microtask2_top%s_cutoff_humanized.gmt'%CUTOFF, 'w') as out:
 # 	i = 0
-# 	for e in gene_entries:
+# 	for e in dz_entries:
 # 		i += 1
 # 		if e.chdir > 5000:
 # 			fn = str(e.uid)+'.json'
 # 			entry = json2entry(fn, meta_only=False) # full entry
-# 			entry.get_lists_cutoff(CUTOFF)
-# 			out.write(str(entry.uid)+'_up\tna\t' + '\t'.join(clean_genes(entry.up_genes)) + '\n')
-# 			out.write(str(entry.uid)+'_dn\tna\t' + '\t'.join(clean_genes(entry.dn_genes)) + '\n')
+# 			entry.get_lists_cutoff(CUTOFF, to_human=True)
+# 			out.write(str(entry.uid)+'_up\tna\t' + '\t'.join(entry.up_genes) + '\n')
+# 			out.write(str(entry.uid)+'_dn\tna\t' + '\t'.join(entry.dn_genes) + '\n')
 # 		if i % 200 == 0:
 # 			print i
-# d_gmt = read_gmt('microtask1_top%s_cutoff.gmt'%CUTOFF)
+# d_gmt = read_gmt('microtask2_top%s_cutoff.gmt'%CUTOFF)
+
+

@@ -6,6 +6,8 @@ from scipy.stats import fisher_exact
 from Bio import Entrez
 Entrez.email = 'wangzc921@gmail.com'
 
+from gene_convertion import *
+
 class GEOentry(object):
 	"""docstring for GEOentry"""
 	def __init__(self, geo_id, ctrls, perts, gene, pert_type, platform, organism, cell, curator):
@@ -97,7 +99,7 @@ class GEOentry(object):
 		else:
 			return False
 
-	def get_lists_cutoff(self, cutoff): ## get up/dn gene lists from chdir by applying rank cutoff
+	def get_lists_cutoff(self, cutoff, to_human=False): ## get up/dn gene lists from chdir by applying rank cutoff
 		if self.chdir is None:
 			raise ValueError('chdir is not set!')
 		else:
@@ -106,9 +108,12 @@ class GEOentry(object):
 			self.chdir = None # free the memory
 			srt_idx = np.argsort(chdir_values)
 			genes = genes[srt_idx]
-			self.dn_genes = genes[0: cutoff]
-			self.up_genes = genes[-cutoff:]
-			
+			if not to_human:
+				self.dn_genes = clean_genes(genes[0: cutoff])
+				self.up_genes = clean_genes(genes[-cutoff:])
+			else:
+				self.dn_genes = humanize(genes[0: cutoff])
+				self.up_genes = humanize(genes[-cutoff:])
 
 
 def json2entry(fn, meta_only=False):
