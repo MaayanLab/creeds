@@ -53,6 +53,7 @@ for uid, dzid in d_uid_dzid.items():
 		umls_ids = d_doid_umls_ids[doid]
 	cleaned_dzids[uid] = [doid, umls_ids]	
 
+print cleaned_dzids[650]
 
 ## insert disease id to the mysql database
 import MySQLdb
@@ -61,8 +62,12 @@ cur = conn.cursor()
 
 for uid in cleaned_dzids:
 	doid, umls_ids = cleaned_dzids[uid]
-	for umls_id in umls_ids:
-		cur.execute("""INSERT INTO cleaned_dzs VALUES(%s, %s, %s)""", (uid, doid, umls_id))
+	if len(umls_ids) == 0:
+		cur.execute("""INSERT INTO cleaned_dzs VALUES(%s, %s, %s)""", (uid, doid, None))
+	else:	
+		for umls_id in umls_ids:
+			umls_id = umls_id.split(':')[1]
+			cur.execute("""INSERT INTO cleaned_dzs VALUES(%s, %s, %s)""", (uid, doid, umls_id))
 
 conn.commit()
 conn.close()

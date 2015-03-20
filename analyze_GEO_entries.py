@@ -1,5 +1,8 @@
 ## to analyze entries in GEO collected
 ## created on 2/13/2015
+## reused for new analysis after cleaning up genes 
+## and disease ids on 3/20/2015
+
 import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,7 +27,7 @@ from clustergram import clustergram
 
 def list2file(l, fn):
 	with open (fn, 'w') as out:
-		out.write('\n'.join(l) + '\n')
+		out.write('\n'.join(map(lambda x :x.encode('utf-8'), l)) + '\n')
 	return
 
 def index_matrix(l, func):
@@ -49,69 +52,95 @@ def adjMatrx2edgeList(mat, row_labels, col_labels):
 	return zip(edges, mat_flat[srt_idx])
 
 
-d_uid_gene = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr', -1, 3)
+LOWEST_NUM_GENES = 5000
+CUTOFF = 500
 
-os.chdir('D:\Zichen_Projects\microtask_GEO')
-d_gse_platform = dict(zip(file2list('GSE_platform.txt',0), file2list('GSE_platform.txt', 1) ))
+'''
+## get up/dn genes by CUTOFF and dump to pickles
+os.chdir('C:\Users\Zichen\Documents\\bitbucket\microtask_GEO\output\\annot_dz_jsons')
+dz_entries = pickle.load(open('valid_dz_entries_meta.p', 'rb'))
+print 'number of valid dz entries:', len(dz_entries)
+dz_entries_data = []
+i = 0
+for e in dz_entries:
+	i += 1
+	if e.chdir > LOWEST_NUM_GENES:
+		fn = str(e.uid)+'.json'
+		entry = json2entry(fn, meta_only=False) # full entry
+		entry.get_lists_cutoff(CUTOFF, to_human=True)
+		dz_entries_data.append(entry)
+	if i % 200 == 0:
+		print i
+pickle.dump(dz_entries_data, open('dz_entries_500up500dn.p','wb'))
+del dz_entries_data
 
-dz_entries = []
-os.chdir('D:\Zichen_Projects\microtask_GEO\jsons_dz')
-fns = os.listdir(os.getcwd())
-for fn in fns:
-	entry = json2entry(fn)
-	if len(entry.chdir) >5000:
-		entry.get_lists_cutoff(500)
-		dz_entries.append(entry)
+os.chdir('C:\Users\Zichen\Documents\\bitbucket\microtask_GEO\output\\annot_jsons')
+gene_entries = pickle.load(open('valid_gene_entries_meta.p', 'rb'))
+print 'number of valid gene entries:', len(gene_entries)
+gene_entries_data = []
+i = 0
+for e in gene_entries:
+	i += 1
+	if e.chdir > LOWEST_NUM_GENES:
+		fn = str(e.uid)+'.json'
+		entry = json2entry(fn, meta_only=False) # full entry
+		entry.get_lists_cutoff(CUTOFF, to_human=True)
+		gene_entries_data.append(entry)
+	if i % 200 == 0:
+		print i
 
-gene_entries = []
-os.chdir('D:\Zichen_Projects\microtask_GEO\jsons')
-fns = os.listdir(os.getcwd())
-for fn in fns:
-	entry = json2entry(fn)
-	if len(entry.chdir) >5000:
-		entry.get_lists_cutoff(500)
-		gene_entries.append(entry)
+## output gene_entries
+pickle.dump(gene_entries_data, open('gene_entries_500up500dn.p','wb'))
+'''
 
+## load dz id
+d_uid_doid = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 1)
+d_uid_umls = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 2)
+# d_uid_name = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', -1, 3)
 
-os.chdir('D:\Zichen_Projects\microtask_GEO')
-## output gene_entries and dz_entries
-pickle.dump(gene_entries, open('gene_entries_500up500dn.p','wb'))
-pickle.dump(dz_entries, open('dz_entries_500up500dn.p','wb'))
+## load entries with data from pickles
+dz_entries = pickle.load(open('output/annot_dz_jsons/dz_entries_500up500dn.p', 'rb'))
+gene_entries = pickle.load(open('output/annot_jsons/gene_entries_500up500dn.p', 'rb'))
 
+os.chdir('output/analyses_output')
+
+'''
+## compute 3 matrix of signed_jaccard
 # compute matrix of Signed Jaccard
 ## self similarity matrix
-# mat_j_gene = index_matrix(gene_entries, signed_jaccard)
-# np.savetxt('genes_signed_Jaccard_matrix_n%sx%s.txt'%(len(gene_entries), len(gene_entries)), mat_j_gene, delimiter='\t')		
-# del mat_j_gene
+mat_j_gene = index_matrix(gene_entries, signed_jaccard)
+np.savetxt('genes_signed_Jaccard_matrix_n%sx%s.txt'%(len(gene_entries), len(gene_entries)), mat_j_gene, delimiter='\t')		
+del mat_j_gene
 
-# mat_j_dz = index_matrix(dz_entries, signed_jaccard)
-# np.savetxt('dzs_signed_Jaccard_matrix_n%sx%s.txt'%(len(dz_entries), len(dz_entries)), mat_j_dz, delimiter='\t')		
-# del mat_j_dz
+mat_j_dz = index_matrix(dz_entries, signed_jaccard)
+np.savetxt('dzs_signed_Jaccard_matrix_n%sx%s.txt'%(len(dz_entries), len(dz_entries)), mat_j_dz, delimiter='\t')		
+del mat_j_dz
 
 ## cross gene pert with diseases
-# signed_jaccard_matrix = np.ones((len(gene_entries), len(dz_entries)))
-# print signed_jaccard_matrix.shape
+signed_jaccard_matrix = np.ones((len(gene_entries), len(dz_entries)))
+print signed_jaccard_matrix.shape
 
-# for i, gene_entry in enumerate(gene_entries):
-# 	for j, dz_entry in enumerate(dz_entries):
-# 		score = signed_jaccard(gene_entry, dz_entry)
-# 		signed_jaccard_matrix[i,j] = score
-# np.savetxt('signed_Jaccard_matrix_n%sx%s.txt'%(len(gene_entries), len(dz_entries)), signed_jaccard_matrix, delimiter='\t')		
+for i, gene_entry in enumerate(gene_entries):
+	for j, dz_entry in enumerate(dz_entries):
+		score = signed_jaccard(gene_entry, dz_entry)
+		signed_jaccard_matrix[i,j] = score
+np.savetxt('signed_Jaccard_matrix_n%sx%s.txt'%(len(gene_entries), len(dz_entries)), signed_jaccard_matrix, delimiter='\t')		
+'''
 
 ## output labels
-# gene_names = [d_uid_gene[e.uid].strip() for e in gene_entries]
-# list2file([d_uid_gene[e.uid].strip() for e in gene_entries], 'gene_names.txt')
-# list2file([e.cell for e in gene_entries], 'gene_cells.txt')
-# list2file([e.curator for e in gene_entries], 'gene_curators.txt')
-# list2file([e.platform for e in gene_entries], 'gene_platforms.txt')
-# list2file(['|'.join([e.gene, e.pert_type, e.cell, e.organism, e.curator, e.uid ]) for e in gene_entries], 'gene_metas.txt')
-# list2file(['|'.join([d_uid_gene[e.uid].strip(), e.pert_type, str(e.uid) ]) for e in gene_entries], 'gene_metas_short.txt')
+# gene_names = [e.gene for e in gene_entries]
+# list2file(gene_names, 'gene_names.txt')
+# # list2file([e.cell for e in gene_entries], 'gene_cells.txt')
+# # list2file([e.curator for e in gene_entries], 'gene_curators.txt')
+# # list2file([e.platform for e in gene_entries], 'gene_platforms.txt')
+# list2file(['|'.join( [e.gene, e.pert_type, e.cell, e.organism, e.curator, str(e.uid) ]) for e in gene_entries], 'gene_metas.txt')
+# # list2file(['|'.join([d_uid_gene[e.uid].strip(), e.pert_type, str(e.uid) ]) for e in gene_entries], 'gene_metas_short.txt')
 
 # list2file([e.gene for e in dz_entries], 'dz_names.txt')
-# list2file([e.cell for e in dz_entries], 'dz_cells.txt')
-# list2file([e.curator for e in dz_entries], 'dz_curators.txt')
-# list2file([e.platform for e in dz_entries], 'dz_platforms.txt')
-# list2file(['|'.join([e.gene, e.pert_type, e.cell, e.organism, e.curator, e.uid ]) for e in dz_entries], 'dz_metas.txt')
+# # list2file([e.cell for e in dz_entries], 'dz_cells.txt')
+# # list2file([e.curator for e in dz_entries], 'dz_curators.txt')
+# # list2file([e.platform for e in dz_entries], 'dz_platforms.txt')
+# list2file(['|'.join( [e.gene, e.pert_type, e.cell, e.organism, e.curator, str(e.uid) ]) for e in dz_entries], 'dz_metas.txt')
 
 # d_curator = {
 # 	'Andrew': 'Andrew',
@@ -132,7 +161,7 @@ pickle.dump(dz_entries, open('dz_entries_500up500dn.p','wb'))
 # 	else:
 # 		gene_curators.append('others')
 
-# signed_jaccard_matrix = np.loadtxt('signed_Jaccard_matrix_n1663x171.txt')
+signed_jaccard_matrix = np.loadtxt('signed_Jaccard_matrix_n2455x717.txt')
 # clustergram(data=signed_jaccard_matrix, row_labels=[e.platform for e in gene_entries], col_labels=[e.platform for e in dz_entries],
 # 			row_groups=[e.platform for e in gene_entries], col_groups=[e.platform for e in dz_entries], cluster=True,
 # 			row_linkage='average', col_linkage='average', 
@@ -141,23 +170,25 @@ pickle.dump(dz_entries, open('dz_entries_500up500dn.p','wb'))
 # 			display_range=[-.05,.05], figsize=8, figname=None, colorkey='Signed Jaccard Index')
 
 ## sort matrix and output edgelist format txt files
+dz_uids = [str(e.uid) for e in dz_entries]
+gene_uids = [str(e.uid) for e in gene_entries]
 
-# edges_vals = adjMatrx2edgeList(signed_jaccard_matrix, gene_names, [e.pert_type for e in dz_entries])
-# with open ('gene_umls_edgelist_signed_jaccard.txt','w') as out:
-# 	for edge, val in edges_vals:
-# 		out.write(edge + '\t' + str(val) + '\n')
+edges_vals = adjMatrx2edgeList(signed_jaccard_matrix, gene_uids, dz_uids)
+with open ('gene_dz_edgelist_signed_jaccard.txt','w') as out:
+	for edge, val in edges_vals:
+		out.write(edge + '\t' + str(val) + '\n')
 
-# mat_j_gene = np.loadtxt('genes_signed_Jaccard_matrix_n1663x1663.txt')
-# edges_vals = adjMatrx2edgeList(mat_j_gene, gene_names, gene_names)
-# with open ('gene_gene_edgelist_signed_jaccard.txt','w') as out:
-# 	for edge, val in edges_vals:
-# 		out.write(edge + '\t' + str(val) + '\n')
+mat_j_gene = np.loadtxt('genes_signed_Jaccard_matrix_n2455x2455.txt')
+edges_vals = adjMatrx2edgeList(mat_j_gene, gene_uids, gene_uids)
+with open ('gene_gene_edgelist_signed_jaccard.txt','w') as out:
+	for edge, val in edges_vals:
+		out.write(edge + '\t' + str(val) + '\n')
 
-# mat_j_dz = np.loadtxt('dzs_signed_Jaccard_matrix_n171x171.txt')
-# edges_vals = adjMatrx2edgeList(mat_j_dz, [e.gene for e in dz_entries], [e.gene for e in dz_entries])
-# with open ('dz_dz_edgelist_signed_jaccard.txt','w') as out:
-# 	for edge, val in edges_vals:
-# 		out.write(edge + '\t' + str(val) + '\n')
+mat_j_dz = np.loadtxt('dzs_signed_Jaccard_matrix_n717x717.txt')
+edges_vals = adjMatrx2edgeList(mat_j_dz, dz_uids, dz_uids)
+with open ('dz_dz_edgelist_signed_jaccard.txt','w') as out:
+	for edge, val in edges_vals:
+		out.write(edge + '\t' + str(val) + '\n')
 
 
 
