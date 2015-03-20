@@ -185,19 +185,17 @@ print 'number of valid gene entries:', len(gene_entries)
 
 ## take up/dn genes and write into gmt
 
-
-
-CUTOFF = 500
-with open ('microtask1_top%s_cutoff.gmt'%CUTOFF, 'w') as out:
-	i = 0
-	for e in gene_entries:
-		i += 1
-		if e.chdir > 5000:
-			fn = str(e.uid)+'.json'
-			entry = json2entry(fn, meta_only=False) # full entry
-			entry.get_lists_cutoff(CUTOFF)
-			out.write(str(entry.uid)+'_up\tna\t' + '\t'.join(clean_genes(entry.up_genes)) + '\n')
-			out.write(str(entry.uid)+'_dn\tna\t' + '\t'.join(clean_genes(entry.dn_genes)) + '\n')
-		if i % 200 == 0:
-			print i
-d_gmt = read_gmt('microtask1_top%s_cutoff.gmt'%CUTOFF)
+# CUTOFF = 500
+# with open ('microtask1_top%s_cutoff.gmt'%CUTOFF, 'w') as out:
+# 	i = 0
+# 	for e in gene_entries:
+# 		i += 1
+# 		if e.chdir > 5000:
+# 			fn = str(e.uid)+'.json'
+# 			entry = json2entry(fn, meta_only=False) # full entry
+# 			entry.get_lists_cutoff(CUTOFF)
+# 			out.write(str(entry.uid)+'_up\tna\t' + '\t'.join(clean_genes(entry.up_genes)) + '\n')
+# 			out.write(str(entry.uid)+'_dn\tna\t' + '\t'.join(clean_genes(entry.dn_genes)) + '\n')
+# 		if i % 200 == 0:
+# 			print i
+# d_gmt = read_gmt('microtask1_top%s_cutoff.gmt'%CUTOFF)
