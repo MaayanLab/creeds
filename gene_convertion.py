@@ -39,5 +39,7 @@ def humanize(genes): ## to convert mouse gene symbols to human's using homologen
 		else:
 			if gene in d_mm_hs:
 				humanized.append(d_mm_hs[gene])
+			else:
+				humanized.append(gene.upper())
 	return humanized
 

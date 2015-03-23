@@ -3,6 +3,7 @@ import urllib2
 import json
 import numpy as np
 from scipy.stats import fisher_exact
+from collections import OrderedDict
 from Bio import Entrez
 Entrez.email = 'wangzc921@gmail.com'
 
@@ -114,6 +115,39 @@ class GEOentry(object):
 			else:
 				self.dn_genes = humanize(genes[0: cutoff])
 				self.up_genes = humanize(genes[-cutoff:])
+
+	def to_json_geneset(self, cutoff=None, fuzzy=False):
+		# writen for dzs
+		if self.chdir is None:
+			raise ValueError('chdir is not set!')
+		else:
+			geneset = OrderedDict()
+			if not fuzzy:
+				self.get_lists_cutoff(cutoff, to_human=True)
+				geneset['term'] = self.gene + '_' + self.geo_id
+				geneset['desc'] = self.cell
+				geneset['up'] = self.up_genes
+				geneset['dn'] = self.dn_genes
+
+			else: # fuzzy
+				chdir_values = np.array(self.chdir.values())
+				genes = np.array(self.chdir.keys())
+				srt_idx = np.argsort(chdir_values)
+				genes = humanize(genes[srt_idx])
+
+				if cutoff is None:
+					geneset['term'] = self.gene + '_' + self.geo_id
+					geneset['desc'] = self.cell
+					geneset['genes'] = genes
+					geneset['vals'] = chdir_values[srt_idx].tolist()
+
+				else:
+					chdir_values = chdir_values[srt_idx]
+					geneset['term'] = self.gene + '_' + self.geo_id
+					geneset['desc'] = self.cell
+					geneset['genes'] = genes[0:cutoff] + genes[-cutoff:]
+					geneset['vals'] = chdir_values.tolist()[0:cutoff] + chdir_values.tolist()[-cutoff:]
+			return geneset
 
 
 def json2entry(fn, meta_only=False):

@@ -22,8 +22,8 @@ sys.path.append('C:\Users\Zichen\Documents\GitHub')
 from clustergram import clustergram
 
 
-DATADIR = 'output/annot_jsons/'
-# DATADIR = 'output/annot_dz_jsons/'
+# DATADIR = 'output/annot_jsons/'
+DATADIR = 'output/annot_dz_jsons/'
 BASE_URL = 'http://127.0.0.1:8083/g2e/full?'
 
 '''
@@ -67,18 +67,18 @@ dz_entries = []
 os.chdir(DATADIR)
 
 ## find invalid jsons and record them
-fns = os.listdir(os.getcwd())
-c = 0
-error_log = open('no_genes_errors.log', 'w')
-for fn in fns:
-	if fn.endswith('.json'):
-		entry = json2entry(fn, meta_only=True)
-		if entry.chdir == 0:
-			line = [entry.uid, entry.status, entry.message, entry.failed_to_download] 
-			error_log.write('\t'.join(map(str, line)) + '\n')
-			c += 1
-print 'errors:', c
-error_log.close()
+# fns = os.listdir(os.getcwd())
+# c = 0
+# error_log = open('no_genes_errors.log', 'w')
+# for fn in fns:
+# 	if fn.endswith('.json'):
+# 		entry = json2entry(fn, meta_only=True)
+# 		if entry.chdir == 0:
+# 			line = [entry.uid, entry.status, entry.message, entry.failed_to_download] 
+# 			error_log.write('\t'.join(map(str, line)) + '\n')
+# 			c += 1
+# print 'errors:', c
+# error_log.close()
 
 
 ## get platforms without annot files
@@ -108,8 +108,8 @@ error_log.close()
 # 				print fn
 # pickle.dump(gene_entries, open('valid_gene_entries_meta.p', 'wb'))
 
-gene_entries = pickle.load(open('valid_gene_entries_meta.p', 'rb'))
-print 'number of valid gene entries:', len(gene_entries)
+# gene_entries = pickle.load(open('valid_gene_entries_meta.p', 'rb'))
+# print 'number of valid gene entries:', len(gene_entries)
 
 ## get valid dz_entries from the DATADIR
 # for fn in fns:
@@ -126,8 +126,8 @@ print 'number of valid gene entries:', len(gene_entries)
 
 # pickle.dump(dz_entries, open('valid_dz_entries_meta.p', 'wb'))
 
-# dz_entries = pickle.load(open('valid_dz_entries_meta.p', 'rb'))
-# print 'number of valid dz entries:', len(dz_entries)
+dz_entries = pickle.load(open('valid_dz_entries_meta.p', 'rb'))
+print 'number of valid dz entries:', len(dz_entries)
 
 
 ## hist for number of genes measured
@@ -183,19 +183,19 @@ print 'number of valid gene entries:', len(gene_entries)
 
 ## take up/dn genes and write into gmt
 
-CUTOFF = 500
-with open ('microtask1_top%s_cutoff_humanized.gmt'%CUTOFF, 'w') as out:
-	i = 0
-	for e in gene_entries:
-		i += 1
-		if e.chdir > 5000:
-			fn = str(e.uid)+'.json'
-			entry = json2entry(fn, meta_only=False) # full entry
-			entry.get_lists_cutoff(CUTOFF, to_human=True)
-			out.write(str(entry.uid)+'_up\tna\t' + '\t'.join(entry.up_genes) + '\n')
-			out.write(str(entry.uid)+'_dn\tna\t' + '\t'.join(entry.dn_genes) + '\n')
-		if i % 200 == 0:
-			print i
+# CUTOFF = 500
+# with open ('microtask1_top%s_cutoff_humanized.gmt'%CUTOFF, 'w') as out:
+# 	i = 0
+# 	for e in gene_entries:
+# 		i += 1
+# 		if e.chdir > 5000:
+# 			fn = str(e.uid)+'.json'
+# 			entry = json2entry(fn, meta_only=False) # full entry
+# 			entry.get_lists_cutoff(CUTOFF, to_human=True)
+# 			out.write(str(entry.uid)+'_up\tna\t' + '\t'.join(entry.up_genes) + '\n')
+# 			out.write(str(entry.uid)+'_dn\tna\t' + '\t'.join(entry.dn_genes) + '\n')
+# 		if i % 200 == 0:
+# 			print i
 # d_gmt = read_gmt('microtask1_top%s_cutoff.gmt'%CUTOFF)
 
 # CUTOFF = 500
@@ -214,3 +214,24 @@ with open ('microtask1_top%s_cutoff_humanized.gmt'%CUTOFF, 'w') as out:
 # d_gmt = read_gmt('microtask2_top%s_cutoff.gmt'%CUTOFF)
 
 
+## make gene-set json files for Qiaonan and Nick 3/23/2015
+
+# crisp:
+import json
+CUTOFF = 300
+genesets = []
+i = 0
+for e in dz_entries:
+	i += 1
+	if e.chdir > 5000:
+		fn = str(e.uid)+'.json'
+		entry = json2entry(fn, meta_only=False) # full entry
+		geneset = entry.to_json_geneset(cutoff=CUTOFF, fuzzy=False)
+		genesets.append(geneset)
+	if i % 200 == 0:
+		print i
+
+json.dump(genesets, open('crowdsourced_diseases_crisp_top300.json', 'w'))
+# json.dump(genesets, open('crowdsourced_diseases_fuzzy_top300.json', 'w'))
+
+# json.dump(genesets, open('crowdsourced_diseases_fuzzy_full.json', 'w'))
