@@ -149,6 +149,17 @@ class GEOentry(object):
 					geneset['vals'] = chdir_values.tolist()[0:cutoff] + chdir_values.tolist()[-cutoff:]
 			return geneset
 
+	def to_full_chdir(self): ## for the PAEA shiny app
+		geneset = OrderedDict()
+		chdir_values = self.chdir.values()
+		genes = self.chdir.keys()
+		genes, chdir_values = clean_genes2(genes, chdir_values)
+		geneset['term'] = self.gene + '_' + self.geo_id
+		geneset['desc'] = self.cell
+		geneset['genes'] = genes
+		geneset['vals'] = chdir_values
+		return geneset
+
 
 def json2entry(fn, meta_only=False):
 	# retrieve entry from a json file

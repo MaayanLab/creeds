@@ -43,3 +43,19 @@ def humanize(genes): ## to convert mouse gene symbols to human's using homologen
 				humanized.append(gene.upper())
 	return humanized
 
+def clean_genes2(genes, vals): ## to split /// in genes and make sure genes are unique
+	## this is only used for PAEA shiny app
+	cleaned = []
+	cleaned_vals = []
+	for gene, val in zip(genes, vals):
+		if '///' in gene:
+			gs = gene.split('///')
+			if len(set(gs) - set(cleaned)) != 0: # has non-overlaping genes
+				cleaned.append(list(set(gs) - set(cleaned))[0])
+				cleaned_vals.append(val)
+		else:
+			if gene not in cleaned:
+				cleaned.append(gene)
+				cleaned_vals.append(val)
+	return cleaned, cleaned_vals
+	

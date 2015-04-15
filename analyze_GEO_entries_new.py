@@ -217,21 +217,42 @@ print 'number of valid dz entries:', len(dz_entries)
 ## make gene-set json files for Qiaonan and Nick 3/23/2015
 
 # crisp:
-import json
-CUTOFF = 300
-genesets = []
-i = 0
-for e in dz_entries:
-	i += 1
-	if e.chdir > 5000:
-		fn = str(e.uid)+'.json'
-		entry = json2entry(fn, meta_only=False) # full entry
-		geneset = entry.to_json_geneset(cutoff=CUTOFF, fuzzy=False)
-		genesets.append(geneset)
-	if i % 200 == 0:
-		print i
+# import json
+# CUTOFF = 300
+# genesets = []
+# i = 0
+# for e in dz_entries:
+# 	i += 1
+# 	if e.chdir > 5000:
+# 		fn = str(e.uid)+'.json'
+# 		entry = json2entry(fn, meta_only=False) # full entry
+# 		geneset = entry.to_json_geneset(cutoff=CUTOFF, fuzzy=False)
+# 		genesets.append(geneset)
+# 	if i % 200 == 0:
+# 		print i
 
-json.dump(genesets, open('crowdsourced_diseases_crisp_top300.json', 'w'))
+# json.dump(genesets, open('crowdsourced_diseases_crisp_top300.json', 'w'))
 # json.dump(genesets, open('crowdsourced_diseases_fuzzy_top300.json', 'w'))
 
 # json.dump(genesets, open('crowdsourced_diseases_fuzzy_full.json', 'w'))
+
+## make gene-set json files for PAEA_shiny app 4/14/2015
+import json
+i = 0
+
+meta_out = open('dz_signatures/meta.txt', 'w')
+meta_out.write('uid\tdisease_name\tgeo_id\tcell_type\n')
+for e in dz_entries:
+	i += 1
+	if e.chdir > 5000:
+		fn = str(e.uid) + '.json'
+		e = json2entry(fn, meta_only=True)
+		meta_out.write('\t'.join(map(lambda x: x.encode('utf-8'), [str(e.uid), e.gene.strip('"'), e.geo_id, e.cell])) + '\n')
+		
+		# entry = json2entry(fn, meta_only=False) # full entry
+		# geneset = entry.to_full_chdir()
+		# json.dump(geneset, open('dz_signatures/%s'%fn, 'w'))
+	# if i % 10 == 0:
+	# 	print i
+
+meta_out.close()
