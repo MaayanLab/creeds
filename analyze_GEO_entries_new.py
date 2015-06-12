@@ -238,21 +238,70 @@ print 'number of valid dz entries:', len(dz_entries)
 
 ## make gene-set json files for PAEA_shiny app 4/14/2015
 import json
-i = 0
+# i = 0
 
-meta_out = open('dz_signatures/meta.txt', 'w')
-meta_out.write('uid\tdisease_name\tgeo_id\tcell_type\n')
-for e in dz_entries:
-	i += 1
-	if e.chdir > 5000:
-		fn = str(e.uid) + '.json'
-		e = json2entry(fn, meta_only=True)
-		meta_out.write('\t'.join(map(lambda x: x.encode('utf-8'), [str(e.uid), e.gene.strip('"'), e.geo_id, e.cell])) + '\n')
+# meta_out = open('dz_signatures/meta.txt', 'w')
+# meta_out.write('uid\tdisease_name\tgeo_id\tcell_type\n')
+# for e in dz_entries:
+# 	i += 1
+# 	if e.chdir > 5000:
+# 		fn = str(e.uid) + '.json'
+# 		e = json2entry(fn, meta_only=True)
+# 		meta_out.write('\t'.join(map(lambda x: x.encode('utf-8'), [str(e.uid), e.gene.strip('"'), e.geo_id, e.cell])) + '\n')
 		
-		# entry = json2entry(fn, meta_only=False) # full entry
-		# geneset = entry.to_full_chdir()
-		# json.dump(geneset, open('dz_signatures/%s'%fn, 'w'))
-	# if i % 10 == 0:
-	# 	print i
+# 		# entry = json2entry(fn, meta_only=False) # full entry
+# 		# geneset = entry.to_full_chdir()
+# 		# json.dump(geneset, open('dz_signatures/%s'%fn, 'w'))
+# 	# if i % 10 == 0:
+# 	# 	print i
 
-meta_out.close()
+# meta_out.close()
+
+## make gene-set json for Qiaonan with UMLS on 6/3/2015
+# i = 0
+# genesets = []
+# d_uid_umls_id = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 2)
+# CUTOFF = 600
+# for e in dz_entries:
+# 	i += 1
+# 	if e.chdir > 5000:
+# 		fn = str(e.uid)+'.json'
+# 		entry = json2entry(fn, meta_only=False) # full entry
+# 		geneset = entry.to_json_geneset2(CUTOFF)
+# 		uid = geneset['term']
+# 		geneset['desc'] = d_uid_umls_id[uid]
+# 		genesets.append(geneset)
+# 	if i % 200 == 0:
+# 		print i
+
+# json.dump(genesets, open('crowdsourced_diseases_top600_with_UMLS.json', 'w'))
+
+## make gmt gene-set for Ben Readhead on 6/11/2015
+i = 0
+d_uid_umls_id = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 2)
+CUTOFF = 600
+with open('crowdsourced_disease_signatures_top600_DEGs_ChDir.gmt', 'w') as out:
+	for e in dz_entries:
+		i += 1
+		if e.chdir > 5000:
+			fn = str(e.uid)+'.json'
+			entry = json2entry(fn, meta_only=False) # full entry
+			geneset = entry.to_json_geneset2(CUTOFF)
+			geneset['desc'] = d_uid_umls_id[e.uid]
+			if geneset['desc'] is None:
+				geneset['desc'] = "NA"
+			try:
+				up_genes = []
+				dn_genes = []
+				for gene, val in zip(geneset['genes'], geneset['vals']):
+					if val > 0:
+						up_genes.append(gene)
+					else:
+						dn_genes.append(gene)
+				out.write(geneset['term'] +'-up' + '\t' + geneset['desc'] + '\t' + '\t'.join(up_genes) + '\n')
+				out.write(geneset['term'] +'-up' + '\t' + geneset['desc'] + '\t' + '\t'.join(dn_genes) + '\n')
+			except:
+				pass
+		if i % 100 == 0:
+			print i
+

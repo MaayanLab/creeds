@@ -160,6 +160,18 @@ class GEOentry(object):
 		geneset['vals'] = chdir_values
 		return geneset
 
+	def to_json_geneset2(self, cutoff): 
+		geneset = OrderedDict()
+		chdir_values = self.chdir.values()
+		genes = self.chdir.keys()
+		genes, chdir_values = clean_genes2(genes, chdir_values)
+		genes, chdir_values = np.array(genes), np.array(chdir_values)
+		srt_idx = np.argsort(abs(chdir_values))[::-1]
+		# geneset['term'] = self.uid
+		geneset['term'] = self.gene + '_' + self.geo_id
+		geneset['genes'] = genes[srt_idx][0:cutoff].tolist()
+		geneset['vals'] = chdir_values[srt_idx][0:cutoff].tolist()
+		return geneset
 
 def json2entry(fn, meta_only=False):
 	# retrieve entry from a json file
