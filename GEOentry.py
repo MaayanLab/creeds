@@ -9,6 +9,12 @@ Entrez.email = 'wangzc921@gmail.com'
 
 from gene_convertion import *
 
+ORGANISMS = {
+	'human': 'human', 'homo sapiens':'human',
+	'mouse': 'mouse', 'mus musculus': 'mouse',
+	'rat': 'rat', 'rattus norvegicus': 'rat',
+} # control vocabularies for organisms
+
 class GEOentry(object):
 	"""docstring for GEOentry"""
 	def __init__(self, geo_id, ctrls, perts, gene, pert_type, platform, organism, cell, curator):
@@ -20,7 +26,7 @@ class GEOentry(object):
 		self.gene = gene # disease name for dz
 		self.pert_type = pert_type # disease id for dz
 		self.platform = platform
-		self.organism = organism
+		self.organism = ORGANISMS[organism.lower()]
 		self.cell = cell
 		self.curator = curator
 		## more fields
@@ -168,7 +174,7 @@ class GEOentry(object):
 		genes, chdir_values = np.array(genes), np.array(chdir_values)
 		srt_idx = np.argsort(abs(chdir_values))[::-1]
 		# geneset['term'] = self.uid
-		geneset['term'] = self.gene + '_' + self.geo_id
+		geneset['term'] = '_'.join([self.gene, self.pert_type, self.organism, self.geo_id])
 		geneset['genes'] = genes[srt_idx][0:cutoff].tolist()
 		geneset['vals'] = chdir_values[srt_idx][0:cutoff].tolist()
 		return geneset
