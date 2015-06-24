@@ -16,9 +16,15 @@ Entrez.email = 'wangzc921@gmail.com'
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\maayanlab_utils')
 from fileIO import file2list, mysqlTable2dict
 
+
+
+
 ##
 # DATADIR = 'output/annot_jsons/'
-DATADIR = 'output/annot_dz_jsons/'
+# DATADIR = 'output/annot_dz_jsons/'
+# DATADIR = 'output/microtask_gene_jsons' # re-run API not normalizing/log-transforming data for microtask1
+# DATADIR = 'output/microtask_dz_jsons' # re-run API not normalizing/log-transforming data for microtask2
+DATADIR = 'output/microtask_drug_jsons' # re-run API not normalizing/log-transforming data for microtask3
 
 ## get dicts from mysql
 d_uid_hsgene = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
@@ -33,7 +39,8 @@ cur_insert = conn.cursor()
 
 
 # query = """SELECT * FROM geo2enrichr"""
-query = """SELECT * FROM geo2enrichr_dz"""
+# query = """SELECT * FROM geo2enrichr_dz"""
+query = """SELECT * FROM geo2enrichr_drug"""
 cur.execute(query)
 
 i = 0

@@ -299,7 +299,7 @@ with open('crowdsourced_disease_signatures_top600_DEGs_ChDir.gmt', 'w') as out:
 					else:
 						dn_genes.append(gene)
 				out.write(geneset['term'] +'-up' + '\t' + geneset['desc'] + '\t' + '\t'.join(up_genes) + '\n')
-				out.write(geneset['term'] +'-up' + '\t' + geneset['desc'] + '\t' + '\t'.join(dn_genes) + '\n')
+				out.write(geneset['term'] +'-dn' + '\t' + geneset['desc'] + '\t' + '\t'.join(dn_genes) + '\n')
 			except:
 				pass
 		if i % 100 == 0:

@@ -1,6 +1,7 @@
 ## script to parse file from diseaes-ontology 
 ## 'HumanDO.obo'
 ## created on 3/20/2015
+## used for cleaning disease_id
 
 import os, sys
 sys.path.append('C:\\Users\\Zichen\\Documents\\bitbucket\\maayanlab_utils')
