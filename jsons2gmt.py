@@ -86,5 +86,5 @@ def make_gmt(datadir, meta_fn, gmt_fn):
 
 # make_gmt('output/microtask_gene_jsons', 'valid_gene_entries.pkl', 'crowdsourced_single_gene_pert_top600.gmt')
 # make_gmt('output/microtask_dz_jsons', 'valid_dz_entries.pkl', 'crowdsourced_diseases_top600.gmt')
-make_gmt('output/microtask_drug_jsons', 'valid_drug_entries.pkl', 'crowdsourced_drugs_top600.gmt')
+# make_gmt('output/microtask_drug_jsons', 'valid_drug_entries.pkl', 'crowdsourced_drugs_top600.gmt')
 

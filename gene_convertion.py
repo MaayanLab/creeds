@@ -30,17 +30,20 @@ def clean_genes(genes): ## to split /// in genes and keep only valid symbols in 
 				cleaned.append(gene)
 	return cleaned
 
+def _humanize(gene):
+	if gene in d_hs_: # human symbols already
+		return gene
+	else:
+		if gene in d_mm_hs:
+			return d_mm_hs[gene]
+		else:
+			return gene.upper()
+
 def humanize(genes): ## to convert mouse gene symbols to human's using homologene
 	cleaned = clean_genes(genes)
 	humanized = []
 	for gene in cleaned:
-		if gene in d_hs_: # human symbols already
-			humanized.append(gene)
-		else:
-			if gene in d_mm_hs:
-				humanized.append(d_mm_hs[gene])
-			else:
-				humanized.append(gene.upper())
+		humanized.append(_humanize(gene))
 	return humanized
 
 def clean_genes2(genes, vals): ## to split /// in genes and make sure genes are unique

@@ -179,6 +179,19 @@ class GEOentry(object):
 		geneset['vals'] = chdir_values[srt_idx][0:cutoff].tolist()
 		return geneset
 
+	def to_sorted_gene_list(self, absolute=True):
+		# return an array of cleaned genes sorted by chdir coefs
+		# in descending order
+		chdir_values = self.chdir.values()
+		genes = self.chdir.keys()
+		genes, chdir_values = clean_genes2(genes, chdir_values)
+		genes, chdir_values = np.array(genes), np.array(chdir_values)
+		if absolute:
+			srt_idx = np.argsort(abs(chdir_values))[::-1]
+		else:
+			srt_idx = np.argsort(chdir_values)[::-1]
+		return genes[srt_idx]
+
 def json2entry(fn, meta_only=False):
 	# retrieve entry from a json file
 	json_data = json.load(open(fn,'r'))

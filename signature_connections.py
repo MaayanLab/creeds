@@ -59,7 +59,10 @@ def jaccard(l1,l2):
 	s1, s2 = set(map(lambda x: x.upper(), l1)), set(map(lambda x:x.upper(), l2))
 	up = len(s1 & s2)
 	dn = len(s1 | s2)
-	return float(up)/dn
+	if dn == 0: # to prevent 0 division error
+		return 0
+	else:
+		return float(up)/dn
 
 
 def signed_jaccard(d1, d2):
@@ -127,5 +130,37 @@ def pairwise_signed_jaccard(unique_genesets, outfn):
 	return
 
 unique_entries, unique_genesets = get_uniq_sigs()
-pairwise_signed_jaccard(unique_genesets, 'signed_jaccard_%s_unique_entries.txt.gz' % len(unique_entries))
+# for idx, geneset in unique_genesets.items():
+# 	if len(geneset['up']) ==0 or len(geneset['dn']) == 0:
+# 		print idx, len(geneset['up']), len(geneset['dn'])
+
+# pairwise_signed_jaccard(unique_genesets, 'signed_jaccard_%s_unique_entries.txt.gz' % len(unique_entries))
+
+## plot embedding for the adjacency matrix
+sys.path.append('C:\Users\Zichen\Documents\\bitbucket\\natural_products')
+from SparseAdjacencyMat import SparseAdjacencyMat
+
+d_prefix_id_idx = dict(zip(unique_entries.keys(), range(len(unique_entries))))
+
+def read_sam_from_file(fn, d_prefix_id_idx, cutoff=-2):
+	## assumes the file is gzipped
+	mat = {}
+	c = 0
+	with gzip.open(fn, 'rb') as f:
+		for line in f:
+			c += 1
+			sl = line.strip().split('\t')
+			i, j = d_prefix_id_idx[sl[0]], d_prefix_id_idx[sl[1]]
+			score = float(sl[2])
+			if score > cutoff:
+				mat[i, j] = score
+			if c % 2000000 == 0:
+				print c
+	fn = fn.split('/')[-1]
+	print 'finished reading %s' % fn
+	return SparseAdjacencyMat(mat, fn)
+
+sam = read_sam_from_file('signed_jaccard_%s_unique_entries.txt.gz' % len(unique_entries), d_prefix_id_idx)
+# sam.plot_embedding('truncatedSVD')
+sam.plot_embedding('TSNE')
 
