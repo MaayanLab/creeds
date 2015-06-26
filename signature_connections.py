@@ -140,19 +140,24 @@ def pairwise_signed_jaccard(unique_genesets, outfn):
 
 # pairwise_signed_jaccard(unique_genesets, 'signed_jaccard_%s_gene_unique_entries.txt.gz' % len(unique_entries))
 
+d_gds_gse = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', 0, 1)
 ## load dz id
 # global d_uid_doid, d_uid_umls, d_uid_gse
 # d_uid_doid = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 1)
 # d_uid_umls = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 2)
 # d_uid_geoid = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', -1, 0)
 
-d_gds_gse = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', 0, 1)
-
 ## load cleaned gene symbols
-global d_uid_hs, d_uid_mm, d_uid_gse
-d_uid_hs = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
-d_uid_mm = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 2)
-d_uid_geoid = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr', -1, 0)
+# global d_uid_hs, d_uid_mm, d_uid_gse
+# d_uid_hs = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
+# d_uid_mm = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 2)
+# d_uid_geoid = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr', -1, 0)
+
+## load cleaned drugs
+global d_uid_gse
+# d_uid_hs = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
+# d_uid_mm = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 2)
+d_uid_geoid = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_drug', -1, 0)
 
 d_uid_gse = {} # convert gds to gse
 for uid, geoid in d_uid_geoid.items():
@@ -319,6 +324,39 @@ def _plot_roc_similar_gene(id_pairs, G, spl_cutoff=1):
 	auroc = auc(FPRs, TPRs)
 	return auroc, FPRs, TPRs
 
+def load_drug_similarities(cutoff):
+	# fn = 'drug_smiles-morgan-tanimoto.txt.gz'
+	fn = 'drug_smiles-maccs-tanimoto.txt.gz'
+	gs = nx.Graph()
+	with gzip.open(fn) as f:
+		for line in f:
+			uid_i, uid_j, score = line.strip().split('\t')
+			uid_i, uid_j = int(uid_i), int(uid_j)
+			score = float(score)
+			if score > cutoff:
+				gs.add_edge(uid_i, uid_j)
+	return gs
+
+def _plot_roc_similar_drug(id_pairs, G):
+	fp_list = []
+	tp_list = []
+	fp = 0
+	tp = 0
+	for uid_i, uid_j in id_pairs:
+		gse_i, gse_j = d_uid_gse[uid_i], d_uid_gse[uid_j]
+		if gse_i != gse_j: # exclude signatures from the same GEO study
+			if G.has_edge(uid_i, uid_j):
+				tp += 1
+			else:
+				fp += 1
+			tp_list.append(tp)
+			fp_list.append(fp)
+	max_TP = float(tp_list[-1])
+	max_FP = float(fp_list[-1])
+	TPRs = np.array(tp_list)/max_TP
+	FPRs = np.array(fp_list)/max_FP
+	auroc = auc(FPRs, TPRs)
+	return auroc, FPRs, TPRs
 
 def plot_roc(signed_jaccard_fn, ax, absolute=False, plot=True, label=None, color=None):
 	id_pairs = read_pairwise_from_file(signed_jaccard_fn, absolute=absolute)
@@ -328,8 +366,11 @@ def plot_roc(signed_jaccard_fn, ax, absolute=False, plot=True, label=None, color
 	# auroc, FPRs, TPRs = _plot_roc_similar_dz(id_pairs, G, spl_cutoff=3)
 	## genes:
 	# auroc, FPRs, TPRs = _plot_roc_same_gene(id_pairs)
-	G= load_ppi()
-	auroc, FPRs, TPRs = _plot_roc_similar_gene(id_pairs, G, spl_cutoff=2)
+	# G= load_ppi()
+	# auroc, FPRs, TPRs = _plot_roc_similar_gene(id_pairs, G, spl_cutoff=2)
+	## drugs:
+	G = load_drug_similarities(0.9)
+	auroc, FPRs, TPRs = _plot_roc_similar_drug(id_pairs, G)
 
 	if plot:
 		label += ", AUC = %.3f" % auroc
@@ -345,8 +386,12 @@ ax = fig.add_subplot(111)
 # plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
 # plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=True, label='abs(signed jaccard)', color='r')
 
-plot_roc('signed_jaccard_2460_gene_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
-plot_roc('signed_jaccard_2460_gene_unique_entries.txt.gz', ax, absolute=True, label='abs(signed jaccard)', color='r')
+# plot_roc('signed_jaccard_2460_gene_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
+# plot_roc('signed_jaccard_2460_gene_unique_entries.txt.gz', ax, absolute=True, label='abs(signed jaccard)', color='r')
+
+plot_roc('signed_jaccard_906_drug_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
+plot_roc('signed_jaccard_906_drug_unique_entries.txt.gz', ax, absolute=True, label='abs(signed jaccard)', color='r')
+
 
 enlarge_tick_fontsize(ax, 16)
 plt.show()
