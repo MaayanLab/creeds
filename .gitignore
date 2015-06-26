@@ -2,3 +2,5 @@
 *.db
 *.gz
 output/*
+*.pdf
+*.txt
