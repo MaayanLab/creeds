@@ -7,7 +7,6 @@ import os, sys
 sys.path.append('C:\\Users\\Zichen\\Documents\\bitbucket\\maayanlab_utils')
 import obo_parser
 
-
 DO_FILE = 'D:\Zichen_Projects\microtask_GEO\DO\HumanDO.obo'
 ontology_id_terms, name2id, G = obo_parser.obo2network(DO_FILE)
 print len(ontology_id_terms), len(name2id), G.number_of_edges(), G.number_of_nodes()
@@ -34,6 +33,7 @@ for doid, term in ontology_id_terms.items():
 ## map between DOID and UMLS_CUI
 from fileIO import mysqlTable2dict
 d_uid_dzid = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', -1, 4)
+d_uid_dzname = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', -1, 3)
 cleaned_dzids = {}
 for uid, dzid in d_uid_dzid.items():
 	if ':' in dzid:
@@ -63,12 +63,17 @@ cur = conn.cursor()
 
 for uid in cleaned_dzids:
 	doid, umls_ids = cleaned_dzids[uid]
+	dz_name = None
+	if doid in ontology_id_terms:
+		dz_name = ontology_id_terms[doid].name
+	elif doid not in ontology_id_terms:
+		dz_name = d_uid_dzname[uid]
 	if len(umls_ids) == 0:
-		cur.execute("""INSERT INTO cleaned_dzs VALUES(%s, %s, %s)""", (uid, doid, None))
+		cur.execute("""INSERT INTO cleaned_dzs VALUES(%s, %s, %s, %s)""", (uid, dz_name, doid, None))
 	else:	
 		for umls_id in umls_ids:
 			umls_id = umls_id.split(':')[1]
-			cur.execute("""INSERT INTO cleaned_dzs VALUES(%s, %s, %s)""", (uid, doid, umls_id))
+			cur.execute("""INSERT INTO cleaned_dzs VALUES(%s, %s, %s, %s)""", (uid, dz_name, doid, umls_id))
 
 conn.commit()
 conn.close()
