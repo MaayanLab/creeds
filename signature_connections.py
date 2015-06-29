@@ -29,8 +29,8 @@ sys.path.append('C:\Users\Zichen\Documents\\bitbucket\maayanlab_utils')
 from fileIO import file2list, mysqlTable2dict
 from plots import enlarge_tick_fontsize
 
-# sys.path.append('C:\Users\Zichen\Documents\GitHub')
-# from clustergram import clustergram
+sys.path.append('C:\Users\Zichen\Documents\GitHub')
+from clustergram import clustergram
 
 def list2file(l, fn):
 	with open (fn, 'w') as out:
@@ -96,8 +96,8 @@ def read_gmt_sigs(fn, prefix):
 def get_uniq_sigs():
 	# get the uids of signatures that are unique across all microtasks
 	all_valid_entry_fns = [
-		# ('dz','output/microtask_dz_jsons/valid_dz_entries.pkl','output/microtask_dz_jsons/crowdsourced_diseases_top600.gmt'),
-		# ('drug','output/microtask_drug_jsons/valid_drug_entries.pkl','output/microtask_drug_jsons/crowdsourced_drugs_top600.gmt'),
+		('dz','output/microtask_dz_jsons/valid_dz_entries.pkl','output/microtask_dz_jsons/crowdsourced_diseases_top600.gmt'),
+		('drug','output/microtask_drug_jsons/valid_drug_entries.pkl','output/microtask_drug_jsons/crowdsourced_drugs_top600.gmt'),
 		('gene','output/microtask_gene_jsons/valid_gene_entries.pkl','output/microtask_gene_jsons/crowdsourced_single_gene_pert_top600.gmt'),
 	] # the order determine priority
 	unique_entries = {}
@@ -133,7 +133,7 @@ def pairwise_signed_jaccard(unique_genesets, outfn):
 				out.write('\t'.join(map(str, [prefix_id_i, prefix_id_j, sj] )) + '\n')
 	return
 
-# unique_entries, unique_genesets = get_uniq_sigs()
+unique_entries, unique_genesets = get_uniq_sigs()
 # for idx, geneset in unique_genesets.items():
 # 	if len(geneset['up']) ==0 or len(geneset['dn']) == 0:
 # 		print idx, len(geneset['up']), len(geneset['dn'])
@@ -381,6 +381,8 @@ def plot_roc(signed_jaccard_fn, ax, absolute=False, plot=True, label=None, color
 		ax.legend(loc='lower right',prop={'size':16})
 	return auroc
 
+## plot roc curves for recovering known connections between signatures
+'''
 fig = plt.figure(figsize=(8,8))
 ax = fig.add_subplot(111)
 # plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
@@ -395,11 +397,11 @@ plot_roc('signed_jaccard_906_drug_unique_entries.txt.gz', ax, absolute=True, lab
 
 enlarge_tick_fontsize(ax, 16)
 plt.show()
-
+'''
 
 
 ## plot embedding for the adjacency matrix
-'''
+# '''
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\\natural_products')
 from SparseAdjacencyMat import SparseAdjacencyMat
 
@@ -424,23 +426,34 @@ def read_sam_from_file(fn, d_prefix_id_idx, cutoff=-2):
 	return SparseAdjacencyMat(mat, fn)
 
 sam = read_sam_from_file('signed_jaccard_%s_unique_entries.txt.gz' % len(unique_entries), d_prefix_id_idx)
-sam.plot_embedding('truncatedSVD')
-sam.plot_embedding('TSNE')
+# sam.plot_embedding('truncatedSVD')
+# sam.plot_embedding('TSNE')
 # embedding = sam.tsne()
-embedding = np.loadtxt('tsne_signed_jaccard_4066_unique_entries.txt.gz.txt')
+# embedding = np.loadtxt('tsne_signed_jaccard_4066_unique_entries.txt.gz.txt')
 #### color by entry type
 colors = []
+categories = []
 for prefix_id in unique_entries:
 	if prefix_id.startswith('dz'):
 		colors.append('r')
+		categories.append('disease')
 	elif prefix_id.startswith('drug'):
 		colors.append('b')
+		categories.append('drug')
 	else:
 		colors.append('k')
+		categories.append('gene')
 
-fig = plt.figure(figsize=(10,10))
-ax = fig.add_subplot(111)
-ax.scatter(embedding[:,0], embedding[:,1], c=colors)
-plt.show()
-'''
+# fig = plt.figure(figsize=(10,10))
+# ax = fig.add_subplot(111)
+# ax.scatter(embedding[:,0], embedding[:,1], c=colors)
+# plt.show()
+
+clustergram(sam.to_csr_matrix().toarray(), row_groups=categories, col_groups=categories, display_range=0.05, 
+	colorkey='signed jaccard',
+	row_pdist='cosine', col_pdist='cosine',
+	row_linkage='complete', col_linkage='complete'
+	)
+
+# '''
 
