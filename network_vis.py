@@ -174,15 +174,13 @@ def make_directed_json_graph(fn, depth=4, outfn=None):
 
 		if len(shortest_path) > depth:
 			shortest_path = shortest_path[0:depth-1] + [leaf_prefix_id] # remove intermediate nodes
-		try:
-			G_trimed.add_path(shortest_path)
-			G_trimed.node[leaf_prefix_id]['label'] = leaf_label
-			G_trimed.node[leaf_prefix_id]['color'] = leaf_color
-		except:
-			print shortest_path
-			print leaf, leaf_prefix_id
+		else: # want the id of leaf node to be prefix_id
+			shortest_path[-1] = leaf_prefix_id
 
-
+		G_trimed.add_path(shortest_path)
+		G_trimed.node[leaf_prefix_id]['label'] = leaf_label
+		G_trimed.node[leaf_prefix_id]['color'] = leaf_color
+		
 	del G
 	print G_trimed.number_of_edges(), G_trimed.number_of_nodes()
 	graph_data = json_graph.tree_data(G_trimed,root=root)
@@ -215,7 +213,7 @@ def make_directed_json_graph_cat(outfn=None):
 
 ### making json graphs
 make_directed_json_graph('signed_jaccard_4066_unique_entries.txt.gz', 
-	depth=6, outfn='signature_digraph_depth6.json')
+	depth=12, outfn='signature_digraph_depth12.json')
 
 # make_directed_json_graph_cat(outfn='signature_digraph_cat.json')
 
