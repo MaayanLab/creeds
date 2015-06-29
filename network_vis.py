@@ -112,21 +112,23 @@ def read_sam_from_file(fn, d_prefix_id_idx, cutoff=-2):
 ## get some meta-data for the signatures
 d_prefix_id_label = {}
 d_prefix_id_color = {}
+d_prefix_id_size = {} # number of samples
 d_dz_name = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', -1, 3)
 d_gene_name = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
 d_drug_name = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_drug', -1, 3)
 
 for prefix_id in d_prefix_id_idx:
 	uid = int(prefix_id.split(':')[1])
+	d_prefix_id_size[prefix_id] = len(unique_entries[prefix_id])
 	if prefix_id.startswith('dz'):
 		d_prefix_id_label[prefix_id] = d_dz_name[uid].lower()
-		d_prefix_id_color[prefix_id] = COLORS10[0]
+		d_prefix_id_color[prefix_id] = COLORS10[0][1:]
 	elif prefix_id.startswith('drug'):
 		d_prefix_id_label[prefix_id] = d_drug_name[uid].lower()
-		d_prefix_id_color[prefix_id] = COLORS10[1]
+		d_prefix_id_color[prefix_id] = COLORS10[1][1:]
 	else:
 		d_prefix_id_label[prefix_id] = d_gene_name[uid]
-		d_prefix_id_color[prefix_id] = COLORS10[2]
+		d_prefix_id_color[prefix_id] = COLORS10[2][1:]
 
 
 def np2matrix(mat):
@@ -171,6 +173,7 @@ def make_directed_json_graph(fn, depth=4, outfn=None):
 		leaf_prefix_id = prefix_ids[leaf] # prefix id of leaf
 		leaf_label = d_prefix_id_label[leaf_prefix_id]
 		leaf_color = d_prefix_id_color[leaf_prefix_id]
+		leaf_size  = d_prefix_id_size[leaf_prefix_id]
 
 		if len(shortest_path) > depth:
 			shortest_path = shortest_path[0:depth-1] + [leaf_prefix_id] # remove intermediate nodes
@@ -180,6 +183,7 @@ def make_directed_json_graph(fn, depth=4, outfn=None):
 		G_trimed.add_path(shortest_path)
 		G_trimed.node[leaf_prefix_id]['label'] = leaf_label
 		G_trimed.node[leaf_prefix_id]['color'] = leaf_color
+		G_trimed.node[leaf_prefix_id]['size'] = leaf_size
 		
 	del G
 	print G_trimed.number_of_edges(), G_trimed.number_of_nodes()
@@ -196,10 +200,12 @@ def make_directed_json_graph_cat(outfn=None):
 		label = d_prefix_id_label[prefix_id]
 		category = prefix_id.split(':')[0]
 		color = d_prefix_id_color[prefix_id]
+		size = d_prefix_id_size[prefix_id]
 		G.add_path(['root', category, prefix_id])
 
 		G.node[prefix_id]['label'] = label
-		G.node[prefix_id]['color'] = color		
+		G.node[prefix_id]['color'] = color
+		G.node[prefix_id]['size'] = size
 	graph_data = json_graph.tree_data(G,root='root')
 	json.dump(graph_data, open(outfn, 'wb'))
 	return
@@ -213,7 +219,7 @@ def make_directed_json_graph_cat(outfn=None):
 
 ### making json graphs
 make_directed_json_graph('signed_jaccard_4066_unique_entries.txt.gz', 
-	depth=12, outfn='signature_digraph_depth12.json')
+	depth=6, outfn='signature_digraph_depth6.json')
 
 # make_directed_json_graph_cat(outfn='signature_digraph_cat.json')
 

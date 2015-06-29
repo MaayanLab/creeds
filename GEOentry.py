@@ -106,6 +106,10 @@ class GEOentry(object):
 		else:
 			return False
 
+	def __len__(self):
+		# the number of replicates
+		return len(self.ctrls) + len(self.perts)
+
 	def get_lists_cutoff(self, cutoff, to_human=False): ## get up/dn gene lists from chdir by applying rank cutoff
 		if self.chdir is None:
 			raise ValueError('chdir is not set!')
