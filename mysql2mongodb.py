@@ -1,11 +1,12 @@
 ## gather cleaned data from the mysql db to mongo db
 ## created on 6/29/2015
 
-import os, sys
+import os, sys, json
 import MySQLdb
 import MySQLdb.cursors
 import pymongo
 from pymongo import MongoClient
+
 sys.path.append('/Users/zichen/Documents/bitbucket/maayanlab_utils')
 from fileIO import mysqlTable2dict
 
@@ -73,6 +74,43 @@ def sanitize_row(row):
 				doc['cell_type'] = cell
 	return doc
 
+def clean_genes2(genes, vals): 
+	## to split /// in genes and make sure genes are unique
+	## replace '.' with '_'
+	cleaned = []
+	cleaned_vals = []
+	for gene, val in zip(genes, vals):
+		gene = gene.replace('.', '_')
+		if '///' in gene:
+			gs = gene.split('///')
+			if len(set(gs) - set(cleaned)) != 0: # has non-overlaping genes
+				cleaned.append(list(set(gs) - set(cleaned))[0])
+				cleaned_vals.append(val)
+		else:
+			if gene not in cleaned:
+				cleaned.append(gene)
+				cleaned_vals.append(val)
+	return cleaned, cleaned_vals
+
+def add_signature_data(doc):
+	## to retrieve genes from json files given doc with id filled
+	d_prefix_path = {'dz':'output/microtask_dz_jsons', 
+		'drug':'output/microtask_drug_jsons', 
+		'gene':'output/microtask_gene_jsons'}
+	prefix, uid = doc['id'].split(':')
+	filepath = d_prefix_path[prefix] + '/' + uid + '.json'
+	if os.path.isfile(filepath):
+		data = json.load(open(filepath, 'rb'))
+		up_genes = data['up_genes']
+		down_genes = data['down_genes']
+		genes = up_genes.keys() + down_genes.keys()
+		vals = up_genes.values() + down_genes.values()
+		vals = map(float, vals) # cast to float, originally unicode
+		genes, vals = clean_genes2(genes, vals) ## to split /// in genes and make sure genes are unique
+		doc['chdir'] = dict(zip(genes, vals))
+	return doc
+
+
 def add_gene_entries():
 	## move single gene pert entries
 	d_uid_hssymbol = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
@@ -100,6 +138,7 @@ def add_gene_entries():
 					doc['mm_gene_symbol'] = mm_symbol
 					# print coll.find_one({'id': prefix_id})				
 					# print doc
+					doc = add_signature_data(doc)
 					result = coll.insert_one(doc)
 
 	return
@@ -124,6 +163,7 @@ def add_dz_entries():
 				doc['do_id'] = doid
 				doc['umls_cui'] = umls
 				doc['disease_name'] = dzname
+				doc = add_signature_data(doc)
 				result = coll.insert_one(doc)
 	return
 
@@ -155,6 +195,7 @@ def add_drug_entries():
 				doc['pubchem_cid'] = pcid
 				doc['drug_name'] = drugname
 				doc['smiles'] = smiles
+				doc = add_signature_data(doc)
 				result = coll.insert_one(doc)
 	return
 
@@ -167,7 +208,6 @@ coll.create_index('id', unique=True)
 add_gene_entries()
 add_dz_entries()
 add_drug_entries()
-
 
 print coll.count()
 
