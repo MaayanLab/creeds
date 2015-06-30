@@ -235,7 +235,7 @@ var DiGraphView = Backbone.View.extend({
 		  .attr("transform", function(d) { 
 		    return "translate(" + d.get('x') + "," + d.get('y') + ")"; }) 			
 
-		this.dots.preloadNodeInfo("gene:508"); 
+		this.dots.preloadNodeInfo("gene:27"); 
 
 		this.showText();
 	},
@@ -567,6 +567,43 @@ updateNodeInfo = function(nodeInfoSelector, model, info){
 
 };
 
+function enrich(options) { // http://amp.pharm.mssm.edu/Enrichr/#help
+    var defaultOptions = {
+    description: "",
+    popup: false
+  };
+
+  if (typeof options.description == 'undefined')
+    options.description = defaultOptions.description;
+  if (typeof options.popup == 'undefined')
+    options.popup = defaultOptions.popup;
+  if (typeof options.list == 'undefined')
+    alert('No genes defined.');
+
+  var form = document.createElement('form');
+  form.setAttribute('method', 'post');
+  form.setAttribute('action', 'http://amp.pharm.mssm.edu/Enrichr/enrich');
+  if (options.popup)
+    form.setAttribute('target', '_blank');
+  form.setAttribute('enctype', 'multipart/form-data');
+
+  var listField = document.createElement('input');
+  listField.setAttribute('type', 'hidden');
+  listField.setAttribute('name', 'list');
+  listField.setAttribute('value', options.list);
+  form.appendChild(listField);
+
+  var descField = document.createElement('input');
+  descField.setAttribute('type', 'hidden');
+  descField.setAttribute('name', 'description');
+  descField.setAttribute('value', options.description);
+  form.appendChild(descField);
+
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+}
+
 displayNodeInfo = function(nodeInfoSelector, model, info) { 
 	// control the open and close the the panel-body
 	var panelBodyDisplay = $(".panel-body").css('display');
@@ -582,7 +619,8 @@ displayNodeInfo = function(nodeInfoSelector, model, info) {
 	d3.select(nodeInfoSelector + ' span').remove();
 	d3.select(nodeInfoSelector)
 		.append("div")
-		.style("height", '800px')
+		.attr('class', 'row')
+		.style("height", '600px')
 		.style("overflow", "auto")
 	
 	var div = d3.select(nodeInfoSelector + ' div'); // the container to put node info
@@ -605,7 +643,6 @@ displayNodeInfo = function(nodeInfoSelector, model, info) {
 	}
 
 	var keys = ['geo_id', 'ctrl_ids', 'pert_ids', 'platform', 'organism', 'cell_type'] // the generic keys in info object
-
 	var allKeys = specificKeys.concat(keys)
     for (var i = 0; i < allKeys.length; i++) {
     	var key = allKeys[i]
@@ -613,6 +650,52 @@ displayNodeInfo = function(nodeInfoSelector, model, info) {
     	dl.append('dd').text(info[key]);
     }
 
+    var fmt = d3.format(".3f")
+    // make table for up/down genes
+    var divLeft = div.append('div').attr('class', 'col-xs-6'); // column left
+    var divUp = divLeft.append('div').style('overflow', 'auto').style('height', '350px');
+
+    var table = divUp.append('table')
+		.attr('class', 'table table-hover table-striped table-condensed')
+	var th = table.append('thead').append('tr');
+	th.append('td').text('Up genes');
+	th.append('td').text('CD coefficient');
+	var tbody = table.append('tbody');
+	var trs = tbody.selectAll('tr').data(info['up_genes'])
+		.enter()
+		.append('tr');
+	trs.append('td').text(function(d){ return d[0]; });
+	trs.append('td').text(function(d){ return fmt(d[1]); });
+
+	divLeft.append('button').text('Enrichr')
+		.on('click', function(){
+			var upGeneStr = _.map(info['up_genes'], function(d){ return d[0]; });
+			upGeneStr = upGeneStr.join('\n');
+			var docStr = ['up-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
+			enrich({list: upGeneStr, description: docStr, popup: true});	
+		});
+
+	var divRight = div.append('div').attr('class', 'col-xs-6'); // column right
+	var divDn = divRight.append('div').style('overflow', 'auto').style('height', '350px');
+    var table = divDn.append('table')
+		.attr('class', 'table table-hover table-striped table-condensed')
+	var th = table.append('thead').append('tr');
+	th.append('td').text('Down genes');
+	th.append('td').text('CD coefficient');
+	var tbody = table.append('tbody');
+	var trs = tbody.selectAll('tr').data(info['down_genes'])
+		.enter()
+		.append('tr');
+	trs.append('td').text(function(d){ return d[0]; });
+	trs.append('td').text(function(d){ return fmt(d[1]); });
+
+	divRight.append('button').text('Enrichr')
+		.on('click', function(){
+			var dnGeneStr = _.map(info['down_genes'], function(d){ return d[0]; });
+			dnGeneStr = dnGeneStr.join('\n');
+			var docStr = ['down-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
+			enrich({list: dnGeneStr, description: docStr, popup: true});
+		});
 
 	// div.append("span")
 	// 	.text("Side effect: ")
