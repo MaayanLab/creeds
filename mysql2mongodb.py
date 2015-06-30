@@ -4,6 +4,7 @@
 import os, sys
 import MySQLdb
 import MySQLdb.cursors
+import pymongo
 from pymongo import MongoClient
 sys.path.append('/Users/zichen/Documents/bitbucket/maayanlab_utils')
 from fileIO import mysqlTable2dict
@@ -80,7 +81,6 @@ def add_gene_entries():
 	for row in cur:
 		uid = row[-1]
 		if uid in d_uid_hssymbol:
-			prefix_id = 'gene:' + str(uid)
 			hs_symbol = d_uid_hssymbol[uid]
 			mm_symbol = d_uid_mmsymbol[uid]
 			if hs_symbol == 'NULL': hs_symbol = None
@@ -90,6 +90,8 @@ def add_gene_entries():
 			else:
 				doc = sanitize_row(row)
 				if doc != {}:
+					prefix_id = 'gene:' + str(uid)
+
 					## table specific fields
 					pert_type = row[4]
 					doc['id'] = prefix_id
@@ -99,6 +101,7 @@ def add_gene_entries():
 					# print coll.find_one({'id': prefix_id})				
 					# print doc
 					result = coll.insert_one(doc)
+
 	return
 
 
@@ -111,9 +114,9 @@ def add_dz_entries():
 	for row in cur:
 		uid = row[-1]
 		if uid in d_uid_dzname:
-			prefix_id = 'dz:' + str(uid)
 			doc = sanitize_row(row)
 			if doc != {}:
+				prefix_id = 'dz:' + str(uid)
 				dzname = d_uid_dzname[uid].strip('"')
 				doid = d_uid_doid[uid]
 				umls = d_uid_umls[uid]
@@ -136,9 +139,9 @@ def add_drug_entries():
 	for row in cur:
 		uid = row[-1]
 		if uid in d_uid_drugname:
-			prefix_id = 'drug:' + str(uid)
 			doc = sanitize_row(row)
 			if doc != {}:
+				prefix_id = 'drug:' + str(uid)
 				drugname = d_uid_drugname[uid]
 				if drugname is None:
 					drugname = d_uid_drugname_ori[uid]
@@ -156,13 +159,15 @@ def add_drug_entries():
 	return
 
 
-# coll.drop()
-
+coll.drop()
 print coll.count()
 
-# add_gene_entries()
+coll.create_index('id', unique=True)
+
+add_gene_entries()
 add_dz_entries()
 add_drug_entries()
+
 
 print coll.count()
 
