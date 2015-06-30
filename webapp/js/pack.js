@@ -245,7 +245,8 @@ var Dots = Backbone.Collection.extend({
 
 
 var DiGraphView = Backbone.View.extend({
-	tagName: 'svg',
+	// tagName: 'svg',
+	tagName: 'canvas',
 
 	defaults: {	
 		isOnStage: false,
@@ -267,8 +268,9 @@ var DiGraphView = Backbone.View.extend({
  		_.defaults(this,options);
 
  		//override view's el property
- 		this.el = document.createElementNS("http://www.w3.org/2000/svg", 
- 			this.tagName);
+ 		// this.el = document.createElementNS("http://www.w3.org/2000/svg", 
+ 		// 	this.tagName);
+		this.el = document.createElement(this.tagName);
 
  		this.dots = new Dots([],{dbTable:this.dbTables[0], stageWidth:this.stageWidth});
  		this.activeTable = 0;
@@ -291,9 +293,9 @@ var DiGraphView = Backbone.View.extend({
  		var self = this;
 
  		if (this.svg === undefined) { // first time collection is fetched
-	 		this.zoomTransform = _.bind(this.zoomTransform,this);
+	 		// this.zoomTransform = _.bind(this.zoomTransform,this);
 	 		this.currentScale = 1;
-	 		this.zoomTranslate = [0,0];
+	 		// this.zoomTranslate = [0,0];
 
 			this.x = d3.scale.pow().exponent(this.scaleExponent)
 									.domain([0,this.stageWidth])
@@ -303,79 +305,127 @@ var DiGraphView = Backbone.View.extend({
 	 								.domain([0,this.stageHeight])
 	 								.range([0,this.stageHeight]);
 
-	 		this.zoom = d3.behavior.zoom().scaleExtent([1, this.maxScale])
-	 						.x(this.x)
-	 						.y(this.y)
-	 						.on("zoom", this.zoomTransform);
+	 		// this.zoom = d3.behavior.zoom().scaleExtent([1, this.maxScale])
+	 		// 				.x(this.x)
+	 		// 				.y(this.y)
+	 		// 				.on("zoom", this.zoomTransform);
 
-	 		this.svg = d3.select(this.el)
-	 						.attr('width',this.stageWidth)
-	 						.attr('height',this.stageWidth)
-	 						.attr('class','svgBorder')
-							.call(this.zoom)
-	 						.append('g');
 
-			this.node = this.svg.selectAll(".node")
-			  .data(this.dots.filter(function(d){
+	 		console.log(this.el)
+	 		// this.svg = d3.select(this.el)
+	 		// 				.attr('width',this.stageWidth)
+	 		// 				.attr('height',this.stageWidth)
+	 		// 				.attr('class','svgBorder')
+				// 			.call(this.zoom)
+	 		// 				.append('g');
+
+	 		var data = this.dots.filter(function(d){
 			  	return d.get('label') !== undefined;
-			  }))
-			.enter().append("g")
-			  .attr("class", "node")
-			  .on('click', function(d){
-			  	self.dotView.updateView(d);
-
-				// highlight the corresponding category
-				d3.selectAll('#colorLegend a').filter(function(D){
-					d3.select(this).attr('class', '')
-					return D[1] === d.get('color');
-				}).each(function(D){
-					d3.select(this).attr('class', 'highlight-legend')
-				});
 			  });
+	 		data = _.map(data, function(d){ return [d.get('x'), d.get('y'), d.get('r'), 
+	 			d.get('color'), d.get('label')]; })
 
-			this.node.append("title")
-			  .text(function(d) { return d.get('label'); });
+	 		var canvas = d3.select('canvas')
+	 						.attr('width',this.stageWidth)
+	 						.attr('height',this.stageWidth)	 		
+	 						.call(d3.behavior.zoom().scaleExtent([1, this.maxScale]).on("zoom", zoom))
+	 						.node().getContext("2d");
 
-			this.node.append("circle")
-			  .attr("r", function(d) { return d.get('r'); })
-			  .style("fill", function(d) { return d.get('color'); });
 
-			this.texts = this.node.append("text")
-			  .attr("dy", function(d){
-			  	var words = d.get('label').split(' ');
-			  	if (words.length === 3) {
-			  		return "-.3em";
-			  	} else{
-			  		return ".3em";
-			  	};
-			  })
-			  .style("text-anchor", "middle")
-			  .style('font-size',function(d){ return d.get('r')/3.5 + 'px'; })
-			  // .style("font-size", function(d) { return Math.min(2 * d.get('r'), (2 * d.get('r') - 8) / this.getComputedTextLength() * 4) + "px"; })
-			  .attr('class',function(d){ return d.get('value') > 6 ? 'display-default' : 'display-none'}); // whether to display text at first view
+draw();
 
-			this.texts.each(function(d) {
-				var el = d3.select(this);
-				var words = d.get('label').split(' ');
-				if (words.length === 4) {
-					words = [words[0]+' '+words[1], words[2]+' '+words[3]]
-				}
-			    for (var i = 0; i < words.length; i++) {
-			        var tspan = el.append('tspan').text(words[i]);
-			        if (i > 0)
-			            tspan.attr('x', 0).attr('dy', '1.2em');
-			    };
-			});
+function zoom() {
+  canvas.save();
+  canvas.clearRect(0, 0, self.stageWidth, self.stageWidth);
+  canvas.translate(d3.event.translate[0], d3.event.translate[1]);
+  canvas.scale(d3.event.scale, d3.event.scale);
+  draw();
+  canvas.restore();
+}
+
+function draw() {
+  var i = -1, n = data.length, d;
+  while (++i < n) {
+    d = data[i];
+    // draw circle
+    canvas.moveTo(d[0], d[1]);
+    canvas.fillStyle = d[3]; //color
+	canvas.beginPath();
+    canvas.arc(d[0], d[1], d[2], 0, 2 * Math.PI);
+	canvas.closePath();
+	canvas.fill();
+	// add text
+	canvas.fillStyle = 'black';
+	var font = d[2]/3.5 +"px serif";
+	canvas.font = font;
+	canvas.textBaseline = "top";
+	canvas.fillText(d[4], d[0]-d[2]/2 ,d[1]-d[2]/2);	
+  }
+}
+
+
+
+			// this.node = this.svg.selectAll(".node")
+			//   .data(this.dots.filter(function(d){
+			//   	return d.get('label') !== undefined;
+			//   }))
+			// .enter().append("g")
+			//   .attr("class", "node")
+			//   .on('click', function(d){
+			//   	self.dotView.updateView(d);
+
+			// 	// highlight the corresponding category
+			// 	d3.selectAll('#colorLegend a').filter(function(D){
+			// 		d3.select(this).attr('class', '')
+			// 		return D[1] === d.get('color');
+			// 	}).each(function(D){
+			// 		d3.select(this).attr('class', 'highlight-legend')
+			// 	});
+			//   });
+
+			// this.node.append("title")
+			//   .text(function(d) { return d.get('label'); });
+
+			// this.node.append("circle")
+			//   .attr("r", function(d) { return d.get('r'); })
+			//   .style("fill", function(d) { return d.get('color'); });
+
+			// this.texts = this.node.append("text")
+			//   .attr("dy", function(d){
+			//   	var words = d.get('label').split(' ');
+			//   	if (words.length === 3) {
+			//   		return "-.3em";
+			//   	} else{
+			//   		return ".3em";
+			//   	};
+			//   })
+			//   .style("text-anchor", "middle")
+			//   .style('font-size',function(d){ return d.get('r')/3.5 + 'px'; })
+			//   // .style("font-size", function(d) { return Math.min(2 * d.get('r'), (2 * d.get('r') - 8) / this.getComputedTextLength() * 4) + "px"; })
+			//   .attr('class',function(d){ return d.get('value') > 6 ? 'display-default' : 'display-none'}); // whether to display text at first view
+
+			// this.texts.each(function(d) {
+			// 	var el = d3.select(this);
+			// 	var words = d.get('label').split(' ');
+			// 	if (words.length === 4) {
+			// 		words = [words[0]+' '+words[1], words[2]+' '+words[3]]
+			// 	}
+			//     for (var i = 0; i < words.length; i++) {
+			//         var tspan = el.append('tspan').text(words[i]);
+			//         if (i > 0)
+			//             tspan.attr('x', 0).attr('dy', '1.2em');
+			//     };
+			// });
 
  		};
 
  		
-		this.node
-			.transition().duration(1000)
-		  .attr("transform", function(d) { 
-		    return "translate(" + d.get('x') + "," + d.get('y') + ")"; })
+		// this.node
+		// 	.transition().duration(1000)
+		//   .attr("transform", function(d) { 
+		//     return "translate(" + d.get('x') + "," + d.get('y') + ")"; })
 
-		this.showText();
+		// this.showText();
 	},
 
 	rerender: function(){ // run when the btn clicked
