@@ -3,6 +3,8 @@ import sys, json
 from flask import Flask, request
 from pymongo import MongoClient
 
+from crossdomain import crossdomain
+
 client = MongoClient('mongodb://127.0.0.1:27017/')
 db = client['microtask_signatures']
 coll = db['signatures']
@@ -11,6 +13,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route('/microtask_geo_webapp/api', methods=['POST', 'GET'])
+@crossdomain(origin='*')
 def post_signature():
 	if request.method == 'POST':
 		data = json.loads(request.data)
