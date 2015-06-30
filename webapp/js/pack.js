@@ -16,12 +16,15 @@ var Dot = Backbone.Model.extend({
 
 	// send a GET request to the API to get infomation about the Dot
 	getInfo: function(){
-		var self = this;
-		$.getJSON('http://localhost:5050/microtask_geo_webapp/api', {id: this.id}, function(json) {
-			displayNodeInfo("#nodeInfo", self, json)
-		});
-		var sideEffect = self.get('label');
-		$("#currentSE").text(sideEffect); // to display the name of the current side effect
+		// var self = this;
+		// $.getJSON('http://localhost:5050/microtask_geo_webapp/api', {id: this.id}, function(json) {
+		// 	// displayNodeInfo("#nodeInfo", self, json)
+		// 	return json;
+		// });
+		// var sideEffect = self.get('label');
+		// $("#currentSE").text(sideEffect); // to display the name of the current side effect
+		// console.log(json)
+		// return json;
 	},
 
 	updateInfo: function(filter, topn){ // to filter or not to filter known drugs 
@@ -32,9 +35,144 @@ var Dot = Backbone.Model.extend({
 	}
 });
 
-// var DotView = Backbone.View.extend({
-// 	//
-// });
+var DotView = Backbone.View.extend({
+	// modulize displayNodeInfo function
+	tagName: 'div',
+	model: '',
+	el: '.panel-body',
+	defaults: {
+		nodeInfoSelector: '#nodeInfo',
+		info: '',
+		apiUrl: 'http://localhost:5050/microtask_geo_webapp/api',
+		formater: '.3f',
+	},
+
+	initialize: function(options){
+ 		//initialize with defaults and passed arguments.
+ 		_.defaults(options,this.defaults);
+ 		_.defaults(this,options);
+ 		var self = this;
+		$.getJSON(this.apiUrl, {id: this.model.get('id')}, function(json) {
+			self.info = json;
+			self.clear();
+			self.render();
+		});
+ 	},
+
+	render: function(){
+		var info = this.info;
+		d3.select(this.nodeInfoSelector)
+			.append("div")
+			.attr('class', 'row')
+			.style("height", '600px')
+			.style("overflow", "auto")
+		
+		var div = d3.select(this.nodeInfoSelector + ' div'); // the container to put node info
+		
+		// display the meta data of the signature in the dl
+		var dl = div.append("dl")
+			.attr('class', 'dl-horizontal')
+
+		var prefix = this.model.get('id').split(':')[0]
+		switch (prefix) {
+			case 'gene':
+				var specificKeys = ['hs_gene_symbol', 'mm_gene_symbol', 'pert_type'];
+				break;
+			case 'dz':
+				var specificKeys = ['disease_name', 'umls_cui', 'do_id'];
+				break;
+			case 'drug':
+				var specificKeys = ['drug_name', 'drugbank_id', 'pubchem_cid', 'smiles'];
+				break;
+		}
+
+		var keys = ['geo_id', 'ctrl_ids', 'pert_ids', 'platform', 'organism', 'cell_type'] // the generic keys in info object
+		var allKeys = specificKeys.concat(keys)
+	    for (var i = 0; i < allKeys.length; i++) {
+	    	var key = allKeys[i]
+	    	dl.append('dt').text(key);
+	    	dl.append('dd').text(info[key]);
+	    }
+
+	    var fmt = d3.format(this.formater);
+	    // make table for up/down genes
+	    var divLeft = div.append('div').attr('class', 'col-xs-6'); // column left
+	    var divUp = divLeft.append('div').style('overflow', 'auto').style('height', '350px');
+
+	    var table = divUp.append('table')
+			.attr('class', 'table table-hover table-striped table-condensed')
+		var th = table.append('thead').append('tr');
+		th.append('td').text('Up genes');
+		th.append('td').text('CD coefficient');
+		var tbody = table.append('tbody');
+		var trs = tbody.selectAll('tr').data(info['up_genes'])
+			.enter()
+			.append('tr');
+		trs.append('td').text(function(d){ return d[0]; });
+		trs.append('td').text(function(d){ return fmt(d[1]); });
+
+		divLeft.append('button').text('Enrichr')
+			.on('click', function(){
+				var upGeneStr = _.map(info['up_genes'], function(d){ return d[0]; });
+				upGeneStr = upGeneStr.join('\n');
+				var docStr = ['up-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
+				enrich({list: upGeneStr, description: docStr, popup: true});	
+			});
+
+		var divRight = div.append('div').attr('class', 'col-xs-6'); // column right
+		var divDn = divRight.append('div').style('overflow', 'auto').style('height', '350px');
+	    var table = divDn.append('table')
+			.attr('class', 'table table-hover table-striped table-condensed')
+		var th = table.append('thead').append('tr');
+		th.append('td').text('Down genes');
+		th.append('td').text('CD coefficient');
+		var tbody = table.append('tbody');
+		var trs = tbody.selectAll('tr').data(info['down_genes'])
+			.enter()
+			.append('tr');
+		trs.append('td').text(function(d){ return d[0]; });
+		trs.append('td').text(function(d){ return fmt(d[1]); });
+
+		divRight.append('button').text('Enrichr')
+			.on('click', function(){
+				var dnGeneStr = _.map(info['down_genes'], function(d){ return d[0]; });
+				dnGeneStr = dnGeneStr.join('\n');
+				var docStr = ['down-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
+				enrich({list: dnGeneStr, description: docStr, popup: true});
+			});
+
+	},
+
+	clear: function(){ // possibly try using view.remove()
+		// to clear what's current loaded 
+		$(this.el).css('display');
+		if ($(this.el) === 'none') { // panel closed 
+			$(this.el).slideToggle(200);	
+		} else{ // panel opened
+			$(this.el).slideToggle(200, function(){
+				$(this).slideToggle(200);
+			});
+		};
+
+		d3.select(this.nodeInfoSelector + ' div').remove();
+		d3.select(this.nodeInfoSelector + ' span').remove();
+	},
+
+	updateView: function(model){
+ 		this.model = model;
+ 		var self = this;
+		$.getJSON(this.apiUrl, {id: model.get('id')}, function(json) {
+			self.info = json;
+			self.clear();
+			self.render();
+		});
+	},	
+
+	events: {
+
+	},
+
+});
 
 var Dots = Backbone.Collection.extend({
 	
@@ -119,6 +257,7 @@ var DiGraphView = Backbone.View.extend({
 		scaleExponent: 1,
 		zoomTranslate: [],
 		dbTables: [],
+		dotView: '',
 	},	
 
 
@@ -146,6 +285,8 @@ var DiGraphView = Backbone.View.extend({
 		this.stageWidth = $(this.el).parent().width();
 
 		this.stageHeight = this.stageWidth;
+
+		this.dotView = new DotView({model: new Dot({id: 'gene:27'}) });
 
  		var self = this;
 
@@ -181,8 +322,7 @@ var DiGraphView = Backbone.View.extend({
 			.enter().append("g")
 			  .attr("class", "node")
 			  .on('click', function(d){
-			  	var modelId = d.get('id');
-			  	self.dots.preloadNodeInfo(modelId);
+			  	self.dotView.updateView(d);
 
 				// highlight the corresponding category
 				d3.selectAll('#colorLegend a').filter(function(D){
@@ -233,9 +373,7 @@ var DiGraphView = Backbone.View.extend({
 		this.node
 			.transition().duration(1000)
 		  .attr("transform", function(d) { 
-		    return "translate(" + d.get('x') + "," + d.get('y') + ")"; }) 			
-
-		this.dots.preloadNodeInfo("gene:27"); 
+		    return "translate(" + d.get('x') + "," + d.get('y') + ")"; })
 
 		this.showText();
 	},
@@ -322,7 +460,8 @@ var DiGraphView = Backbone.View.extend({
 											.search(event.term)>-1;})
 			.each(function(d){
 				var D = [d.get('x'), d.get('y'), d.get('r')];
-				self.dots.preloadNodeInfo(d.get('id'));
+				// self.dots.preloadNodeInfo(d.get('id'));
+				self.dotView.updateView(d);
 
 				d3.select('g')
 					.attr('transform', function(){
@@ -604,163 +743,6 @@ function enrich(options) { // http://amp.pharm.mssm.edu/Enrichr/#help
   document.body.removeChild(form);
 }
 
-displayNodeInfo = function(nodeInfoSelector, model, info) { 
-	// control the open and close the the panel-body
-	var panelBodyDisplay = $(".panel-body").css('display');
-	if (panelBodyDisplay === 'none') { // panel closed 
-		$(".panel-body").slideToggle(200);	
-	} else{ // panel opened
-		$(".panel-body").slideToggle(200, function(){
-			$(this).slideToggle(200);
-		});		
-	};
-
-	d3.select(nodeInfoSelector + ' div').remove();
-	d3.select(nodeInfoSelector + ' span').remove();
-	d3.select(nodeInfoSelector)
-		.append("div")
-		.attr('class', 'row')
-		.style("height", '600px')
-		.style("overflow", "auto")
-	
-	var div = d3.select(nodeInfoSelector + ' div'); // the container to put node info
-	
-	// display the meta data of the signature in the dl
-	var dl = div.append("dl")
-		.attr('class', 'dl-horizontal')
-
-	var prefix = model.get('id').split(':')[0]
-	switch (prefix) {
-		case 'gene':
-			var specificKeys = ['hs_gene_symbol', 'mm_gene_symbol', 'pert_type'];
-			break;
-		case 'dz':
-			var specificKeys = ['disease_name', 'umls_cui', 'do_id'];
-			break;
-		case 'drug':
-			var specificKeys = ['drug_name', 'drugbank_id', 'pubchem_cid', 'smiles'];
-			break;
-	}
-
-	var keys = ['geo_id', 'ctrl_ids', 'pert_ids', 'platform', 'organism', 'cell_type'] // the generic keys in info object
-	var allKeys = specificKeys.concat(keys)
-    for (var i = 0; i < allKeys.length; i++) {
-    	var key = allKeys[i]
-    	dl.append('dt').text(key);
-    	dl.append('dd').text(info[key]);
-    }
-
-    var fmt = d3.format(".3f")
-    // make table for up/down genes
-    var divLeft = div.append('div').attr('class', 'col-xs-6'); // column left
-    var divUp = divLeft.append('div').style('overflow', 'auto').style('height', '350px');
-
-    var table = divUp.append('table')
-		.attr('class', 'table table-hover table-striped table-condensed')
-	var th = table.append('thead').append('tr');
-	th.append('td').text('Up genes');
-	th.append('td').text('CD coefficient');
-	var tbody = table.append('tbody');
-	var trs = tbody.selectAll('tr').data(info['up_genes'])
-		.enter()
-		.append('tr');
-	trs.append('td').text(function(d){ return d[0]; });
-	trs.append('td').text(function(d){ return fmt(d[1]); });
-
-	divLeft.append('button').text('Enrichr')
-		.on('click', function(){
-			var upGeneStr = _.map(info['up_genes'], function(d){ return d[0]; });
-			upGeneStr = upGeneStr.join('\n');
-			var docStr = ['up-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
-			enrich({list: upGeneStr, description: docStr, popup: true});	
-		});
-
-	var divRight = div.append('div').attr('class', 'col-xs-6'); // column right
-	var divDn = divRight.append('div').style('overflow', 'auto').style('height', '350px');
-    var table = divDn.append('table')
-		.attr('class', 'table table-hover table-striped table-condensed')
-	var th = table.append('thead').append('tr');
-	th.append('td').text('Down genes');
-	th.append('td').text('CD coefficient');
-	var tbody = table.append('tbody');
-	var trs = tbody.selectAll('tr').data(info['down_genes'])
-		.enter()
-		.append('tr');
-	trs.append('td').text(function(d){ return d[0]; });
-	trs.append('td').text(function(d){ return fmt(d[1]); });
-
-	divRight.append('button').text('Enrichr')
-		.on('click', function(){
-			var dnGeneStr = _.map(info['down_genes'], function(d){ return d[0]; });
-			dnGeneStr = dnGeneStr.join('\n');
-			var docStr = ['down-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
-			enrich({list: dnGeneStr, description: docStr, popup: true});
-		});
-
-	// div.append("span")
-	// 	.text("Side effect: ")
-	// 	.append("a")
-	// 	.text(model.get('label'))
-	// 	.attr('href', '#se/'+model.get('id'))
-	// 	.attr('target', '_blank');
-	// div.append('br');
-	// var span = div.append("span")
-	// 	.text("* Already known to cause side effect (")
-	// span.append("a").text('filter') // to filter out known drugs
-	// 	.attr('id', 'filterAnchor')
-	// 	.attr('href', '##')
-	// 	.on('click', function(){
-	// 		model.updateInfo(true, 100);
-	// 	});
-	// span.append("span").text(")");
-
-	// var table = div.append('table')
-	// 	.attr('class', 'table table-hover table-striped table-condensed')
-	// var th = table.append('thead').append('tr');
-	// th.append('td').text('Drugs');
-	// th.append('td').text('Broad ID');
-	// th.append('td').text('probability ')
-	// 	.append('span')
-	// 	.append('a')
-	// 		.attr('href', '#methods')
-	// 		.attr('class', 'glyphicon glyphicon-info-sign')
-	// 		.attr('title', 'probability of the drug causing the side effect generated by the classifier')
-	// 		.attr('data-toggle', 'tooltip')
-	// 		.attr('data-placement', 'right');
-
-	// var tbody = table.append('tbody')
-
-	// // sort genes based on p-values 
-	// sortedGenePval = _.sortBy(info, function(o) { return -o.p_val });
-	// // use d3 to bind data
-	// var trs = tbody.selectAll('tr').data(sortedGenePval)
-	// 	.enter()
-	// 	.append('tr')
-	// var tdDrug = trs.append('td')
-	// 	.append('a')
-	// 	.text(function(d){
-	// 		if (d.sider === 'yes') {
-	// 			return [d.name + '*'];	
-	// 		} else {
-	// 			return [d.name];
-	// 		}
-	// 	})
-	// 	.attr('title', function(d){return 'more info about '+d.name;})
-	// 	.attr('href', function(d){return '#drug/'+d.pert_id});
-
-	// trs.append('td')
-	// 	.text(function(d){ return d.pert_id;} );
-	// var fmt = d3.format(".2f")
-	// trs.append('td')
-	// 	.text(function(d){return fmt(d.p_val)} ) // pval
-
-	// div.append("span").append("a")
-	// 	.text("See more")
-	// 	.attr("href", '#se/'+model.get('id'))
-	// 	.attr('target', '_blank');
-
-	$('[data-toggle="tooltip"]').tooltip();	
-};
 
 // init instances
 var searchModel = new SearchModel;
