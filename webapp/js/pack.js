@@ -762,7 +762,7 @@ var searchView = new SearchView({model:searchModel});
 
 var stageWidth = $('#stage').parent().width();
 
-var graphView = new DiGraphView({dbTables:['signature_digraph_depth8.json', 'signature_digraph_cat.json'], stageWidth: stageWidth});
+var graphView = new DiGraphView({dbTables:['signature_digraph_depth12.json', 'signature_digraph_cat.json'], stageWidth: stageWidth});
 graphView.onStage();
 
 searchModel.listenTo(graphView.dots,'autoCompleteListGot',function(){

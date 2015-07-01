@@ -1,0 +1,57 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-10 col-md-offset-1">
+      <input id="searchBox" placeholder="Type to search side effects in the bubble chart"></input>
+      <div id="colorLegend" class="well well-sm">
+        <h6>Type of signature:</h6>
+        <small>Click a legend to highlight all the corresponding signatures that belong to a type of signatures</small>
+        <br>
+      </div>
+      <div class="btn-group-xs" role="group">
+        <button id="zoom_in" type="button" class="btn btn-default"> <span class="glyphicon glyphicon-zoom-in"></span> </button>
+        <button id="zoom_out" type="button" class="btn btn-default" disabled> <span class="glyphicon glyphicon-zoom-out"></span> </button>
+        <button id="changeData" type="button" class="btn btn-default"></button>
+      </div>
+      
+      <div id="wrap">
+
+        <div id="sidebar-wrapper" class="panel panel-default">
+          <div class="panel-heading">
+            <div class="row">
+              <div class="col-xs-12">
+                <span class="pull-left">Information about the signature</span>
+                <a id="minimize-sidebar" href="#" class="pull-right" title="click to toggle this panel" data-toggle="tooltip" data-placement="right">
+                  <span id="minimize-icon" class="glyphicon glyphicon-minus"></span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-body">
+
+            <div id="nodeInfo"></div>
+          </div>
+        </div>
+
+        <div id="selectionPanel"></div>
+        <div id="stage"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+  $("#sidebar-wrapper").draggable();
+
+  $("#minimize-sidebar").click(function(event) {
+    $(".panel-body").slideToggle(500, function() {
+      $("#minimize-icon").toggleClass('glyphicon-minus');
+      $("#minimize-icon").toggleClass('glyphicon-plus');
+    });
+  });
+})
+</script>
+
