@@ -6,3 +6,4 @@ output/*
 *.txt
 *.json
 *.smi
+db/*

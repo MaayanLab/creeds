@@ -1,5 +1,5 @@
 ## python API for the mongodb
-import sys, json
+import os, sys, json
 # import numpy as np
 # from collections import OrderedDict
 from flask import Flask, request
@@ -7,14 +7,20 @@ from pymongo import MongoClient
 
 from crossdomain import crossdomain
 
-client = MongoClient('mongodb://127.0.0.1:27017/')
+# client = MongoClient('mongodb://127.0.0.1:27017/')
+client = MongoClient('mongodb://146.203.54.131:27017/')
 db = client['microtask_signatures']
 coll = db['signatures']
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder=os.getcwd())
 app.debug = True
 
-@app.route('/microtask_geo_webapp/api', methods=['POST', 'GET'])
+@app.route('/')
+def root():
+	return app.send_static_file('index.html')
+
+
+@app.route('/api', methods=['POST', 'GET'])
 @crossdomain(origin='*')
 def post_signature():
 	if request.method == 'POST':
@@ -48,9 +54,10 @@ if __name__ == '__main__':
 	if len(sys.argv) > 1:
 		port = int(sys.argv[1])
 	else:
-		port = 5050
+		port = 5000
 	if len(sys.argv) > 2:
 		host = sys.argv[2]
 	else:
 		host = '127.0.0.1'
+		# host = '0.0.0.0'
 	app.run(host=host, port=port)

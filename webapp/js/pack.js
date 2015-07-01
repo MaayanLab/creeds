@@ -43,7 +43,7 @@ var DotView = Backbone.View.extend({
 	defaults: {
 		nodeInfoSelector: '#nodeInfo',
 		info: '',
-		apiUrl: 'http://localhost:5050/microtask_geo_webapp/api',
+		apiUrl: '/api',
 		formater: '.3f',
 	},
 
