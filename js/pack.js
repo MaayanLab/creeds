@@ -79,19 +79,30 @@ var DotView = Backbone.View.extend({
 				var specificKeys = ['hs_gene_symbol', 'mm_gene_symbol', 'pert_type'];
 				break;
 			case 'dz':
-				var specificKeys = ['disease_name', 'umls_cui', 'do_id'];
+				var specificKeys = ['disease_name', 'umls_cui', {'do_id':'http://disease-ontology.org/term/'}];
 				break;
 			case 'drug':
-				var specificKeys = ['drug_name', 'drugbank_id', 'pubchem_cid', 'smiles'];
+				var specificKeys = ['drug_name', {'drugbank_id':'http://www.drugbank.ca/drugs/'}, {'pubchem_cid':'https://pubchem.ncbi.nlm.nih.gov/compound/'}, 'smiles'];
 				break;
 		}
 
-		var keys = ['geo_id', 'ctrl_ids', 'pert_ids', 'platform', 'organism', 'cell_type'] // the generic keys in info object
+		var keys = [{'geo_id': 'http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='}, 
+			'ctrl_ids', 'pert_ids', {'platform': 'http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='}, 
+			'organism', 'cell_type'] // the generic keys in info object
 		var allKeys = specificKeys.concat(keys)
 	    for (var i = 0; i < allKeys.length; i++) {
 	    	var key = allKeys[i]
-	    	dl.append('dt').text(key);
-	    	dl.append('dd').text(info[key]);
+	    	if(typeof(key) === 'string'){
+		    	dl.append('dt').text(key);
+		    	dl.append('dd').text(info[key]);	    		
+	    	} else { // add hyperlinks for key that is object
+	    		var field = Object.keys(key)[0];
+	    		var url = key[field] + info[field];
+	    		dl.append('dt').text(field);
+	    		dl.append('dd').append('a').attr('href', url)
+	    			.attr('target', '_blank')
+	    			.text(info[field]);
+	    	}
 	    }
 
 	    var fmt = d3.format(this.formater);
@@ -653,9 +664,10 @@ var ChangeDataBtn = BaseBtn.extend({
 // Returns a flattened hierarchy containing all leaf nodes under the root.
 function classes(root) {
   var classes = [];
+  var colorMap = {'2ca02c':'9467bd','1f77b4':'1f77b4','ff7f0e':'ff7f0e'} // change green to purple
   function recurse(name, node) {
     if (node.children) node.children.forEach(function(child) { recurse(node.label, child); });
-    else classes.push({id: node.id, name: name, label: node.label, value: node.size, color: node.color});
+    else classes.push({id: node.id, name: name, label: node.label, value: node.size, color: colorMap[node.color]});
   }
   recurse(null, root);
   return {children: classes};
@@ -784,7 +796,7 @@ zoomOutBtn.listenTo(graphView, 'zoomoutDisabled', zoomOutBtn.disable);
 
 var json = [
 	{'name': 'single drug perturbation', 'color': 'ff7f0e'}, 
-	{'name': 'single gene perturbation', 'color': '2ca02c'},
+	{'name': 'single gene perturbation', 'color': '9467bd'},
 	{'name': 'disease', 'color':'1f77b4'}
 ];
 for (var i = json.length - 1; i >= 0; i--) {
