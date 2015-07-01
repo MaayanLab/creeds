@@ -145,8 +145,8 @@ var DotView = Backbone.View.extend({
 
 	clear: function(){ // possibly try using view.remove()
 		// to clear what's current loaded 
-		$(this.el).css('display');
-		if ($(this.el) === 'none') { // panel closed 
+		var display = $(this.el).css('display');
+		if (display === 'none') { // panel closed 
 			$(this.el).slideToggle(200);	
 		} else{ // panel opened
 			$(this.el).slideToggle(200, function(){
@@ -631,8 +631,8 @@ var BaseBtn = Backbone.View.extend({ // a base class for btn
 
 var ChangeDataBtn = BaseBtn.extend({
 	defaults: {
-		text0: "Cluster by signature similarity",
-		text1: "Cluster by signature category"
+		text0: "Cluster by signature category",
+		text1: "Cluster by signature similarity"
 	},
 
 	initialize: function(options){
@@ -750,7 +750,7 @@ var searchView = new SearchView({model:searchModel});
 
 var stageWidth = $('#stage').parent().width();
 
-var graphView = new DiGraphView({dbTables:['signature_digraph_cat.json', 'signature_digraph_depth8.json'], stageWidth: stageWidth});
+var graphView = new DiGraphView({dbTables:['signature_digraph_depth8.json', 'signature_digraph_cat.json'], stageWidth: stageWidth});
 graphView.onStage();
 
 searchModel.listenTo(graphView.dots,'autoCompleteListGot',function(){
