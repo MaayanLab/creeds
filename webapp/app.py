@@ -3,14 +3,10 @@ import os, sys, json
 # import numpy as np
 # from collections import OrderedDict
 from flask import Flask, request
-from pymongo import MongoClient
 
+from orm_utils import *
 from crossdomain import crossdomain
 
-# client = MongoClient('mongodb://127.0.0.1:27017/')
-client = MongoClient('mongodb://146.203.54.131:27017/')
-db = client['microtask_signatures']
-coll = db['signatures']
 
 app = Flask(__name__, static_url_path='', static_folder=os.getcwd())
 app.debug = True
@@ -20,14 +16,10 @@ def root():
 	return app.send_static_file('index.html')
 
 
-@app.route('/api', methods=['POST', 'GET'])
+@app.route('/api', methods=['GET'])
 @crossdomain(origin='*')
-def post_signature():
-	if request.method == 'POST':
-		data = json.loads(request.data)
-		return
-
-	elif request.method == 'GET':
+def retrieve_signature():
+	if request.method == 'GET':
 		uid = request.args.get('id', '')
 		cutoff = request.args.get('topn', '') # number of genes to return
 		if cutoff == '':
@@ -35,20 +27,13 @@ def post_signature():
 		else:
 			cutoff = int(cutoff)
 
-		doc = coll.find_one({'id':uid}, {'_id':False})
-		if doc is not None:
-			chdir = doc['chdir']
-			del doc['chdir']
-			chdir = sorted(chdir.items(), key=lambda x: abs(x[1]), reverse=True)
-			doc['up_genes'] = []
-			doc['down_genes'] = []
-			for gene, val in chdir[0:cutoff]:
-				if val > 0: doc['up_genes'].append( (gene, val) )
-				else: doc['down_genes'].append( (gene, val) )
-
-			return json.dumps(doc)
+		if uid in ALL_UIDS:
+			sig = DBSignature(uid) # Signature instance
+			sig.fill_top_genes(cutoff)
+			return sig.to_json(meta_only=False)
 		else: # bad request
 			return ('', 400, '')
+
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:

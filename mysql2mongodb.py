@@ -200,16 +200,43 @@ def add_drug_entries():
 	return
 
 
-coll.drop()
-print coll.count()
+# coll.drop()
+# print coll.count()
 
-coll.create_index('id', unique=True)
+# coll.create_index('id', unique=True)
 
-add_gene_entries()
-add_dz_entries()
-add_drug_entries()
+# add_gene_entries()
+# add_dz_entries()
+# add_drug_entries()
 
-print coll.count()
+# print coll.count()
 
 mysql.close()
+
+print coll.count()
+
+## update 'chdir' field
+def get_sorted_chdir_in_doc(uid):
+	doc = coll.find_one({'id': uid})
+	new_chdir = None
+	if 'chdir' in doc:
+		new_chdir = {}
+		chdir = doc['chdir']
+		sorted_chdir = sorted(chdir.items(), key=lambda x: abs(x[1]), reverse=True)
+		new_chdir['genes'] = map(lambda x: x[0], sorted_chdir)
+		new_chdir['vals'] = map(lambda x: x[1], sorted_chdir)
+	return new_chdir
+
+
+all_uid = coll.distinct('id')
+i = 0
+for uid in all_uid:
+	new_chdir = get_sorted_chdir_in_doc(uid)
+	if new_chdir is not None:
+		coll.update_one({'id': uid}, {'$set': {'chdir': new_chdir}})
+	i += 1
+	if i % 200 == 0:
+		print i, len(all_uid)
+
+print coll.count()
 
