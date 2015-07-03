@@ -24,7 +24,11 @@ from fileIO import file2list, mysqlTable2dict
 # DATADIR = 'output/annot_dz_jsons/'
 # DATADIR = 'output/microtask_gene_jsons' # re-run API not normalizing/log-transforming data for microtask1
 # DATADIR = 'output/microtask_dz_jsons' # re-run API not normalizing/log-transforming data for microtask2
-DATADIR = 'output/microtask_drug_jsons' # re-run API not normalizing/log-transforming data for microtask3
+# DATADIR = 'output/microtask_drug_jsons' # re-run API not normalizing/log-transforming data for microtask3
+# re-run API to get fold_change and limma result
+# DATADIR = 'output/microtask_gene_jsons_limma' 
+# DATADIR = 'output/microtask_dz_jsons_limma' 
+DATADIR = 'output/microtask_drug_jsons_limma' 
 
 ## get dicts from mysql
 d_uid_hsgene = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
@@ -90,7 +94,7 @@ for row in cur:
 
 		if len(ctrls) != 1 and len(perts) != 1: # should have replicates
 			if len(set(ctrls) & set(perts)) == 0: # GSMs are not allowed to be in both ctrls and perts
-				entry = GEOentry(geo_id, ctrls, perts, gene, pert_type, platform, organism, cell, curator)
+				entry = GEOentry(geo_id, ctrls, perts, 'gene', 'pert_type', platform, 'human', 'cell', 'curator')
 				bools = [valid_e == entry for valid_e in valid_entries.values()]
 				if sum(bools) == 0: # all False
 					valid_entries[uid] = entry
@@ -113,7 +117,7 @@ conn.commit()
 conn.close()
 
 ## GENERIC use G2E API to get list and dump them to json 
-BASE_URL = 'http://127.0.0.1:8083/g2e/full?'
+BASE_URL = 'http://127.0.0.1:8085/g2e/full?'
 os.chdir(DATADIR)
 error_log = open('errors.log', 'w')
 exist_entries = os.listdir(os.getcwd())
