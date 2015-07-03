@@ -97,8 +97,10 @@ class Signature(object):
 
 class DBSignature(Signature):
 	## signature from mongodb
-	def __init__(self, uid):
-		doc = COLL.find_one({'id':uid}, {'_id':False})
+	def __init__(self, uid, projection={'_id':False}):
+		## the constructor also act as a way to query mongodb using
+		## the id and return desirable fields by specifying projection
+		doc = COLL.find_one({'id':uid}, projection)
 		name = find_name(doc)
 		if 'chdir' in doc:
 			chdir = doc['chdir']
