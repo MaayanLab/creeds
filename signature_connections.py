@@ -325,8 +325,11 @@ def _plot_roc_similar_gene(id_pairs, G, spl_cutoff=1):
 	return auroc, FPRs, TPRs
 
 def load_drug_similarities(cutoff):
-	# fn = 'drug_smiles-morgan-tanimoto.txt.gz'
-	fn = 'drug_smiles-maccs-tanimoto.txt.gz'
+	# fn = 'drug_smiles-morgan-dice.txt.gz'
+	fn = 'drug_smiles-maccs-dice.txt.gz'
+	# fn = 'drug_smiles-morgan_fb-tanimoto.txt.gz'
+	# fn = 'drug_smiles-torsion-tanimoto.txt.gz'
+	# fn = 'drug_smiles-rdkit-tanimoto.txt.gz'
 	gs = nx.Graph()
 	with gzip.open(fn) as f:
 		for line in f:
@@ -349,8 +352,8 @@ def _plot_roc_similar_drug(id_pairs, G):
 				tp += 1
 			else:
 				fp += 1
-			tp_list.append(tp)
-			fp_list.append(fp)
+		tp_list.append(tp)
+		fp_list.append(fp)
 	max_TP = float(tp_list[-1])
 	max_FP = float(fp_list[-1])
 	TPRs = np.array(tp_list)/max_TP
@@ -382,7 +385,7 @@ def plot_roc(signed_jaccard_fn, ax, absolute=False, plot=True, label=None, color
 	return auroc
 
 ## plot roc curves for recovering known connections between signatures
-'''
+# '''
 fig = plt.figure(figsize=(8,8))
 ax = fig.add_subplot(111)
 # plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
@@ -397,11 +400,11 @@ plot_roc('signed_jaccard_906_drug_unique_entries.txt.gz', ax, absolute=True, lab
 
 enlarge_tick_fontsize(ax, 16)
 plt.show()
-'''
+# '''
 
 
 ## plot embedding for the adjacency matrix
-# '''
+'''
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\\natural_products')
 from SparseAdjacencyMat import SparseAdjacencyMat
 
@@ -455,5 +458,5 @@ clustergram(sam.to_csr_matrix().toarray(), row_groups=categories, col_groups=cat
 	row_linkage='complete', col_linkage='complete'
 	)
 
-# '''
+'''
 
