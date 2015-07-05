@@ -5,6 +5,7 @@ import os, sys, json
 from flask import Flask, request
 
 from orm_utils import *
+import clustergram
 from crossdomain import crossdomain
 
 
@@ -86,6 +87,24 @@ def search():
 	else:
 		return ('', 400, '')
 
+
+@app.route('/geneSigClustergram', methods=['POST'])
+@crossdomain(origin='*')
+def make_gene_sig_clustergram():
+	if request.method == 'POST':
+		post_data = json.loads(request.data)
+		uids = post_data.get('ids', '')
+		genes = post_data.get('genes', '')
+		na_val = post_data.get('na_val', 0)
+		mat = get_matrix(uids, genes, na_val=na_val)
+
+		json_data = clustergram.clustergram(mat, genes, uids)
+		return json.dumps(json_data)
+
+
+# @app.route('/sigSigClustergram', methods=['GET', 'POST'])
+# @crossdomain(origin='*')
+## this one shoud probably be pre-computed
 
 
 if __name__ == '__main__':

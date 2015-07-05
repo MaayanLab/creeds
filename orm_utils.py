@@ -2,6 +2,7 @@
 
 import os, sys, json
 import time
+import numpy as np
 from pymongo import MongoClient
 
 client = MongoClient('mongodb://127.0.0.1:27017/')
@@ -135,19 +136,49 @@ class DBSignature(Signature):
 		uid_scores = [(uid, score) for uid, score in uid_scores if score] # filter out None
 		return dict(uid_scores)
 
+	def get_gene_vals(self, genes, na_val=0):
+		## retrieve the values of a given list of genes
+		if self.has_chdir():
+			vals = []
+			for gene in genes:
+				if gene in self.chdir['genes']:
+					idx = self.chdir['genes'].index(gene)
+					val = self.chdir['vals'][idx]
+				else:
+					val = na_val
+				vals.append(val)
+		return vals
+
+
+
+def get_matrix(uids, genes, na_val=0):
+	## retrieve a matrix based on uids of signatures and genes
+	mat = np.zeros((len(genes), len(uids)))
+	projection ={'id':True, '_id':False, 'chdir': True,
+		'hs_gene_symbol':True, 'disease_name':True, 'drug_name':True}
+
+	for j, uid in enumerate(uids):
+		sig = DBSignature(uid, projection=projection)
+		vals = sig.get_gene_vals(genes, na_val=na_val)
+		mat[:, j] = vals
+	return mat
+
 
 ## test
-'''
-gs = DBSignature('gene:24')
+# '''
+# gs = DBSignature('gene:24')
 # gs.get_top_genes(600)
-print gs.to_json()
+# print gs.to_json()
 
-t0 = time.time()
+# t0 = time.time()
 
-d_uid_scores = gs.calc_all_scores(4, 600)
-print d_uid_scores.items()[:5]
+# d_uid_scores = gs.calc_all_scores(4, 600)
+# print d_uid_scores.items()[:5]
 
-tt = time.time()
-print(len(d_uid_scores))
-print('time passed:', tt-t0)
-'''
+# tt = time.time()
+# print(len(d_uid_scores))
+# print('time passed:', tt-t0)
+
+# mat = get_matrix(['gene:24', 'dz:114'], ['TPM3', 'TNNT1', 'MYL2', 'ATP2A1'])
+# print mat
+# '''

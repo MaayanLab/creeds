@@ -13,6 +13,7 @@ var Router = Backbone.Router.extend({
 		'': 'home',
 		'similarity': 'similarity',
 		'drug/:id': 'drug',
+		'clustergram': 'clustergram'
 	},
 
 	home: function(){
@@ -35,6 +36,13 @@ var Router = Backbone.Router.extend({
 			removeActive();
 			$("#browse").addClass('active');			
 		});
+	},
+
+	clustergram: function(){
+		$(this.el).load("clustergram.html", function() {
+			removeActive();
+			$('#clustergram').addClass('active');
+		})
 	},
 
 });
