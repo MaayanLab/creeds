@@ -1,3 +1,4 @@
+<link rel="stylesheet" type="text/css" href="css/typeahead.css">
 <div class="container-fluid">
 	<div class="row">
 		<div class="col-sm-3">
@@ -14,11 +15,8 @@
 					<div class="input-group">
 						<input id="sigNameInput" type="text" class="form-control" placeholder="Search for signatures...">
 						<span class="input-group-btn">
-							<button class="btn btn-default" type="button">Go!</button>
+							<button id="sigNameBtn" class="btn btn-default" type="button">Go!</button>
 						</span>
-						<input type="hidden" id="sigUID">
-						<p id="sigDesc"></p>
-
 					</div>
 
 
@@ -50,7 +48,7 @@
 	</div>
 </div>
 
-
+<script src="js/typeahead.bundle.min.js"></script>
 <script>
 var exampleGenes = {
 	upGenes: ['KIAA0907','KDM5A','CDC25A','EGR1','GADD45B','RELB','TERF2IP','SMNDC1','TICAM1','NFKB2','RGS2','NCOA3','ICAM1','TEX10','CNOT4','ARID4B','CLPX','CHIC2','CXCL2','FBXO11','MTF2','CDK2','DNTTIP2','GADD45A','GOLT1B','POLR2K','NFKBIE','GABPB1','ECD','PHKG2','RAD9A','NET1','KIAA0753','EZH2','NRAS','ATP6V0B','CDK7','CCNH','SENP6','TIPARP','FOS','ARPP19','TFAP2A','KDM5B','NPC1','TP53BP2','NUSAP1'],
@@ -60,13 +58,67 @@ var exampleGenes = {
 
 $(document).ready(function(){
 	// autocomplete for searching signatures
-	// $.getJSON('/autoCompleteList', function(signatureInfo){
-	// 	console.log('autoCompleteList got')
-	// 	$("#sigNameInput").autocomplete({
-	// 		source: signatureInfo,
-	// 		minLength: 2,
-	// 	});
-	// });
+	$.getJSON('data/autoCompleteList.json', function(signatureInfo){
+		console.log('autoCompleteList got')
+		// console.log(signatureInfo)
+
+		var autoCompleteGenes = new Bloodhound({
+			datumTokenizer: Bloodhound.tokenizers.whitespace,
+			queryTokenizer: Bloodhound.tokenizers.whitespace,
+			local: signatureInfo.gene
+		});
+
+		var autoCompleteDzs = new Bloodhound({
+			datumTokenizer: Bloodhound.tokenizers.whitespace,
+			queryTokenizer: Bloodhound.tokenizers.whitespace,
+			local: signatureInfo.dz
+		});
+
+		var autoCompleteDrugs = new Bloodhound({
+			datumTokenizer: Bloodhound.tokenizers.whitespace,
+			queryTokenizer: Bloodhound.tokenizers.whitespace,
+			local: signatureInfo.drug
+		});
+
+		$("#sigNameInput").typeahead({
+			hint: true,
+			highlight: true,
+			minLength: 2
+		},
+		{
+			name: 'genes',
+			source: autoCompleteGenes,
+			templates: {
+				header: '<h4 class="catagory-header">Genes</h4>'
+			}
+		},
+		{
+			name: 'dzs',
+			source: autoCompleteDzs,
+			templates: {
+				header: '<h4 class="catagory-header">Diseases</h4>'
+			}
+		},
+		{
+			name: 'drugs',
+			source: autoCompleteDrugs,
+			templates: {
+				header: '<h4 class="catagory-header">Drugs</h4>'
+			}
+		}
+		);
+	});
+
+
+$("#sigNameBtn").click(function(){
+	var searchStr = $("#sigNameInput").val();
+	$.getJSON('http://127.0.0.1:5000/searchByStr', {search: searchStr}, function(results){
+		// console.log(results)
+		displayStrSearchResult(results);
+
+	});
+});
+
 
 $("#geneSearchEgBtn").click(function(){
 	$('#upGenes').val(exampleGenes.upGenes.join('\n'));
@@ -103,12 +155,10 @@ $("#geneSearchEgBtn").click(function(){
 		};
 
 	})
-
-	//
-
 });
 
-function displayGeneSearchResult (results) {
+
+function displayGeneSearchResult (results) { // to display results using gene list search
 	headerLabels = ['id', 'name', 'geo_id', 'signed_jaccard']
 	var table = $('<table>').addClass('table table-striped table-hover');
 
@@ -129,26 +179,26 @@ function displayGeneSearchResult (results) {
 	rctable = table.dataTable({
 		"data": results,
 		"columns": [
-			{ "data": "id" },
-			{ "data": "name" },
-			{ "data": "geo_id" },
-			{ "data": "signed_jaccard" },
+		{ "data": "id" },
+		{ "data": "name" },
+		{ "data": "geo_id" },
+		{ "data": "signed_jaccard" },
 		],
 		"order": [[3, 'desc']],
 		"deferRender": true,
-        "sDom": 'T<"clear">lfrtip',
-        "oTableTools": {
+		"sDom": 'T<"clear">lfrtip',
+		"oTableTools": {
         	// to save table
-            "sSwfPath": "js/swf/copy_csv_xls_pdf.swf",
-            "aButtons": [
-            "copy",
-            "print",
-            {
-                "sExtends":    "collection",
-                "sButtonText": 'Save <span class="caret" />',
-                "aButtons":    [ "csv", "xls", "pdf" ]
-            }
-            ],
+        	"sSwfPath": "js/swf/copy_csv_xls_pdf.swf",
+        	"aButtons": [
+        	"copy",
+        	"print",
+        	{
+        		"sExtends":    "collection",
+        		"sButtonText": 'Save <span class="caret" />',
+        		"aButtons":    [ "csv", "xls", "pdf" ]
+        	}
+        	],
             // to make rows selectable
             "sRowSelect": "multi",
             "fnRowSelected": function ( row ) {
@@ -159,12 +209,12 @@ function displayGeneSearchResult (results) {
             	var rData = rctable.fnGetData(row);
             	// remove from uids
             	var index = uids.indexOf(rData.id);
-				if (index > -1) {
-				    uids.splice(index, 1);
-				}
+            	if (index > -1) {
+            		uids.splice(index, 1);
+            	}
             },
         },
-	});
+    });
 }
 
 function submitSelectedBtn (){
@@ -186,5 +236,77 @@ function submitSelectedBtn (){
 
 }
 
+function displayStrSearchResult(results){
+	d3.select("#searchResultsInner").remove()
+	d3.select("#searchResults").append('div')
+		.attr('id', 'searchResultsInner')
+
+	d3.select("#searchResultsInner").append('div')
+		.attr('class','alert alert-success')
+		.text(results.length + ' signatures found');
+
+	for (var i = results.length - 1; i >= 0; i--) {
+		var info = results[i];
+
+		domId = info['id'].replace(':','-')
+		d3.select("#searchResultsInner")
+			.append("div")
+			.attr('id', domId)
+			.attr('class', 'well')
+			// .style("height", '600px')
+			// .style("overflow", "auto")
+		
+		var div = d3.select("#" + domId); // the container to put node info
+		
+		// display the meta data of the signature in the dl
+		var dl = div.append("dl")
+			.attr('class', 'dl-horizontal')
+
+		var prefix = info['id'].split(':')[0]
+		switch (prefix) {
+			case 'gene':
+				var specificKeys = ['hs_gene_symbol', 'mm_gene_symbol', 'pert_type'];
+				var label = 'single gene perturbation';
+				var color = '#9467bd';
+				break;
+			case 'dz':
+				var specificKeys = ['disease_name', 'umls_cui', {'do_id':'http://disease-ontology.org/term/'}];
+				var label = 'disease';
+				var color = '#1f77b4';
+				break;
+			case 'drug':
+				var specificKeys = ['drug_name', {'drugbank_id':'http://www.drugbank.ca/drugs/'}, {'pubchem_cid':'https://pubchem.ncbi.nlm.nih.gov/compound/'}, 'smiles'];
+				var label = 'single drug perturbation';
+				var color = '#ff7f0e';
+				break;
+		}
+
+
+		dl.append('dt').text('type');
+		dl.append('dd').append('span')
+			.attr('class', 'label')
+			.style('background-color', color)
+			.text(label);
+
+		var keys = [{'geo_id': 'http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='}, 
+			'ctrl_ids', 'pert_ids', {'platform': 'http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='}, 
+			'organism', 'cell_type'] // the generic keys in info object
+		var allKeys = specificKeys.concat(keys)
+	    for (var ii = 0; ii < allKeys.length; ii++) {
+	    	var key = allKeys[ii]
+	    	if(typeof(key) === 'string'){
+		    	dl.append('dt').text(key);
+		    	dl.append('dd').text(info[key]);	    		
+	    	} else { // add hyperlinks for key that is object
+	    		var field = Object.keys(key)[0];
+	    		var url = key[field] + info[field];
+	    		dl.append('dt').text(field);
+	    		dl.append('dd').append('a').attr('href', url)
+	    			.attr('target', '_blank')
+	    			.text(info[field]);
+	    	}
+	    }
+	};	    	
+}
 </script>
 
