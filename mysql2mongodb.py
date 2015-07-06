@@ -216,24 +216,59 @@ mysql.close()
 print coll.count()
 
 ## update 'chdir' field
-def get_sorted_chdir_in_doc(uid):
-	doc = coll.find_one({'id': uid})
-	new_chdir = None
-	if 'chdir' in doc:
-		new_chdir = {}
-		chdir = doc['chdir']
-		sorted_chdir = sorted(chdir.items(), key=lambda x: abs(x[1]), reverse=True)
-		new_chdir['genes'] = map(lambda x: x[0], sorted_chdir)
-		new_chdir['vals'] = map(lambda x: x[1], sorted_chdir)
-	return new_chdir
+# def get_sorted_chdir_in_doc(uid):
+# 	doc = coll.find_one({'id': uid})
+# 	new_chdir = None
+# 	if 'chdir' in doc:
+# 		new_chdir = {}
+# 		chdir = doc['chdir']
+# 		sorted_chdir = sorted(chdir.items(), key=lambda x: abs(x[1]), reverse=True)
+# 		new_chdir['genes'] = map(lambda x: x[0], sorted_chdir)
+# 		new_chdir['vals'] = map(lambda x: x[1], sorted_chdir)
+# 	return new_chdir
 
+
+# all_uid = coll.distinct('id')
+# i = 0
+# for uid in all_uid:
+# 	new_chdir = get_sorted_chdir_in_doc(uid)
+# 	if new_chdir is not None:
+# 		coll.update_one({'id': uid}, {'$set': {'chdir': new_chdir}})
+# 	i += 1
+# 	if i % 200 == 0:
+# 		print i, len(all_uid)
+
+
+## update database with limma and fold_changes
+
+def sort_limma_json(json_fn):
+	json_data = json.load(open(json_fn, 'rb'))
+	limma_dict = dict(json_data['limma'])
+	limma_sorted = sorted(limma_dict.items(), key=lambda x: (x[1]), reverse=False) # small to large
+	genes = map(lambda x:x[0], limma_sorted)
+	vals = map(lambda x:x[1], limma_sorted)
+	genes, vals = clean_genes2(genes, vals) ## to split /// in genes and make sure genes are unique
+	limma ={'genes': genes, 'vals': vals}
+
+	fold_changes_dict = dict(json_data['fold_changes'])
+	fold_changes_sorted = sorted(fold_changes_dict.items(), key=lambda x: (x[1]), reverse=True) #  large to small
+	genes = map(lambda x:x[0], fold_changes_sorted)
+	vals = map(lambda x:x[1], fold_changes_sorted)
+	genes, vals = clean_genes2(genes, vals) ## to split /// in genes and make sure genes are unique
+	fold_changes ={'genes': genes, 'vals': vals}	
+
+	return limma, fold_changes
 
 all_uid = coll.distinct('id')
 i = 0
+d_prefix_path = {'dz':'microtask_dz_jsons_limma', 'drug':'microtask_drug_jsons_limma'}
 for uid in all_uid:
-	new_chdir = get_sorted_chdir_in_doc(uid)
-	if new_chdir is not None:
-		coll.update_one({'id': uid}, {'$set': {'chdir': new_chdir}})
+	prefix, id = uid.split(':')
+	json_fn = 'output/microtask_%s_jsons_limma/%s.json' %(prefix, id)
+	if os.path.isfile(json_fn):
+		limma, fold_changes = sort_limma_json(json_fn)
+		coll.update_one({'id': uid}, {'$set': {'limma': limma}})
+		coll.update_one({'id': uid}, {'$set': {'fold_changes': fold_changes}})
 	i += 1
 	if i % 200 == 0:
 		print i, len(all_uid)

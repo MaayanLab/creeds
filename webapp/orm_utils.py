@@ -98,7 +98,7 @@ class Signature(object):
 
 class DBSignature(Signature):
 	## signature from mongodb
-	def __init__(self, uid, projection={'_id':False}):
+	def __init__(self, uid, projection={'_id':False, 'limma':False, 'fold_changes':False}):
 		## the constructor also act as a way to query mongodb using
 		## the id and return desirable fields by specifying projection
 		doc = COLL.find_one({'id':uid}, projection)
@@ -182,4 +182,16 @@ def get_matrix(uids, genes, na_val=0):
 
 # mat = get_matrix(['gene:24', 'dz:114'], ['TPM3', 'TNNT1', 'MYL2', 'ATP2A1'])
 # print mat
+
+# search_string = 'tp5'
+# search_dict = {
+# 	"$or":[
+# 		{'hs_gene_symbol' : {"$regex": search_string,"$options":"i"}},
+# 		{'mm_gene_symbol' : {"$regex": search_string,"$options":"i"}},
+# 		# 'disease_name' : {"$regex": search_string},
+# 		# 'drug_name' : {"$regex": search_string},
+# 	]
+# 	}
+# docs = COLL.find(search_dict)
+# print docs.count()
 # '''

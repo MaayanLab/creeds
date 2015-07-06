@@ -11,6 +11,8 @@ from crossdomain import crossdomain
 
 app = Flask(__name__, static_url_path='', static_folder=os.getcwd())
 app.debug = True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
+print app.config['SEND_FILE_MAX_AGE_DEFAULT']
 
 @app.route('/')
 def root():
@@ -41,26 +43,44 @@ def retrieve_signature():
 def get_all_names():
 	if request.method == 'GET':
 		## get a list of names for signatures in mongodb with chdir
-		names = []
+		d_cat_names = {}
+		# catagory = request.args['catagory']
 		for uid in ALL_UIDS:
 			sig = DBSignature(uid)
 			if sig.has_chdir():
+				cat = uid.split(':')[0]
+				if cat not in d_cat_names:
+					d_cat_names[cat] = []
 				name = sig.name
-				obj = {}
-				# obj['name'] = name
-				# geo_id = sig.meta['geo_id']
-				# obj['id'] = sig.meta['id']
-				# if 'pert_type' in sig.meta:
-				# 	pert_type = sig.meta['pert_type']
-				# else:
-				# 	pert_type = ''
-				# obj['desc'] = ' | '.join([name + pert_type , geo_id])
-				# names.append(obj)
-				names.append(name)
-		names = list(set(names))
-		return json.dumps(names)
+				d_cat_names[cat].append(name)
 
-# @app.route('/searchByStr')
+		for cat, names in d_cat_names.items():
+			d_cat_names[cat] = list(set(names))
+		return json.dumps(d_cat_names)
+
+@app.route('/searchByStr', methods=['GET'])
+@crossdomain(origin='*')
+def search_by_string():
+	if request.method == 'GET':
+		search_string = request.args.get('search', '')
+		search_dict = {
+			"$or":[
+				{'hs_gene_symbol' : {"$regex": search_string, "$options":"i"}},
+				{'mm_gene_symbol' : {"$regex": search_string, "$options":"i"}},
+				{'disease_name' : {"$regex": search_string, "$options":"i"}},
+				{'drug_name' : {"$regex": search_string, "$options":"i"}}
+				]
+			}
+		docs = []
+		# projection = {'_id':False,'limma':False, 'fold_changes':False,'chdir':False}
+		for doc in COLL.find(search_dict, {'id':True,'_id':False}):
+			uid = doc['id']
+			sig = DBSignature(uid) # Signature instance
+			if sig.has_chdir():
+				docs.append(sig.meta)
+
+		return json.dumps(docs)
+
 
 
 @app.route('/search', methods=['GET', 'POST'])
