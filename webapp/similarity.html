@@ -1,0 +1,154 @@
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-sm-3">
+			<ul class="nav nav-tabs">
+				<li role="presentation" class="active"><a data-toggle="tab" href="#tab1">Search1</a></li>
+				<li role="presentation"><a data-toggle="tab" href="#tab2">Search2</a></li>
+			</ul>
+
+			<div class="tab-content">
+				<div id="tab1" class="tab-pane fade in active">
+					<h3>Search signature connections by name</h3>
+					<p>Some content.</p>
+
+					<div class="input-group">
+						<input id="sigNameInput" type="text" class="form-control" placeholder="Search for signatures...">
+						<span class="input-group-btn">
+							<button class="btn btn-default" type="button">Go!</button>
+						</span>
+						<input type="hidden" id="sigUID">
+						<p id="sigDesc"></p>
+
+					</div>
+
+
+				</div>
+				<div id="tab2" class="tab-pane fade">
+					<h3>Query simialr signatures by genes</h3>
+					<p>Some content.</p>
+					<button id="geneSearchEgBtn" class="btn btn-default">Example</button>
+					<div class="form-group">
+						<label for="upGenes" class="control-label">Up genes</label>
+						<textarea class="form-control" id="upGenes" rows="10" placeholder="Up genes"></textarea>
+					</div>
+
+					<div class="form-group">
+						<label for="dnGenes" class="control-label">Down genes</label>
+						<textarea class="form-control" id="dnGenes" rows="10" placeholder="Down genes"></textarea>
+					</div>
+
+					<button id="geneSearchBtn" class="btn btn-info">Search</button>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="col-sm-9">
+			<h1>Search Results</h1>
+			<div id="searchResults"></div>
+		</div>
+	</div>
+</div>
+
+
+<script>
+var exampleGenes = {
+	upGenes: ['KIAA0907','KDM5A','CDC25A','EGR1','GADD45B','RELB','TERF2IP','SMNDC1','TICAM1','NFKB2','RGS2','NCOA3','ICAM1','TEX10','CNOT4','ARID4B','CLPX','CHIC2','CXCL2','FBXO11','MTF2','CDK2','DNTTIP2','GADD45A','GOLT1B','POLR2K','NFKBIE','GABPB1','ECD','PHKG2','RAD9A','NET1','KIAA0753','EZH2','NRAS','ATP6V0B','CDK7','CCNH','SENP6','TIPARP','FOS','ARPP19','TFAP2A','KDM5B','NPC1','TP53BP2','NUSAP1'],
+	dnGenes: ['SCCPDH','KIF20A','FZD7','USP22','PIP4K2B','CRYZ','GNB5','EIF4EBP1','PHGDH','RRAGA','SLC25A46','RPA1','HADH','DAG1','RPIA','P4HA2','MACF1','TMEM97','MPZL1','PSMG1','PLK1','SLC37A4','GLRX','CBR3','PRSS23','NUDCD3','CDC20','KIAA0528','NIPSNAP1','TRAM2','STUB1','DERA','MTHFD2','BLVRA','IARS2','LIPA','PGM1','CNDP2','BNIP3','CTSL1','CDC25B','HSPA8','EPRS','PAX8','SACM1L','HOXA5','TLE1','PYGL','TUBB6','LOXL1']
+};
+
+
+$(document).ready(function(){
+	// autocomplete for searching signatures
+	// $.getJSON('/autoCompleteList', function(signatureInfo){
+	// 	console.log('autoCompleteList got')
+	// 	$("#sigNameInput").autocomplete({
+	// 		source: signatureInfo,
+	// 		minLength: 2,
+	// 	});
+	// });
+
+$("#geneSearchEgBtn").click(function(){
+	$('#upGenes').val(exampleGenes.upGenes.join('\n'));
+	$('#dnGenes').val(exampleGenes.dnGenes.join('\n'));
+});
+
+	// search sigs using up/dn genes
+	$("#geneSearchBtn").click(function(){
+
+		var upGenes = $('#upGenes').val();
+		var dnGenes = $('#dnGenes').val();
+		if (upGenes != '' && dnGenes !='') {
+
+			var postPayLoad = {"up_genes": upGenes.split('\n'), "dn_genes": dnGenes.split('\n')}
+			$.ajax({
+
+				type: 'POST',
+				url: '/search',
+				contentType : 'application/json',
+				data: JSON.stringify(postPayLoad),
+				dataType: 'json',
+				success: function(results){
+					// display result
+					// console.log(results)
+					displayGeneSearchResult(results);
+				},
+				
+
+			});
+
+		} else {
+			alert('Please fill genes');
+		};
+
+	})
+
+});
+
+function displayGeneSearchResult (results) {
+	headerLabels = ['id', 'name', 'geo_id', 'signed_jaccard']
+	var table = $('<table>').addClass('table table-striped table-hover');
+
+	var thead = $('<thead>');
+	var tr = $('<tr>')
+
+	$.each(headerLabels,function(i, headerLabel) {
+		tr.append('<th>' + headerLabel + '</th>');
+	});
+
+	thead.append(tr)
+	table.append(thead);
+
+	$("#searchResults").append(table);
+
+	table.dataTable({
+		"data": results,
+		"columns": [
+			{ "data": "id" },
+			{ "data": "name" },
+			{ "data": "geo_id" },
+			{ "data": "signed_jaccard" },
+		],
+		"order": [[3, 'desc']],
+		"deferRender": true,
+        "sDom": 'T<"clear">lfrtip',
+        "oTableTools": {
+            "sSwfPath": "js/swf/copy_csv_xls_pdf.swf",
+            "aButtons": [
+            "copy",
+            "print",
+            {
+                "sExtends":    "collection",
+                "sButtonText": 'Save <span class="caret" />',
+                "aButtons":    [ "csv", "xls", "pdf" ]
+            }
+            ]
+        },
+	});
+
+
+
+}
+
+</script>
+

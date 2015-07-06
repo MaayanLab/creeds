@@ -803,10 +803,13 @@ for (var i = json.length - 1; i >= 0; i--) {
 	var name = json[i].name;
 	var color = "#" + json[i].color;
 
-	var a = d3.select("#colorLegend").append('small').append('a')
+	var a = d3.select("#colorLegend").append('span').attr('class','label')
+		.style('background-color', color)
+		.append('a')
 		.datum([name, color])
 		.attr('href', '#')
-		.style('background-color', color).style('color', 'black').text(name);
+		.style('color', 'black')
+		.text(name);
 
 	a.on('click', function(d) {
 		graphView.removeHighlighted();
