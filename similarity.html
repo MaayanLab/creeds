@@ -92,6 +92,7 @@ $("#geneSearchEgBtn").click(function(){
 					// display result
 					// console.log(results)
 					displayGeneSearchResult(results);
+					submitSelectedBtn();
 				},
 				
 
@@ -102,6 +103,8 @@ $("#geneSearchEgBtn").click(function(){
 		};
 
 	})
+
+	//
 
 });
 
@@ -121,7 +124,9 @@ function displayGeneSearchResult (results) {
 
 	$("#searchResults").append(table);
 
-	table.dataTable({
+	uids = [];
+
+	rctable = table.dataTable({
 		"data": results,
 		"columns": [
 			{ "data": "id" },
@@ -133,6 +138,7 @@ function displayGeneSearchResult (results) {
 		"deferRender": true,
         "sDom": 'T<"clear">lfrtip',
         "oTableTools": {
+        	// to save table
             "sSwfPath": "js/swf/copy_csv_xls_pdf.swf",
             "aButtons": [
             "copy",
@@ -142,11 +148,41 @@ function displayGeneSearchResult (results) {
                 "sButtonText": 'Save <span class="caret" />',
                 "aButtons":    [ "csv", "xls", "pdf" ]
             }
-            ]
+            ],
+            // to make rows selectable
+            "sRowSelect": "multi",
+            "fnRowSelected": function ( row ) {
+            	var rData = rctable.fnGetData(row);
+            	uids.push(rData.id);
+            },
+            "fnRowDeselected": function (row) {
+            	var rData = rctable.fnGetData(row);
+            	// remove from uids
+            	var index = uids.indexOf(rData.id);
+				if (index > -1) {
+				    uids.splice(index, 1);
+				}
+            },
         },
 	});
+}
 
+function submitSelectedBtn (){
+	var btn = $("<a>");
+	btn.text("visualize clustergram");
+	btn.addClass('btn btn-info');
+	btn.attr('href', '#clustergram')
+	btn.click(function(){ // click to post genes and uids to clustergram vis
+		
+		var upGenes = $('#upGenes').val().split('\n');
+		var dnGenes = $('#dnGenes').val().split('\n');		
+		var genes = upGenes.concat(dnGenes);
 
+		postPayLoad = {"genes": genes, "ids": uids}; // global
+
+	});
+
+	$("#searchResults").append(btn);
 
 }
 

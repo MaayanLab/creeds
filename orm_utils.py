@@ -140,9 +140,10 @@ class DBSignature(Signature):
 		## retrieve the values of a given list of genes
 		if self.has_chdir():
 			vals = []
+			genes_upper = map(lambda x: x.upper(), self.chdir['genes'])
 			for gene in genes:
-				if gene in self.chdir['genes']:
-					idx = self.chdir['genes'].index(gene)
+				if gene in genes_upper:
+					idx = genes_upper.index(gene)
 					val = self.chdir['vals'][idx]
 				else:
 					val = na_val
