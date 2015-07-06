@@ -71,7 +71,9 @@
   <script src='js/d3_clustergram.js'></script>
 <script>
 
-var postPayLoad = {"genes": ["TPM3", "TNNT1", "MYL2", "ATP2A1"], "ids": ["gene:24", "dz:114", "dz:115"]};
+// var postPayLoad = {"genes": ["TPM3", "TNNT1", "MYL2", "ATP2A1"], "ids": ["gene:24", "dz:114", "dz:115"]};
+// console.log(postPayLoad);
+// postPayLoad is global
 $.ajax({
   type: 'POST',
   url: '/geneSigClustergram',
@@ -79,7 +81,6 @@ $.ajax({
   data: JSON.stringify(postPayLoad),
   dataType: 'json',
   success: function(network_data){
-
   // make global copy of network_data 
   global_network_data = network_data;
 

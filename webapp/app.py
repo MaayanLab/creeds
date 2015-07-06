@@ -89,8 +89,8 @@ def search():
 
 	elif request.method == 'POST': # search using custom up/dn gene list
 		data = json.loads(request.data)
-		up_genes = data['up_genes']
-		dn_genes = data['dn_genes']
+		up_genes = map(lambda x : x.upper(), data['up_genes'])
+		dn_genes = map(lambda x : x.upper(), data['dn_genes'])
 		name = data.get('name', None)
 		meta = data.get('meta', None)
 
@@ -110,6 +110,7 @@ def make_gene_sig_clustergram():
 		post_data = json.loads(request.data)
 		uids = post_data.get('ids', '')
 		genes = post_data.get('genes', '')
+		genes = map(lambda x: x.upper(), genes)
 		na_val = post_data.get('na_val', 0)
 		mat = get_matrix(uids, genes, na_val=na_val)
 
