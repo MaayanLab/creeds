@@ -45,8 +45,22 @@ def get_all_names():
 		for uid in ALL_UIDS:
 			sig = DBSignature(uid)
 			if sig.has_chdir():
-				names.append(sig.name)
+				name = sig.name
+				obj = {}
+				# obj['name'] = name
+				# geo_id = sig.meta['geo_id']
+				# obj['id'] = sig.meta['id']
+				# if 'pert_type' in sig.meta:
+				# 	pert_type = sig.meta['pert_type']
+				# else:
+				# 	pert_type = ''
+				# obj['desc'] = ' | '.join([name + pert_type , geo_id])
+				# names.append(obj)
+				names.append(name)
+		names = list(set(names))
 		return json.dumps(names)
+
+# @app.route('/searchByStr')
 
 
 @app.route('/search', methods=['GET', 'POST'])
@@ -77,8 +91,9 @@ def search():
 		data = json.loads(request.data)
 		up_genes = data['up_genes']
 		dn_genes = data['dn_genes']
-		name = data['name']
-		meta = data['meta']
+		name = data.get('name', None)
+		meta = data.get('meta', None)
+
 		sig = Signature(name, meta, up_genes, dn_genes)
 
 	if sig is not None:

@@ -32,7 +32,6 @@ var Router = Backbone.Router.extend({
 
 	drug: function(id){
 		$(this.el).load("drug_profile.html", function() {
-			hideTour();
 			removeActive();
 			$("#browse").addClass('active');			
 		});
