@@ -59,7 +59,7 @@ var exampleGenes = {
 $(document).ready(function(){
 	// autocomplete for searching signatures
 	$.getJSON('data/autoCompleteList.json', function(signatureInfo){
-		console.log('autoCompleteList got')
+		// console.log('autoCompleteList got')
 		// console.log(signatureInfo)
 
 		var autoCompleteGenes = new Bloodhound({
@@ -142,7 +142,7 @@ $("#geneSearchEgBtn").click(function(){
 				dataType: 'json',
 				success: function(results){
 					// display result
-					// console.log(results)
+
 					displayGeneSearchResult(results);
 					submitSelectedBtn();
 				},
@@ -159,6 +159,10 @@ $("#geneSearchEgBtn").click(function(){
 
 
 function displayGeneSearchResult (results) { // to display results using gene list search
+	d3.select('#searchResultsInner').remove();
+	d3.select("#searchResults").append('div')
+		.attr('id', 'searchResultsInner');	
+
 	headerLabels = ['id', 'name', 'geo_id', 'signed_jaccard']
 	var table = $('<table>').addClass('table table-striped table-hover');
 
@@ -172,7 +176,7 @@ function displayGeneSearchResult (results) { // to display results using gene li
 	thead.append(tr)
 	table.append(thead);
 
-	$("#searchResults").append(table);
+	$("#searchResultsInner").append(table);
 
 	uids = [];
 
