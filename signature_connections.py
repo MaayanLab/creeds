@@ -23,6 +23,7 @@ from itertools import combinations
 from collections import Counter, OrderedDict
 from pprint import pprint
 from sklearn.metrics import auc
+from statsmodels.sandbox.stats.multicomp import multipletests
 
 from GEOentry import *
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\maayanlab_utils')
@@ -118,6 +119,34 @@ def get_uniq_sigs():
 	unique_genesets = OrderedDict(sorted(unique_genesets.items(), key=lambda t: t[0]))
 	return unique_entries, unique_genesets
 
+from pymongo import MongoClient
+def get_limma_sigs_from_db(unique_entries, correction_method='fdr_bh'):
+	# correction_method should be in ['fdr_bh', 'bonferroni']
+	unique_genesets = {}
+	cutoff = 0.05
+	# client = MongoClient('mongodb://127.0.0.1:27017/')
+	client = MongoClient('mongodb://146.203.54.131:27017/')
+	db = client['microtask_signatures']
+	COLL = db['signatures']
+	projection = {'_id':False, 'limma':True, 'fold_changes':True}
+	for uid in unique_entries:
+		doc = COLL.find_one({'id':uid}, projection)
+		if doc is not None:
+			if 'limma' in doc and 'fold_changes' in doc:
+				d_gene_fc = dict(zip(doc['fold_changes']['genes'], doc['fold_changes']['vals'])) # raw fold change
+				pvals = np.array(doc['limma']['vals'])
+				genes = np.array(doc['limma']['genes'])
+				_, qvals, _, _ = multipletests(pvals, method=correction_method)
+				unique_genesets[uid] = {'up':[], 'dn':[]}
+				for gene in genes[qvals < cutoff].tolist():
+					if gene in d_gene_fc:
+						if d_gene_fc[gene] > 1:
+							unique_genesets[uid]['up'].append(gene)
+						else:
+							unique_genesets[uid]['dn'].append(gene)
+	return unique_genesets
+
+
 def pairwise_signed_jaccard(unique_genesets, outfn):
 	## compute pairwise signed jaccard and write into file
 	with gzip.open (outfn, 'w') as out:
@@ -133,6 +162,41 @@ def pairwise_signed_jaccard(unique_genesets, outfn):
 				out.write('\t'.join(map(str, [prefix_id_i, prefix_id_j, sj] )) + '\n')
 	return
 
+from scipy.spatial.distance import cosine
+def chdir_cosine(chdir1, chdir2):
+	chdir1 = dict(zip(map(lambda x:x.upper(), chdir1['genes']), chdir1['vals']))
+	chdir2 = dict(zip(map(lambda x:x.upper(), chdir2['genes']), chdir2['vals']))
+
+	shared_genes = set(chdir1.keys()) & set(chdir2.keys())
+	# shared_genes = list(shared_genes)
+	vals1 = [ chdir1[gene] for gene in shared_genes ]
+	vals2 = [ chdir2[gene] for gene in shared_genes ]
+	return 1 - cosine(vals1, vals2) # cosine similarity
+
+
+def pairwase_cosine(unique_entries, outfn):
+	## calculate cosine distance between chdir signatures in the db
+	## by using the shared genes
+	client = MongoClient('mongodb://146.203.54.131:27017/')
+	db = client['microtask_signatures']
+	COLL = db['signatures']
+	projection = {'_id':False, 'chdir':True}
+	all_uids = unique_entries.keys()
+	with gzip.open (outfn, 'w') as out:
+		for i, uid_i in enumerate(all_uids):
+			doc_i = COLL.find_one({'id':uid_i}, projection)
+			if doc_i is not None:
+				chdir_i = doc_i['chdir']
+				for j in range(i+1, len(all_uids)):
+					uid_j = all_uids[j]
+					doc_j = COLL.find_one({'id':uid_j}, projection)
+					if doc_j is not None:
+						chdir_j = doc_j['chdir']
+						score = chdir_cosine(chdir_i, chdir_j)
+						out.write('\t'.join(map(str, [uid_i, uid_j, score] )) + '\n')
+	return	
+
+
 unique_entries, unique_genesets = get_uniq_sigs()
 # for idx, geneset in unique_genesets.items():
 # 	if len(geneset['up']) ==0 or len(geneset['dn']) == 0:
@@ -140,6 +204,14 @@ unique_entries, unique_genesets = get_uniq_sigs()
 
 # pairwise_signed_jaccard(unique_genesets, 'signed_jaccard_%s_gene_unique_entries.txt.gz' % len(unique_entries))
 
+# unique_genesets = get_limma_sigs_from_db(unique_entries, correction_method='bonferroni')
+# pairwase_cosine(unique_entries)
+# json.dump(unique_genesets, open('limma_genesets_bonferroni_0.05.json', 'wb'))
+# pairwise_signed_jaccard(unique_genesets, 'signed_jaccard_%s_gene_unique_entries_limma_bonferroni_0.05.txt.gz' % len(unique_entries))
+
+pairwase_cosine(unique_entries, 'cosine_similarity_%s_gene_unique_entries.txt.gz' % len(unique_entries))
+
+'''
 d_gds_gse = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', 0, 1)
 ## load dz id
 # global d_uid_doid, d_uid_umls, d_uid_gse
@@ -164,7 +236,7 @@ for uid, geoid in d_uid_geoid.items():
 	if geoid in d_gds_gse: gse = d_gds_gse[geoid]
 	else: gse = geoid
 	d_uid_gse[uid] = gse
-
+'''
 
 def read_pairwise_from_file(fn, absolute=False):
 	## read signed jaccard file
@@ -385,7 +457,7 @@ def plot_roc(signed_jaccard_fn, ax, absolute=False, plot=True, label=None, color
 	return auroc
 
 ## plot roc curves for recovering known connections between signatures
-# '''
+'''
 fig = plt.figure(figsize=(8,8))
 ax = fig.add_subplot(111)
 # plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
@@ -400,7 +472,7 @@ plot_roc('signed_jaccard_906_drug_unique_entries.txt.gz', ax, absolute=True, lab
 
 enlarge_tick_fontsize(ax, 16)
 plt.show()
-# '''
+'''
 
 
 ## plot embedding for the adjacency matrix
