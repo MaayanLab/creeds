@@ -35,12 +35,16 @@ def clustergram(data, rids, cids,
 	idx2 = Z2['leaves']
 
 	row_nodes = []
-	for idx, rid in zip(idx1, rids):
-		row_nodes.append({'sort': idx, 'name': rid})
+	rids = np.array(rids)[np.array(idx1)]
+	for idx, rid in enumerate(rids):
+		row_nodes.append({'sort': idx, 'name': rid})		
+
 
 	col_nodes = []
-	for idx, cid in zip(idx2, cids):
+	cids = np.array(cids)[np.array(idx2)]
+	for idx, cid in enumerate(cids):
 		col_nodes.append({'sort': idx, 'name': cid})	
+
 
 	links = []
 	for i in range(len(rids)):
