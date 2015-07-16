@@ -250,14 +250,14 @@ def sort_limma_json(json_fn):
 	genes, vals = clean_genes2(genes, vals) ## to split /// in genes and make sure genes are unique
 	limma ={'genes': genes, 'vals': vals}
 
-	fold_changes_dict = dict(json_data['fold_changes'])
-	fold_changes_sorted = sorted(fold_changes_dict.items(), key=lambda x: (x[1]), reverse=True) #  large to small
-	genes = map(lambda x:x[0], fold_changes_sorted)
-	vals = map(lambda x:x[1], fold_changes_sorted)
-	genes, vals = clean_genes2(genes, vals) ## to split /// in genes and make sure genes are unique
-	fold_changes ={'genes': genes, 'vals': vals}	
+	# fold_changes_dict = dict(json_data['fold_changes'])
+	# fold_changes_sorted = sorted(fold_changes_dict.items(), key=lambda x: (x[1]), reverse=True) #  large to small
+	# genes = map(lambda x:x[0], fold_changes_sorted)
+	# vals = map(lambda x:x[1], fold_changes_sorted)
+	# genes, vals = clean_genes2(genes, vals) ## to split /// in genes and make sure genes are unique
+	# fold_changes ={'genes': genes, 'vals': vals}	
 
-	return limma, fold_changes
+	return limma#, fold_changes
 
 all_uid = coll.distinct('id')
 # i = 0
@@ -276,17 +276,29 @@ all_uid = coll.distinct('id')
 
 ## correction fold change: it was calculated as A.mean(axis=1) / B.mean(axis=1), which was wrong
 import numpy as np
+# i = 0
+# d_prefix_path = {'dz':'microtask_dz_jsons_limma', 'drug':'microtask_drug_jsons_limma'}
+# for uid in all_uid:
+# 	doc = coll.find_one({'id': uid}, {'fold_changes':True, '_id':False})
+# 	if 'fold_changes' in doc:
+# 		fold_changes = doc['fold_changes']
+# 		fold_changes['vals'] = 1./np.array(fold_changes['vals'])
+# 		fold_changes['vals'] = fold_changes['vals'].tolist()
+# 		coll.update_one({'id': uid}, {'$set': {'fold_changes': fold_changes}})
+# 	i += 1
+# 	if i % 200 == 0:
+# 		print i, len(all_uid)
+
+print coll.count()
+## update limma with limma_cf
 i = 0
-d_prefix_path = {'dz':'microtask_dz_jsons_limma', 'drug':'microtask_drug_jsons_limma'}
 for uid in all_uid:
-	doc = coll.find_one({'id': uid}, {'fold_changes':True, '_id':False})
-	if 'fold_changes' in doc:
-		fold_changes = doc['fold_changes']
-		fold_changes['vals'] = 1./np.array(fold_changes['vals'])
-		fold_changes['vals'] = fold_changes['vals'].tolist()
-		coll.update_one({'id': uid}, {'$set': {'fold_changes': fold_changes}})
+	prefix, id = uid.split(':')
+	json_fn = 'output/microtask_%s_jsons_limma_cf/%s.json' %(prefix, id)
+	if os.path.isfile(json_fn):
+		limma = sort_limma_json(json_fn)
+		coll.update_one({'id': uid}, {'$set': {'limma': limma}})
 	i += 1
 	if i % 200 == 0:
 		print i, len(all_uid)
-
 print coll.count()
