@@ -28,7 +28,7 @@ from statsmodels.sandbox.stats.multicomp import multipletests
 from GEOentry import *
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\maayanlab_utils')
 from fileIO import file2list, mysqlTable2dict
-from plots import enlarge_tick_fontsize
+from plots import enlarge_tick_fontsize, COLORS10
 
 sys.path.append('C:\Users\Zichen\Documents\GitHub')
 from clustergram import clustergram
@@ -97,8 +97,8 @@ def read_gmt_sigs(fn, prefix):
 def get_uniq_sigs():
 	# get the uids of signatures that are unique across all microtasks
 	all_valid_entry_fns = [
-		('dz','output/microtask_dz_jsons/valid_dz_entries.pkl','output/microtask_dz_jsons/crowdsourced_diseases_top600.gmt'),
-		('drug','output/microtask_drug_jsons/valid_drug_entries.pkl','output/microtask_drug_jsons/crowdsourced_drugs_top600.gmt'),
+		# ('dz','output/microtask_dz_jsons/valid_dz_entries.pkl','output/microtask_dz_jsons/crowdsourced_diseases_top600.gmt'),
+		# ('drug','output/microtask_drug_jsons/valid_drug_entries.pkl','output/microtask_drug_jsons/crowdsourced_drugs_top600.gmt'),
 		('gene','output/microtask_gene_jsons/valid_gene_entries.pkl','output/microtask_gene_jsons/crowdsourced_single_gene_pert_top600.gmt'),
 	] # the order determine priority
 	unique_entries = {}
@@ -124,8 +124,8 @@ def get_limma_sigs_from_db(unique_entries, correction_method='fdr_bh'):
 	# correction_method should be in ['fdr_bh', 'bonferroni']
 	unique_genesets = {}
 	cutoff = 0.05
-	# client = MongoClient('mongodb://127.0.0.1:27017/')
-	client = MongoClient('mongodb://146.203.54.131:27017/')
+	client = MongoClient('mongodb://127.0.0.1:27017/')
+	# client = MongoClient('mongodb://146.203.54.131:27017/')
 	db = client['microtask_signatures']
 	COLL = db['signatures']
 	projection = {'_id':False, 'limma':True, 'fold_changes':True}
@@ -164,8 +164,8 @@ def pairwise_signed_jaccard(unique_genesets, outfn):
 
 from scipy.spatial.distance import cosine
 def chdir_cosine(chdir1, chdir2):
-	chdir1 = dict(zip(map(lambda x:x.upper(), chdir1['genes']), chdir1['vals']))
-	chdir2 = dict(zip(map(lambda x:x.upper(), chdir2['genes']), chdir2['vals']))
+	# chdir1 = dict(zip(map(lambda x:x.upper(), chdir1['genes']), chdir1['vals']))
+	# chdir2 = dict(zip(map(lambda x:x.upper(), chdir2['genes']), chdir2['vals']))
 
 	shared_genes = set(chdir1.keys()) & set(chdir2.keys())
 	# shared_genes = list(shared_genes)
@@ -173,17 +173,40 @@ def chdir_cosine(chdir1, chdir2):
 	vals2 = [ chdir2[gene] for gene in shared_genes ]
 	return 1 - cosine(vals1, vals2) # cosine similarity
 
+def update_chdir_in_db():
+	## this action is only run on windows for faster computing the cosine distance
+	## do not do this to the db behind the webapp
+	client = MongoClient('mongodb://127.0.0.1:27017/')
+	db = client['microtask_signatures']
+	coll = db['signatures']
+	projection = {'_id':False, 'chdir':True}
+	all_uid = coll.distinct('id')
+	i = 0
+	for uid in all_uid:
+		doc = coll.find_one({'id': uid}, projection)
+		if 'chdir' in doc:
+			chdir = doc['chdir']
+			chdir = dict(zip(map(lambda x:x.upper(), chdir['genes']), chdir['vals']))
+			coll.update_one({'id': uid}, {'$set': {'chdir': chdir}})
+		i += 1
+		if i % 200 == 0:
+			print i, len(all_uid)
+	print coll.count()
+	return
 
 def pairwase_cosine(unique_entries, outfn):
 	## calculate cosine distance between chdir signatures in the db
 	## by using the shared genes
-	client = MongoClient('mongodb://146.203.54.131:27017/')
+	# client = MongoClient('mongodb://146.203.54.131:27017/')
+	client = MongoClient('mongodb://127.0.0.1:27017/')
 	db = client['microtask_signatures']
 	COLL = db['signatures']
 	projection = {'_id':False, 'chdir':True}
 	all_uids = unique_entries.keys()
+	# all_uids.reverse()
 	with gzip.open (outfn, 'w') as out:
 		for i, uid_i in enumerate(all_uids):
+			print i
 			doc_i = COLL.find_one({'id':uid_i}, projection)
 			if doc_i is not None:
 				chdir_i = doc_i['chdir']
@@ -198,6 +221,8 @@ def pairwase_cosine(unique_entries, outfn):
 
 
 unique_entries, unique_genesets = get_uniq_sigs()
+
+# '''
 # for idx, geneset in unique_genesets.items():
 # 	if len(geneset['up']) ==0 or len(geneset['dn']) == 0:
 # 		print idx, len(geneset['up']), len(geneset['dn'])
@@ -209,26 +234,28 @@ unique_entries, unique_genesets = get_uniq_sigs()
 # json.dump(unique_genesets, open('limma_genesets_bonferroni_0.05.json', 'wb'))
 # pairwise_signed_jaccard(unique_genesets, 'signed_jaccard_%s_gene_unique_entries_limma_bonferroni_0.05.txt.gz' % len(unique_entries))
 
-pairwase_cosine(unique_entries, 'cosine_similarity_%s_gene_unique_entries.txt.gz' % len(unique_entries))
+# update_chdir_in_db()
+pairwase_cosine(unique_entries, 'cosine_similarity_%s_gene_unique_entries_reverse.txt.gz' % len(unique_entries))
+# '''
 
 '''
 d_gds_gse = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', 0, 1)
 ## load dz id
 # global d_uid_doid, d_uid_umls, d_uid_gse
-# d_uid_doid = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 1)
-# d_uid_umls = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 2)
+# d_uid_doid = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 2)
+# d_uid_umls = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 3)
 # d_uid_geoid = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', -1, 0)
 
 ## load cleaned gene symbols
-# global d_uid_hs, d_uid_mm, d_uid_gse
+# global d_uid_hs, d_uid_mm
 # d_uid_hs = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
 # d_uid_mm = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 2)
 # d_uid_geoid = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr', -1, 0)
 
 ## load cleaned drugs
 global d_uid_gse
-# d_uid_hs = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
-# d_uid_mm = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 2)
+d_uid_hs = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
+d_uid_mm = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 2)
 d_uid_geoid = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_drug', -1, 0)
 
 d_uid_gse = {} # convert gds to gse
@@ -294,7 +321,7 @@ def load_do_network():
 	ontology_id_terms, name2id, G = obo_parser.obo2network(DO_FILE)
 	return G.to_undirected()
 
-def _plot_roc_similar_dz(id_pairs, G, spl_cutoff=1):
+def _plot_roc_similar_dz(id_pairs, G, spl_cutoff=2):
 	## compute TPR, FPR, auroc for similar dz
 	## G is the network for disease ontology
 	## spl_cutoff shortest path length cutoff
@@ -397,8 +424,8 @@ def _plot_roc_similar_gene(id_pairs, G, spl_cutoff=1):
 	return auroc, FPRs, TPRs
 
 def load_drug_similarities(cutoff):
-	# fn = 'drug_smiles-morgan-dice.txt.gz'
-	fn = 'drug_smiles-maccs-dice.txt.gz'
+	fn = 'drug_smiles-morgan-tanimoto.txt.gz'
+	# fn = 'drug_smiles-maccs-dice.txt.gz'
 	# fn = 'drug_smiles-morgan_fb-tanimoto.txt.gz'
 	# fn = 'drug_smiles-torsion-tanimoto.txt.gz'
 	# fn = 'drug_smiles-rdkit-tanimoto.txt.gz'
@@ -433,12 +460,12 @@ def _plot_roc_similar_drug(id_pairs, G):
 	auroc = auc(FPRs, TPRs)
 	return auroc, FPRs, TPRs
 
-def plot_roc(signed_jaccard_fn, ax, absolute=False, plot=True, label=None, color=None):
+def plot_roc(signed_jaccard_fn, ax, absolute=False, plot=True, label=None, color=None, ls='-'):
 	id_pairs = read_pairwise_from_file(signed_jaccard_fn, absolute=absolute)
 	## diseases:
 	# auroc, FPRs, TPRs = _plot_roc_same_dz(id_pairs)
 	# G= load_do_network()
-	# auroc, FPRs, TPRs = _plot_roc_similar_dz(id_pairs, G, spl_cutoff=3)
+	# auroc, FPRs, TPRs = _plot_roc_similar_dz(id_pairs, G, spl_cutoff=1)
 	## genes:
 	# auroc, FPRs, TPRs = _plot_roc_same_gene(id_pairs)
 	# G= load_ppi()
@@ -450,25 +477,37 @@ def plot_roc(signed_jaccard_fn, ax, absolute=False, plot=True, label=None, color
 	if plot:
 		label += ", AUC = %.3f" % auroc
 		print label
-		ax.plot(FPRs, TPRs, label=label, color=color, lw=2)
+		ax.plot(FPRs, TPRs, label=label, color=color, lw=2, ls=ls)
 		ax.set_xlabel('False Positive Rate',fontsize=20)
 		ax.set_ylabel('True Positive Rate',fontsize=20)
-		ax.legend(loc='lower right',prop={'size':16})
+		ax.legend(loc='lower right',prop={'size':14})
 	return auroc
 
 ## plot roc curves for recovering known connections between signatures
 '''
-fig = plt.figure(figsize=(8,8))
+fig = plt.figure(figsize=(10,10))
 ax = fig.add_subplot(111)
-# plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
-# plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=True, label='abs(signed jaccard)', color='r')
+# plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=False, label='chdir signed jaccard', color=COLORS10[0], ls='--')
+# plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=True, label='chdir abs(signed jaccard)', color=COLORS10[0])
+# plot_roc('cosine_similarity_839_dz_unique_entries.txt.gz', ax, absolute=False, label='chdir cosine', color=COLORS10[3], ls='--')
+# plot_roc('cosine_similarity_839_dz_unique_entries.txt.gz', ax, absolute=True, label='chdir abs(cosine)', color=COLORS10[3])
+# # plot_roc('signed_jaccard_839_dz_unique_entries_limma_fdr_bh_0.05.txt.gz', ax, absolute=False, label='limma fdr signed jaccard', color=COLORS10[1], ls='--')
+# # plot_roc('signed_jaccard_839_dz_unique_entries_limma_fdr_bh_0.05.txt.gz', ax, absolute=True, label='limma fdr abs(signed jaccard)', color=COLORS10[1])
+# # plot_roc('signed_jaccard_839_dz_unique_entries_limma_bonferroni_0.05.txt.gz', ax, absolute=False, label='limma bonferroni signed jaccard', color=COLORS10[2], ls='--')
+# # plot_roc('signed_jaccard_839_dz_unique_entries_limma_bonferroni_0.05.txt.gz', ax, absolute=True, label='limma bonferroni abs(signed jaccard)', color=COLORS10[2])
 
 # plot_roc('signed_jaccard_2460_gene_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
 # plot_roc('signed_jaccard_2460_gene_unique_entries.txt.gz', ax, absolute=True, label='abs(signed jaccard)', color='r')
 
-plot_roc('signed_jaccard_906_drug_unique_entries.txt.gz', ax, absolute=False, label='signed jaccard', color='b')
-plot_roc('signed_jaccard_906_drug_unique_entries.txt.gz', ax, absolute=True, label='abs(signed jaccard)', color='r')
+plot_roc('signed_jaccard_906_drug_unique_entries.txt.gz', ax, absolute=False, label='chdir signed jaccard', color=COLORS10[0], ls='--')
+plot_roc('signed_jaccard_906_drug_unique_entries.txt.gz', ax, absolute=True, label='chdir abs(signed jaccard)', color=COLORS10[0])
+# plot_roc('cosine_similarity_906_drug_unique_entries.txt.gz', ax, absolute=False, label='chdir cosine', color=COLORS10[3], ls='--')
+# plot_roc('cosine_similarity_906_drug_unique_entries.txt.gz', ax, absolute=True, label='chdir abs(cosine)', color=COLORS10[3])
 
+plot_roc('signed_jaccard_906_drug_unique_entries_limma_fdr_bh_0.05.txt.gz', ax, absolute=False, label='limma fdr signed jaccard', color=COLORS10[1], ls='--')
+plot_roc('signed_jaccard_906_drug_unique_entries_limma_fdr_bh_0.05.txt.gz', ax, absolute=True, label='limma fdr abs(signed jaccard)', color=COLORS10[1])
+plot_roc('signed_jaccard_906_drug_unique_entries_limma_bonferroni_0.05.txt.gz', ax, absolute=False, label='limma bonferroni signed jaccard', color=COLORS10[2], ls='--')
+plot_roc('signed_jaccard_906_drug_unique_entries_limma_bonferroni_0.05.txt.gz', ax, absolute=True, label='limma bonferroni abs(signed jaccard)', color=COLORS10[2])
 
 enlarge_tick_fontsize(ax, 16)
 plt.show()

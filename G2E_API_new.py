@@ -26,9 +26,9 @@ from fileIO import file2list, mysqlTable2dict
 # DATADIR = 'output/microtask_dz_jsons' # re-run API not normalizing/log-transforming data for microtask2
 # DATADIR = 'output/microtask_drug_jsons' # re-run API not normalizing/log-transforming data for microtask3
 # re-run API to get fold_change and limma result
-# DATADIR = 'output/microtask_gene_jsons_limma' 
-# DATADIR = 'output/microtask_dz_jsons_limma' 
-DATADIR = 'output/microtask_drug_jsons_limma' 
+# DATADIR = 'output/microtask_gene_jsons_limma_cf' 
+# DATADIR = 'output/microtask_dz_jsons_limma_cf' 
+DATADIR = 'output/microtask_drug_jsons_limma_cf' 
 
 ## get dicts from mysql
 d_uid_hsgene = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
