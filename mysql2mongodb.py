@@ -7,7 +7,7 @@ import MySQLdb.cursors
 import pymongo
 from pymongo import MongoClient
 
-sys.path.append('/Users/zichen/Documents/bitbucket/maayanlab_utils')
+sys.path.append('../maayanlab_utils')
 from fileIO import mysqlTable2dict
 
 

@@ -28,6 +28,7 @@ from fileIO import file2list, mysqlTable2dict, sqliteTable2dict, read_gmt
 from plots import enlarge_tick_fontsize, COLORS10
 from plot_DRR import plt_DRR, get_DRR_plt_auc
 
+
 def _plot_roc(sorted_list, gs):
 	fp_list = []
 	tp_list = []
@@ -58,7 +59,7 @@ def _read_json_entry(fn,absolute=True):
 
 def _read_limma_from_json(uid):
 	prefix, id = uid.split(':')
-	fn = 'C://Users/Zichen/Documents/bitbucket/microtask_GEO/output/microtask_%s_jsons_limma_cf/%s.json' %(prefix, id)
+	fn = 'C://Users/Zichen/Documents/bitbucket/microtask_GEO/output/microtask_%s_jsons_limma_norm/%s.json' %(prefix, id)
 	data = json.load(open(fn, 'rb'))
 	return map(lambda x : _humanize(x[0]), data['limma'])
 	
@@ -73,6 +74,7 @@ def _read_limma(uid):
 	if doc is not None:
 		if 'limma' in doc:
 			return map(lambda x: x.upper(), doc['limma']['genes'])
+
 
 def make_gs(fn, val_idx, key_idx, header=False):
 	# to store the gold standard from a file
@@ -109,14 +111,20 @@ def _get_scaled_ranks(sorted_list, gs):
 	mask = np.in1d(sorted_list, list(gs))
 	return ranks[mask].tolist()	
 
-def get_scaled_ranks(uid, key, G_gs):
+def get_scaled_ranks(uid, key, G_gs, signature_type="limma"):
 	## wrapper
 	# key is the node name in G_gs
-	# json_fn = str(uid) + '.json'
-	# sorted_list = _read_json_entry(json_fn)
 	# sorted_list = _read_limma('dz:' + str(uid))
-	sorted_list = _read_limma_from_json('dz:' + str(uid))
-	gs = G_gs.neighbors(key)
+	if signature_type == 'limma':
+		# sorted_list = _read_limma_from_json('dz:' + str(uid))
+		sorted_list = _read_limma('dz:' + str(uid))
+	elif signature_type == 'chdir':
+		json_fn = str(uid) + '.json'
+		sorted_list = _read_json_entry(json_fn)
+	if type(G_gs) == dict:
+		gs = G_gs[key]
+	else:
+		gs = G_gs.neighbors(key)
 	sr = _get_scaled_ranks(sorted_list, gs)
 	return sr
 
@@ -133,6 +141,9 @@ d_uid_umls = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_dzs', 0, 3)
 # d_uid_name = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', -1, 3)
 d_doid_name = dict(zip(file2list('D:\Zichen_Projects\microtask_GEO\DISEASES\human_disease_filtered_combined.tsv', 2),
 	file2list('D:\Zichen_Projects\microtask_GEO\DISEASES\human_disease_filtered_combined.tsv', 3)))
+
+## load tf 
+d_uid_TF = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
 
 def write_dz_genes_aurocs(gs_type, valid_entries, d_uid_doid):
 	d_gs_type_fn = {
@@ -157,7 +168,7 @@ def write_dz_genes_aurocs(gs_type, valid_entries, d_uid_doid):
 						pass
 	return
 
-def plot_dz_genes_DRR(gs_type, valid_entries, d_uid_doid):
+def plot_dz_genes_DRR(gs_type, valid_entries, d_uid_doid, ax, ax_right, signature_type=None, color=None):
 	d_gs_type_fn = {
 		'knowledge': 'D:\Zichen_Projects\microtask_GEO\DISEASES\human_disease_knowledge_filtered.tsv',
 		'experiments': 'D:\Zichen_Projects\microtask_GEO\DISEASES\human_disease_experiments_filtered.tsv',
@@ -174,19 +185,47 @@ def plot_dz_genes_DRR(gs_type, valid_entries, d_uid_doid):
 			if len(G_k.neighbors(doid)) > 0: # at least 10 known disease genes
 				print uid
 				try:
-					sr = get_scaled_ranks(uid, doid, G_k)
+					sr = get_scaled_ranks(uid, doid, G_k, signature_type=signature_type)
 					srs.extend(sr)
 				except:
 					pass
-	fig = plt.figure(figsize=(9,9))
-	ax = fig.add_subplot(111)
-	ax_right = ax.twinx()
-	plt_DRR(srs, ax, ax_right, color=COLORS10[0], ls='-', label='limma_cf')
-	ax.set_title(gs_type, fontsize=18)
-	ax.legend(loc='best')
-	plt.show()
-	return	
+	plt_DRR(srs, ax, ax_right, color=color, ls='-', label=signature_type)
+	return
 
+def plot_tf_genes_DRR(gmt, valid_entries, d_uid_TF, ax, ax_right, signature_type=None, color=None):
+	## try to repeat limma beat chdir on kevin's TF set
+	HOME = 'C:/Users/Zichen/'
+	if gmt == 'ChEA':
+		d_gmt = read_gmt(HOME+'/Documents/GitLab/gmt_enrichr/ChEA.gmt')
+		sep = '-'
+	elif gmt == 'ENCODE':
+		d_gmt = read_gmt(HOME+'/Documents/GitLab/gmt_enrichr/ENCODE_TF_ChIP-seq_2015.gmt')
+		sep = '_'
+	elif gmt == 'TF-PPI':
+		d_gmt = read_gmt(HOME+'/Documents/GitLab/gmt_enrichr/Transcription_Factor_PPIs.gmt')
+		sep = ''
+	d_tf_targets = {}
+	for term, genes in d_gmt.items():
+		tf = term.split(sep)[0] # ChEA
+		if tf not in d_tf_targets:
+			d_tf_targets[tf] = set(genes)
+		else:
+			d_tf_targets[tf] = set(genes) & d_tf_targets[tf]
+
+	srs = []
+	for uid in valid_entries:
+		tf = d_uid_TF[uid]
+		if tf is not None and tf in d_tf_targets:
+			print uid, tf
+			try:
+				sr = get_scaled_ranks(uid, tf, d_tf_targets, signature_type=signature_type)
+				srs.extend(sr)
+				print len(srs)
+			except:
+				pass
+
+	plt_DRR(srs, ax, ax_right, color=color, ls='-', label=signature_type)
+	return
 
 ## write all AUROC for recovering dz_genes using signatures
 # write_dz_genes_aurocs('knowledge', valid_entries, d_uid_doid)
@@ -195,9 +234,32 @@ def plot_dz_genes_DRR(gs_type, valid_entries, d_uid_doid):
 # write_dz_genes_aurocs('textmining', valid_entries, d_uid_doid)
 
 ## plot DRR 
-plot_dz_genes_DRR('knowledge', valid_entries, d_uid_doid)
-# plot_dz_genes_DRR('combined', valid_entries, d_uid_doid)
+fig = plt.figure(figsize=(9,9))
+ax = fig.add_subplot(111)
+ax_right = ax.twinx()
 
+gs_type = 'knowledge'
+# plot_dz_genes_DRR(gs_type, valid_entries, d_uid_doid, ax, ax_right, signature_type='chdir', color=COLORS10[0])
+plot_dz_genes_DRR(gs_type, valid_entries, d_uid_doid, ax, ax_right, signature_type='limma', color=COLORS10[1])
+# # plot_dz_genes_DRR('combined', valid_entries, d_uid_doid)
+
+# ax.set_title(gs_type, fontsize=18)
+
+# gmt = 'ChEA'
+# d_uid_curator = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr', -1, -3)
+# valid_entries = []
+
+# for uid, curator in d_uid_curator.items():
+# 	# if curator == 'Kevin' :
+# 	valid_entries.append(uid)
+# print len(valid_entries)
+
+# plot_tf_genes_DRR(gmt,valid_entries, d_uid_TF, ax, ax_right, signature_type='chdir', color=COLORS10[0])
+# plot_tf_genes_DRR(gmt,valid_entries, d_uid_TF, ax, ax_right, signature_type='limma', color=COLORS10[1])
+
+# ax.set_title(gmt, fontsize=18)
+ax.legend(loc='best')
+plt.show()
 
 ## analyse, stratify AUROCs
 '''
