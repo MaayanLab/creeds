@@ -3,14 +3,15 @@
 	<div class="row">
 		<div class="col-sm-3">
 			<ul class="nav nav-tabs">
-				<li role="presentation" class="active"><a data-toggle="tab" href="#tab1">Search1</a></li>
-				<li role="presentation"><a data-toggle="tab" href="#tab2">Search2</a></li>
+				<li role="presentation" class="active"><a data-toggle="tab" href="#tab1">Search signatures by name</a></li>
+				<li role="presentation"><a data-toggle="tab" href="#tab2">Query signatures by gene lists</a></li>
 			</ul>
 
 			<div class="tab-content">
 				<div id="tab1" class="tab-pane fade in active">
 					<h3>Search signature connections by name</h3>
-					<p>Some content.</p>
+					<p>Signatures can be searched by the gene symbols of genes being perturbed, name of diseases for disease signatures, and name of drugs for drug perturbation signatures.</p>
+					<p>Examples: TP53, Breast cancer, Imatinib.</p>
 
 					<div class="input-group">
 						<input id="sigNameInput" type="text" class="form-control" placeholder="Search for signatures...">
@@ -23,7 +24,8 @@
 				</div>
 				<div id="tab2" class="tab-pane fade">
 					<h3>Query simialr signatures by genes</h3>
-					<p>Some content.</p>
+					<p>Signatures that are similar to a query signature from the user can be searched. The similarity between signatures are measured by signed Jaccard Index. </p>
+					<p>Once the search results are displayed, user can select signatures of interest by clicking on them and visualize them in a clustergram.</p>
 					<button id="geneSearchEgBtn" class="btn btn-default">Example</button>
 					<div class="form-group">
 						<label for="upGenes" class="control-label">Up genes</label>
