@@ -12,7 +12,7 @@ from crossdomain import crossdomain
 app = Flask(__name__, static_url_path='', static_folder=os.getcwd())
 app.debug = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
-print app.config['SEND_FILE_MAX_AGE_DEFAULT']
+
 
 @app.route('/')
 def root():
