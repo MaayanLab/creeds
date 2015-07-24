@@ -1,6 +1,8 @@
 FROM python:2.7
 
 # Get pip to download and install requirements:
+RUN apt-get update && apt-get install -y libatlas-base-dev gfortran
+RUN pip install numpy scipy matplotlib
 RUN pip install pymongo Flask
 
 # Copy the application folder inside the container
