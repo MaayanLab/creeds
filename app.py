@@ -8,18 +8,18 @@ from orm_utils import *
 import clustergram
 from crossdomain import crossdomain
 
-
-app = Flask(__name__, static_url_path='', static_folder=os.getcwd())
+ENTER_POINT = '/geosigs'
+app = Flask(__name__, static_url_path=ENTER_POINT, static_folder=os.getcwd())
 app.debug = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
 
 
-@app.route('/')
+@app.route(ENTER_POINT + '/')
 def root():
 	return app.send_static_file('index.html')
 
 
-@app.route('/api', methods=['GET'])
+@app.route(ENTER_POINT + '/api', methods=['GET'])
 @crossdomain(origin='*')
 def retrieve_signature():
 	if request.method == 'GET':
@@ -38,7 +38,7 @@ def retrieve_signature():
 			return ('', 400, '')
 
 
-@app.route('/autoCompleteList', methods=['GET', 'POST'])
+@app.route(ENTER_POINT + '/autoCompleteList', methods=['GET', 'POST'])
 @crossdomain(origin='*')
 def get_all_names():
 	if request.method == 'GET':
@@ -58,7 +58,7 @@ def get_all_names():
 			d_cat_names[cat] = list(set(names))
 		return json.dumps(d_cat_names)
 
-@app.route('/searchByStr', methods=['GET'])
+@app.route(ENTER_POINT + '/searchByStr', methods=['GET'])
 @crossdomain(origin='*')
 def search_by_string():
 	if request.method == 'GET':
@@ -83,7 +83,7 @@ def search_by_string():
 
 
 
-@app.route('/search', methods=['GET', 'POST'])
+@app.route(ENTER_POINT + '/search', methods=['GET', 'POST'])
 @crossdomain(origin='*')
 def search():
 	## handle searching signatures with either custom genes or a document in the db
@@ -123,7 +123,7 @@ def search():
 		return ('', 400, '')
 
 
-@app.route('/geneSigClustergram', methods=['POST'])
+@app.route(ENTER_POINT + '/geneSigClustergram', methods=['POST'])
 @crossdomain(origin='*')
 def make_gene_sig_clustergram():
 	if request.method == 'POST':

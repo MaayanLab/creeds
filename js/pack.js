@@ -43,7 +43,7 @@ var DotView = Backbone.View.extend({
 	defaults: {
 		nodeInfoSelector: '#nodeInfo',
 		info: '',
-		apiUrl: '/api',
+		apiUrl: '/geosigs/api',
 		formater: '.3f',
 	},
 
