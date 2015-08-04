@@ -79,7 +79,7 @@ var DotView = Backbone.View.extend({
 				var specificKeys = ['hs_gene_symbol', 'mm_gene_symbol', 'pert_type'];
 				break;
 			case 'dz':
-				var specificKeys = ['disease_name', 'umls_cui', {'do_id':'http://disease-ontology.org/term/'}];
+				var specificKeys = [{'disease_name':'https://www.google.com/search?q='}, 'umls_cui', {'do_id':'http://disease-ontology.org/term/'}];
 				break;
 			case 'drug':
 				var specificKeys = ['drug_name', {'drugbank_id':'http://www.drugbank.ca/drugs/'}, {'pubchem_cid':'https://pubchem.ncbi.nlm.nih.gov/compound/'}, 'smiles'];
@@ -97,7 +97,12 @@ var DotView = Backbone.View.extend({
 		    	dl.append('dd').text(info[key]);	    		
 	    	} else { // add hyperlinks for key that is object
 	    		var field = Object.keys(key)[0];
-	    		var url = key[field] + info[field];
+	    		if (field === 'disease_name') {
+	    			var url = key[field] + info[field].replace(' ', '+'); // for googling disease name 	
+	    		} else {
+	    			var url = key[field] + info[field];
+	    		}
+	    		
 	    		dl.append('dt').text(field);
 	    		dl.append('dd').append('a').attr('href', url)
 	    			.attr('target', '_blank')
@@ -390,6 +395,11 @@ var DiGraphView = Backbone.View.extend({
 	},
 
 	rerender: function(){ // run when the btn clicked
+		// remove highlights in legends
+		d3.selectAll('#colorLegend a').each(function(){
+			d3.select(this).attr('class', '')
+		});
+
 		if (this.activeTable === 0) {
 			this.dots.dbTable = this.dbTables[1];
 			this.activeTable = 1;	

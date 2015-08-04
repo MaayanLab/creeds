@@ -96,6 +96,7 @@ def search():
 			sig_ = DBSignature(uid, projection=projection)
 			meta = sig_.meta
 			meta['name'] = sig_.name
+			score = float('%.5f'%score)
 			meta['signed_jaccard'] = score
 			uid_data.append(meta)
 		return uid_data
