@@ -97,8 +97,8 @@ def read_gmt_sigs(fn, prefix):
 def get_uniq_sigs():
 	# get the uids of signatures that are unique across all microtasks
 	all_valid_entry_fns = [
-		# ('dz','output/microtask_dz_jsons/valid_dz_entries.pkl','output/microtask_dz_jsons/crowdsourced_diseases_top600.gmt'),
-		# ('drug','output/microtask_drug_jsons/valid_drug_entries.pkl','output/microtask_drug_jsons/crowdsourced_drugs_top600.gmt'),
+		('dz','output/microtask_dz_jsons/valid_dz_entries.pkl','output/microtask_dz_jsons/crowdsourced_diseases_top600.gmt'),
+		('drug','output/microtask_drug_jsons/valid_drug_entries.pkl','output/microtask_drug_jsons/crowdsourced_drugs_top600.gmt'),
 		('gene','output/microtask_gene_jsons/valid_gene_entries.pkl','output/microtask_gene_jsons/crowdsourced_single_gene_pert_top600.gmt'),
 	] # the order determine priority
 	unique_entries = {}
@@ -598,7 +598,7 @@ def plot_roc_bins(signed_jaccard_fn, d_uid_category, ax, absolute=False, plot=Tr
 
 
 ## plot roc curves for recovering known connections between signatures
-# '''
+'''
 fig = plt.figure(figsize=(10,10))
 ax = fig.add_subplot(111)
 # plot_roc('signed_jaccard_839_dz_unique_entries.txt.gz', ax, absolute=False, label='chdir signed jaccard', color=COLORS10[0], ls='--')
@@ -647,11 +647,11 @@ plot_roc_bins('signed_jaccard_2460_gene_unique_entries.txt.gz',d_uid_platform, a
 
 enlarge_tick_fontsize(ax, 16)
 plt.show()
-# '''
+'''
 
 
 ## plot embedding for the adjacency matrix
-'''
+# '''
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\\natural_products')
 from SparseAdjacencyMat import SparseAdjacencyMat
 
@@ -699,12 +699,12 @@ for prefix_id in unique_entries:
 # ax.scatter(embedding[:,0], embedding[:,1], c=colors)
 # plt.show()
 
-# clustergram(sam.to_csr_matrix().toarray(), row_groups=categories, col_groups=categories, display_range=0.05, 
-# 	colorkey='signed jaccard',
-# 	row_pdist='cosine', col_pdist='cosine',
-# 	row_linkage='average', col_linkage='average'
-# 	)
-
+clustergram(sam.to_csr_matrix().toarray(), row_groups=categories, col_groups=categories, display_range=0.05, 
+	colorkey='signed jaccard',
+	row_pdist='cosine', col_pdist='cosine',
+	row_linkage='average', col_linkage='average'
+	)
+'''
 ## subset the sam matrix to keep only signature with a certain cutoff
 mask = np.absolute(sam.to_csr_matrix().toarray()) > 0.15
 num_postive_per_row = mask.sum(axis=1)
@@ -729,6 +729,6 @@ clustergram(sam, row_groups=np.array(categories)[mask], col_groups=np.array(cate
 	row_linkage='average', col_linkage='average'
 	)
 
-
 '''
+# '''
 
