@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from sklearn import manifold
 import networkx as nx
 from networkx.readwrite import json_graph
-
+from pymongo import MongoClient
 
 import rpy2.robjects as ro
 ro.r('''
@@ -85,7 +85,51 @@ unique_entries, _ = get_uniq_sigs()
 sys.path.append('C:\Users\Zichen\Documents\\bitbucket\\natural_products')
 from SparseAdjacencyMat import SparseAdjacencyMat
 
-d_prefix_id_idx = dict(zip(unique_entries.keys(), range(len(unique_entries))))
+
+
+#### end of functions copied from 'signature_connections.py'
+
+
+## get some meta-data for the signatures
+d_prefix_id_label = {}
+d_prefix_id_color = {}
+d_prefix_id_size = {} # number of samples
+# d_dz_name = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', -1, 3)
+d_gene_name = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
+# d_drug_name = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_drug', -1, 3)
+client = MongoClient('mongodb://127.0.0.1:27017/')
+db = client['microtask_signatures']
+coll = db['signatures']
+
+prefix_ids_exclude = set()
+prefix_ids_include = []
+for prefix_id in unique_entries.keys():
+	uid = int(prefix_id.split(':')[1])
+	d_prefix_id_size[prefix_id] = len(unique_entries[prefix_id])
+	doc = coll.find_one({'id':prefix_id}, 
+		{'_id':False,'disease_name':True,'drug_name':True})
+	if prefix_id.startswith('dz'):
+		# d_prefix_id_label[prefix_id] = d_dz_name[uid].lower()
+		d_prefix_id_label[prefix_id] = doc['disease_name'].split(' - ')[-1]
+		d_prefix_id_color[prefix_id] = COLORS10[0][1:]
+		prefix_ids_include.append(prefix_id)
+	elif prefix_id.startswith('drug'):
+		# d_prefix_id_label[prefix_id] = d_drug_name[uid].lower()
+		try:
+			d_prefix_id_label[prefix_id] = doc['drug_name']
+			prefix_ids_include.append(prefix_id)
+		except:
+			prefix_ids_exclude.add(prefix_id)
+			print prefix_id
+		d_prefix_id_color[prefix_id] = COLORS10[1][1:]
+	else:
+		prefix_ids_include.append(prefix_id)
+		d_prefix_id_label[prefix_id] = d_gene_name[uid]
+		d_prefix_id_color[prefix_id] = COLORS10[2][1:]
+
+
+d_prefix_id_idx = dict(zip(prefix_ids_include, range(len(prefix_ids_include))))
+
 
 def read_sam_from_file(fn, d_prefix_id_idx, cutoff=-2):
 	## assumes the file is gzipped
@@ -96,39 +140,16 @@ def read_sam_from_file(fn, d_prefix_id_idx, cutoff=-2):
 		for line in f:
 			c += 1
 			sl = line.strip().split('\t')
-			i, j = d_prefix_id_idx[sl[0]], d_prefix_id_idx[sl[1]]
-			score = float(sl[2])
-			if score > cutoff:
-				mat[i, j] = score
-			if c % 2000000 == 0:
-				print c
+			if sl[0] not in prefix_ids_exclude and sl[1] not in prefix_ids_exclude:
+				i, j = d_prefix_id_idx[sl[0]], d_prefix_id_idx[sl[1]]
+				score = float(sl[2])
+				if score > cutoff:
+					mat[i, j] = score
+				if c % 2000000 == 0:
+					print c
 	fn = fn.split('/')[-1]
 	print 'finished reading %s' % fn
 	return SparseAdjacencyMat(mat, fn)
-
-#### end of functions copied from 'signature_connections.py'
-
-
-## get some meta-data for the signatures
-d_prefix_id_label = {}
-d_prefix_id_color = {}
-d_prefix_id_size = {} # number of samples
-d_dz_name = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_dz', -1, 3)
-d_gene_name = mysqlTable2dict('maaya0_crowdsourcing', 'cleaned_genes', 0, 1)
-d_drug_name = mysqlTable2dict('maaya0_crowdsourcing', 'geo2enrichr_drug', -1, 3)
-
-for prefix_id in d_prefix_id_idx:
-	uid = int(prefix_id.split(':')[1])
-	d_prefix_id_size[prefix_id] = len(unique_entries[prefix_id])
-	if prefix_id.startswith('dz'):
-		d_prefix_id_label[prefix_id] = d_dz_name[uid].lower()
-		d_prefix_id_color[prefix_id] = COLORS10[0][1:]
-	elif prefix_id.startswith('drug'):
-		d_prefix_id_label[prefix_id] = d_drug_name[uid].lower()
-		d_prefix_id_color[prefix_id] = COLORS10[1][1:]
-	else:
-		d_prefix_id_label[prefix_id] = d_gene_name[uid]
-		d_prefix_id_color[prefix_id] = COLORS10[2][1:]
 
 
 def np2matrix(mat):
@@ -151,7 +172,7 @@ def make_directed_json_graph(fn, depth=4, outfn=None):
 	edgelist = rmatrix2np(edgelist) # convert to numpy array
 	print 'finished generating edgelist'
 
-	prefix_ids = unique_entries.keys() # ordered unique prefix_ids
+	prefix_ids = prefix_ids_include # ordered unique prefix_ids
 	all_idx = set(d_prefix_id_idx.values())
 
 	## convert the edgelist to DiGraph
@@ -193,7 +214,7 @@ def make_directed_json_graph(fn, depth=4, outfn=None):
 
 def make_directed_json_graph_cat(outfn=None):
 	# make directed graph based on category
-	prefix_ids = unique_entries.keys() # ordered unique prefix_ids
+	prefix_ids = prefix_ids_include
 	G = nx.DiGraph()
 	# for i in range(len(umls_ids_kept)):
 	for prefix_id in prefix_ids:
@@ -219,8 +240,8 @@ def make_directed_json_graph_cat(outfn=None):
 
 ### making json graphs
 make_directed_json_graph('signed_jaccard_4066_unique_entries.txt.gz', 
-	depth=6, outfn='signature_digraph_depth6.json')
+	depth=12, outfn='signature_digraph_depth12.json')
 
-# make_directed_json_graph_cat(outfn='signature_digraph_cat.json')
+make_directed_json_graph_cat(outfn='signature_digraph_cat.json')
 
 # print d_prefix_id_idx['gene:2165']
