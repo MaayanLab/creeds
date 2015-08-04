@@ -6,3 +6,4 @@ output/*
 *.txt
 *.smi
 db/*
+.DS_Store
