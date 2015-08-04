@@ -5,8 +5,8 @@ import time
 import numpy as np
 from pymongo import MongoClient
 
-client = MongoClient('mongodb://127.0.0.1:27017/')
-# client = MongoClient('mongodb://146.203.54.131:27017/')
+# client = MongoClient('mongodb://127.0.0.1:27017/')
+client = MongoClient('mongodb://146.203.54.131:27017/')
 db = client['microtask_signatures']
 COLL = db['signatures']
 ALL_UIDS = COLL.distinct('id')

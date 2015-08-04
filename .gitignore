@@ -4,6 +4,6 @@
 output/*
 *.pdf
 *.txt
-*.json
 *.smi
 db/*
+.DS_Store

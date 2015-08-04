@@ -23,7 +23,7 @@
 
 				</div>
 				<div id="tab2" class="tab-pane fade">
-					<h3>Query simialr signatures by genes</h3>
+					<h3>Signature search by input gene lists</h3>
 					<p>Signatures that are similar to a query signature from the user can be searched. The similarity between signatures are measured by signed Jaccard Index. </p>
 					<p>Once the search results are displayed, user can select signatures of interest by clicking on them and visualize them in a clustergram.</p>
 					<button id="geneSearchEgBtn" class="btn btn-default">Example</button>
@@ -44,7 +44,10 @@
 		</div>
 
 		<div class="col-sm-9">
-			<h1>Search Results</h1>
+			<div class="alert alert-info">
+				<h4>Here you can search and prioritize signatures from the collection by either entering your own input lists of up and down genes, or by entering a term that will search the signatures meta-data</h4>
+			</div>
+			<h2>Search Results</h2>
 			<div id="searchResults"></div>
 		</div>
 	</div>
@@ -114,7 +117,7 @@ $(document).ready(function(){
 
 $("#sigNameBtn").click(function(){
 	var searchStr = $("#sigNameInput").val();
-	$.getJSON('http://127.0.0.1:5000/searchByStr', {search: searchStr}, function(results){
+	$.getJSON('/geosigs/searchByStr', {search: searchStr}, function(results){
 		// console.log(results)
 		displayStrSearchResult(results);
 
@@ -138,7 +141,7 @@ $("#geneSearchEgBtn").click(function(){
 			$.ajax({
 
 				type: 'POST',
-				url: '/search',
+				url: '/geosigs/search',
 				contentType : 'application/json',
 				data: JSON.stringify(postPayLoad),
 				dataType: 'json',
@@ -224,10 +227,12 @@ function displayGeneSearchResult (results) { // to display results using gene li
 }
 
 function submitSelectedBtn (){
+	$("#submitSelectedBtn").remove();
 	var btn = $("<a>");
-	btn.text("visualize clustergram");
+	btn.text("Visualize results as a clustergram");
 	btn.addClass('btn btn-info');
-	btn.attr('href', '#clustergram')
+	btn.attr('href', '#clustergram');
+	btn.attr('id', 'submitSelectedBtn');
 	btn.click(function(){ // click to post genes and uids to clustergram vis
 		
 		var upGenes = $('#upGenes').val().split('\n');
