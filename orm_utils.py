@@ -4,6 +4,7 @@ import os, sys, json
 import time
 import numpy as np
 from pymongo import MongoClient
+import requests
 
 # client = MongoClient('mongodb://127.0.0.1:27017/')
 client = MongoClient('mongodb://146.203.54.131:27017/')
@@ -150,7 +151,42 @@ class DBSignature(Signature):
 				vals.append(val)
 		return vals
 
+	def post_to_paea(self, cutoff=2000):
+		## post top n genes to PAEA and return a PAEA url
+		## return None if instance has no chdir
+		post_url = 'http://amp.pharm.mssm.edu/Enrichr/addList'
+		base_url = 'http://amp.pharm.mssm.edu/PAEA?id='
+		paea_url = None
+		if self.has_chdir():
+			gene_list = ''
+			for gene, coef in zip(self.chdir['genes'], self.chdir['vals'])[:cutoff]:
+				gene_list += '%s,%s\n'% (gene, coef)
+			data = {'list': gene_list, 'inputMethod': "PAEA", 'description': self.name}
+			r = requests.post(post_url, files=data)
+			paea_url = base_url + str(json.loads(r.text)['userListId'])
+		return paea_url
 
+	def post_to_cds2(self, cutoff=2000):
+		## post top n genes to L1000CDS2 API and return a CDS2 url
+		url = 'http://amp.pharm.mssm.edu/L1000CDS2/query'
+		cds2_url = None
+		if self.has_chdir():
+			data = {
+				"genes": map(lambda x: x.upper(), self.chdir['genes'][:cutoff]), 
+				"vals":  self.chdir['vals'][:cutoff]
+				}
+			config = {"aggravate":False,"searchMethod":"CD","share":True,"combination":True}
+			metadata = [{"key":"name","value": self.name}]
+			for key, val in self.meta.items():
+				if key not in ['pert_ids', 'ctrl_ids', 'curator']:
+					metadata.append({"key":key, "value":val})
+			payload = {"data":data,"config":config,"meta":metadata}
+			headers = {'content-type':'application/json'}
+			r = requests.post(url,data=json.dumps(payload),headers=headers)
+			resCD = r.json()
+			shareId = resCD['shareId']
+			cds2_url = 'http://amp.pharm.mssm.edu/L1000CDS2/#/result/' + shareId
+		return cds2_url
 
 def get_matrix(uids, genes, na_val=0):
 	## retrieve a matrix based on uids of signatures and genes
@@ -194,4 +230,7 @@ def get_matrix(uids, genes, na_val=0):
 # 	}
 # docs = COLL.find(search_dict)
 # print docs.count()
+# print gs.post_to_paea()
+# print gs.meta
+# print gs.post_to_cds2()
 # '''

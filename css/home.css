@@ -1,0 +1,18 @@
+table {
+  width: 100%;
+}
+
+thead, tbody, th { display: block; }
+
+thead th {
+  height: 30px;
+}
+
+tbody {
+  height: 400px;
+  overflow-y: auto;
+}
+
+tbody td, thead th {
+  width: 19.2%;
+}
