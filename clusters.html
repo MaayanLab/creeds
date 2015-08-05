@@ -47,7 +47,7 @@
 <script src="js/d3_clustergram.js"></script>
 <script>
 // load network 
-d3.json('data/example_network.json', function(network_data){
+d3.json('data/signed_jaccard_subset_clustergram_259.json', function(network_data){
 
   // define the outer margins of the visualization 
   var outer_margins = {
@@ -78,7 +78,7 @@ d3.json('data/example_network.json', function(network_data){
     'row_label':'Row-Data-Name',
     'col_label':'Column-Data-Name',
     'outer_margins': outer_margins,
-    'input_domain':7,
+    'input_domain':0.2,
     'click_tile': click_tile_callback,
     'click_group': click_group_callback
     // 'resize':'yes',

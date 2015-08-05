@@ -925,26 +925,26 @@ function make_d3_clustergram(args) {
   // enr_max = _.max( col_nodes, function(d) { return Math.abs(d.nl_pval) } ).nl_pval ; 
 
   // the enrichment bar should be 3/4ths of the height of the column labels 
-  params.bar_scale_col = d3.scale.linear()
-    // .domain([0, enr_max])
-    .domain([0, 1])
-    .range([0, params.norm_label.width.col ]); 
+  // params.bar_scale_col = d3.scale.linear()
+  //   // .domain([0, enr_max])
+  //   .domain([0, 1])
+  //   .range([0, params.norm_label.width.col ]); 
 
   // append enrichment bars  
-  col_label_click
-    .append('rect')
-    .attr('class','col_bars')
-    // column is rotated - effectively width and height are switched
-    .attr('width', function(d,i) { 
-      return params.bar_scale_col( d.value ); 
-    })
-    // rotate labels - reduce width if rotating
-    .attr('height', params.x_scale.rangeBand() * 0.66 )
-    .attr('fill', function(d){
-      // return d.color;
-      return 'red';
-    })
-    .attr('opacity', 0.4);
+  // col_label_click
+  //   .append('rect')
+  //   .attr('class','col_bars')
+  //   // column is rotated - effectively width and height are switched
+  //   .attr('width', function(d,i) { 
+  //     return params.bar_scale_col( d.value ); 
+  //   })
+  //   // rotate labels - reduce width if rotating
+  //   .attr('height', params.x_scale.rangeBand() * 0.66 )
+  //   .attr('fill', function(d){
+  //     // return d.color;
+  //     return 'red';
+  //   })
+  //   .attr('opacity', 0.4);
 
   // add group labels if necessary 
   //////////////////////////////////
@@ -1260,7 +1260,7 @@ function highlight_resource_types(params){
   // define cell line groups 
   // var all_groups = ['TF group 1','TF group 2','TF group 3'];
 
-  var all_groups = _.keys(params.class_colors.row);
+  // var all_groups = _.keys(params.class_colors.row);
 
   // // generate an object to associate group with color 
   // var res_color_dict = {};
@@ -1303,37 +1303,37 @@ function highlight_resource_types(params){
   // add color key 
   ////////////////////
   // add keys 
-  var key_divs = d3.select('#res_color_key_div')
-    .selectAll('row')
-    .data(all_groups)
-    .enter()
-    .append('row')
-    .style('padding-top','15px');
+  // var key_divs = d3.select('#res_color_key_div')
+  //   .selectAll('row')
+  //   .data(all_groups)
+  //   .enter()
+  //   .append('row')
+  //   .style('padding-top','15px');
 
-  // add color 
-  key_divs
-    .append('div')
-    .attr('class','col-xs-2')
-    // get rid of excess padding 
-    .style('padding-left','5px')
-    .style('padding-right','0px')
-    .style('padding-top','1px')
-    .append('div')
-    .style('width','12px')
-    .style('height','12px')
-    .style('background-color', function(d){
-      return params.class_colors.row[d];
-    })
+  // // add color 
+  // key_divs
+  //   .append('div')
+  //   .attr('class','col-xs-2')
+  //   // get rid of excess padding 
+  //   .style('padding-left','5px')
+  //   .style('padding-right','0px')
+  //   .style('padding-top','1px')
+  //   .append('div')
+  //   .style('width','12px')
+  //   .style('height','12px')
+  //   .style('background-color', function(d){
+  //     return params.class_colors.row[d];
+  //   })
 
-  // add names 
-  key_divs
-    .append('div')
-    .attr('class','col-xs-10 res_names_in_key')
-    .append('text')
-    .text(function(d){ 
-      var inst_res = d.replace(/_/g, ' ');
-      return inst_res ;
-    })
+  // // add names 
+  // key_divs
+  //   .append('div')
+  //   .attr('class','col-xs-10 res_names_in_key')
+  //   .append('text')
+  //   .text(function(d){ 
+  //     var inst_res = d.replace(/_/g, ' ');
+  //     return inst_res ;
+  //   })
 
   // generate a list of genes for auto complete 
   ////////////////////////////////////////////////
@@ -1672,11 +1672,11 @@ function apply_transformation( trans_x, trans_y, zoom_x, zoom_y ){
 
   // enrichment bars 
   ///////////////////////
-  d3.selectAll('.col_bars')
-    // column is rotated - effectively width and height are switched
-    .attr('width', function(d,i) { 
-      return params.bar_scale_col( d.value ) / (zoom_x) ; 
-    });
+  // d3.selectAll('.col_bars')
+  //   // column is rotated - effectively width and height are switched
+  //   .attr('width', function(d,i) { 
+  //     return params.bar_scale_col( d.value ) / (zoom_x) ; 
+  //   });
 
 
 
@@ -1890,13 +1890,13 @@ function two_translate_zoom( pan_dx, pan_dy, fin_zoom){
     // reduce the height of the enrichment bars based on the zoom applied 
     // recalculate the height and divide by the zooming scale 
     // col_label_obj.select('rect')
-    d3.selectAll('.col_bars')
-      .transition()
-      .duration(search_duration)
-      // column is rotated - effectively width and height are switched
-      .attr('width', function(d,i) { 
-        return params.bar_scale_col( d.value ) / (zoom_x) ; 
-      });
+    // d3.selectAll('.col_bars')
+    //   .transition()
+    //   .duration(search_duration)
+    //   // column is rotated - effectively width and height are switched
+    //   .attr('width', function(d,i) { 
+    //     return params.bar_scale_col( d.value ) / (zoom_x) ; 
+    //   });
   };
 
 };
