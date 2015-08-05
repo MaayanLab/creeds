@@ -142,6 +142,20 @@ def make_gene_sig_clustergram():
 # @app.route('/sigSigClustergram', methods=['GET', 'POST'])
 # @crossdomain(origin='*')
 ## this one shoud probably be pre-computed
+@app.route(ENTER_POINT + '/appUrl', methods=['GET'])
+@crossdomain(origin='*')
+def get_link():
+	if request.method == 'GET':
+		uid = request.args.get('id', '')
+		app_name = request.args.get('app', '')
+		url = None
+		if uid in ALL_UIDS:
+			sig = DBSignature(uid) # Signature instance
+			if app_name == 'paea':
+				url = sig.post_to_paea(cutoff=2000)
+			elif app_name == 'cds2':
+				url = sig.post_to_cds2(cutoff=2000)
+		return json.dumps(url)
 
 
 if __name__ == '__main__':

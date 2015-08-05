@@ -64,7 +64,7 @@ var DotView = Backbone.View.extend({
 		d3.select(this.nodeInfoSelector)
 			.append("div")
 			.attr('class', 'row')
-			.style("height", '600px')
+			.style("height", '650px')
 			.style("overflow", "auto")
 		
 		var div = d3.select(this.nodeInfoSelector + ' div'); // the container to put node info
@@ -94,7 +94,12 @@ var DotView = Backbone.View.extend({
 	    	var key = allKeys[i]
 	    	if(typeof(key) === 'string'){
 		    	dl.append('dt').text(key);
-		    	dl.append('dd').text(info[key]);	    		
+		    	if (key === 'pert_ids' || key === 'ctrl_ids' || key === 'smiles'){
+		    		dl.append('dd').append('textarea').text(info[key]);
+		    	} else {
+		    		dl.append('dd').text(info[key]);
+		    	}
+		    	
 	    	} else { // add hyperlinks for key that is object
 	    		var field = Object.keys(key)[0];
 	    		if (field === 'disease_name') {
@@ -156,6 +161,25 @@ var DotView = Backbone.View.extend({
 				var docStr = ['down-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
 				enrich({list: dnGeneStr, description: docStr, popup: true});
 			});
+
+		// buttons for PAEA and L1000CDS2
+		var divBottom = div.append('div').attr('class', 'col-xs-12');
+		var id = info.id;
+		$.getJSON('/geosigs/appUrl', {id: id, app: 'cds2'}, function(url){
+			divBottom.append('a')
+			.attr('target','_blank')
+			.attr('href',url)
+			.append('button')
+			.text('L1000CDS2')
+		});
+		
+		$.getJSON('/geosigs/appUrl', {id: id, app: 'paea'}, function(url){
+			divBottom.append('a')
+			.attr('target','_blank')
+			.attr('href',url)
+			.append('button')
+			.text('PAEA')
+		});
 
 	},
 

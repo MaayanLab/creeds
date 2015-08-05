@@ -3,13 +3,13 @@
 	<div class="row">
 		<div class="col-sm-3">
 			<ul class="nav nav-tabs">
-				<li role="presentation" class="active"><a data-toggle="tab" href="#tab1">Search signatures</a></li>
+				<li role="presentation" class="active"><a data-toggle="tab" href="#tab1">Search</a></li>
 				<li role="presentation"><a data-toggle="tab" href="#tab2">Find similar signatures</a></li>
 			</ul>
 
 			<div class="tab-content">
 				<div id="tab1" class="tab-pane fade in active">
-					<h3>Search signature connections by name</h3>
+					<h3>Search signatures by name</h3>
 					<p>Signatures can be searched by the gene symbols of genes being perturbed, name of diseases for disease signatures, and name of drugs for drug perturbation signatures.</p>
 					<p>Examples: TP53, Breast cancer, Imatinib.</p>
 
@@ -147,7 +147,7 @@ $("#geneSearchEgBtn").click(function(){
 				dataType: 'json',
 				success: function(results){
 					// display result
-
+					
 					displayGeneSearchResult(results);
 					submitSelectedBtn();
 				},
@@ -164,6 +164,14 @@ $("#geneSearchEgBtn").click(function(){
 
 
 function displayGeneSearchResult (results) { // to display results using gene list search
+	// prettify the results for displaying
+	results = _.map(results, function(obj){
+		if (obj.id.startsWith('dz:')) {
+			obj.id = 'disease:' + obj.id.split(':')[1];
+		}
+		return obj;
+	});
+
 	d3.select('#searchResultsInner').remove();
 	d3.select("#searchResults").append('div')
 		.attr('id', 'searchResultsInner');	
