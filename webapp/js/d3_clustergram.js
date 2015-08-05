@@ -930,7 +930,7 @@ function make_d3_clustergram(args) {
   //   .domain([0, 1])
   //   .range([0, params.norm_label.width.col ]); 
 
-  // append enrichment bars  
+  // // append enrichment bars  
   // col_label_click
   //   .append('rect')
   //   .attr('class','col_bars')
@@ -1300,9 +1300,9 @@ function highlight_resource_types(params){
   // res_color_key['TF group 3'] = res_hexcodes[2];
   // res_color_key['TF group 4'] = res_hexcodes[3];
 
-  // add color key 
-  ////////////////////
-  // add keys 
+  // // add color key 
+  // ////////////////////
+  // // add keys 
   // var key_divs = d3.select('#res_color_key_div')
   //   .selectAll('row')
   //   .data(all_groups)
@@ -1366,50 +1366,12 @@ function row_function(row_data) {
     .selectAll('g')
     .data( row_data )
     .enter()
-    .append('g')
+    // .append('g')
+    .append("rect")
     .attr('class','tile')
     .attr('transform', function(d){
       return 'translate(' + params.x_scale(d.pos_x) + ',0)'
     })
-
-
-  // add callback function to tile group - if one is supplied by the user 
-  if ( typeof params.click_tile =='function' ) {
-    tile
-      .on('click',function(d,i){
-        // export row/col name and value from tile 
-        var tile_info = {};
-        tile_info.row = d3_clustergram.network_data.row_nodes[d.pos_y].name;
-        tile_info.col = d3_clustergram.network_data.col_nodes[d.pos_x].name;
-        tile_info.value = d.value;
-        // run the user supplied callback function 
-        params.click_tile(tile_info);
-      });
-  };
-
-  // add mouseover highlight event to group 
-  tile
-    .on("mouseover", function(p) {
-      // highlight row - set text to active if 
-      d3.selectAll(".row_label_text text")
-        .classed("active", function(d, i) { 
-          return i == p.pos_y; 
-        });
-      d3.selectAll(".col_label_text text")
-        .classed("active", function(d, i) { 
-          return i == p.pos_x; 
-        });
-    })
-    .on("mouseout", function mouseout() {
-      d3.selectAll("text").classed("active", false);
-    })
-    .attr('title', function(d){
-      return d.value;
-    });
-
-  // append tile rect 
-  tile
-    .append("rect")
     .attr("width",  params.x_scale.rangeBand())
     .attr("height", params.y_scale.rangeBand())
     .style("fill-opacity", function(d) { 
@@ -1422,27 +1384,77 @@ function row_function(row_data) {
       return d.value > 0 ? '#FF0000' : '#1C86EE' ;
     } );
 
-  // append evidence highlighting - black rects 
-  //!! only do this if there is evidence 
-  tile 
-    .append('rect')
-    .attr("width",  params.x_scale.rangeBand()*0.80)
-    .attr("height", params.y_scale.rangeBand()*0.80)
-    .attr('class','highlighting_rect')
-    .attr('transform','translate('+ params.x_scale.rangeBand()/10 + ' , '+ params.y_scale.rangeBand()/10 + ')')
-    .attr('class', 'cell_highlight')
-    .attr('stroke','black')
-    .attr('stroke-width',1.0)
-    .attr('fill-opacity', 0.0)
-    .attr('stroke-opacity', function(d){
-      // initialize opacity to 0 
-      var inst_opacity = 0;
-      // set opacity to 1 if there is evidence 
-      if (d.highlight == 1){
-        inst_opacity= 1;
-      }
-      return inst_opacity
-    }); 
+
+  // // add callback function to tile group - if one is supplied by the user 
+  // if ( typeof params.click_tile =='function' ) {
+  //   tile
+  //     .on('click',function(d,i){
+  //       // export row/col name and value from tile 
+  //       var tile_info = {};
+  //       tile_info.row = d3_clustergram.network_data.row_nodes[d.pos_y].name;
+  //       tile_info.col = d3_clustergram.network_data.col_nodes[d.pos_x].name;
+  //       tile_info.value = d.value;
+  //       // run the user supplied callback function 
+  //       params.click_tile(tile_info);
+  //     });
+  // };
+
+  // // add mouseover highlight event to group 
+  // tile
+  //   .on("mouseover", function(p) {
+  //     // highlight row - set text to active if 
+  //     d3.selectAll(".row_label_text text")
+  //       .classed("active", function(d, i) { 
+  //         return i == p.pos_y; 
+  //       });
+  //     d3.selectAll(".col_label_text text")
+  //       .classed("active", function(d, i) { 
+  //         return i == p.pos_x; 
+  //       });
+  //   })
+  //   .on("mouseout", function mouseout() {
+  //     d3.selectAll("text").classed("active", false);
+  //   })
+  //   .attr('title', function(d){
+  //     return d.value;
+  //   });
+
+  // // append tile rect 
+  // tile
+  //   .append("rect")
+  //   .attr("width",  params.x_scale.rangeBand())
+  //   .attr("height", params.y_scale.rangeBand())
+  //   .style("fill-opacity", function(d) { 
+  //     // calculate output opacity using the opacity scale 
+  //     var output_opacity = params.opacity_scale( Math.abs(d.value) );
+  //     return output_opacity ; 
+  //   }) 
+  //   // switch the color based on up/dn value 
+  //   .style('fill', function(d) { 
+  //     return d.value > 0 ? '#FF0000' : '#1C86EE' ;
+  //   } );
+
+  // // append evidence highlighting - black rects 
+  // //!! only do this if there is evidence 
+  // tile 
+  //   .append('rect')
+  //   .attr("width",  params.x_scale.rangeBand()*0.80)
+  //   .attr("height", params.y_scale.rangeBand()*0.80)
+  //   .attr('class','highlighting_rect')
+  //   .attr('transform','translate('+ params.x_scale.rangeBand()/10 + ' , '+ params.y_scale.rangeBand()/10 + ')')
+  //   .attr('class', 'cell_highlight')
+  //   .attr('stroke','black')
+  //   .attr('stroke-width',1.0)
+  //   .attr('fill-opacity', 0.0)
+  //   .attr('stroke-opacity', function(d){
+  //     // initialize opacity to 0 
+  //     var inst_opacity = 0;
+  //     // set opacity to 1 if there is evidence 
+  //     if (d.highlight == 1){
+  //       inst_opacity= 1;
+  //     }
+  //     return inst_opacity
+  //   }); 
 
 };
 
