@@ -136,20 +136,24 @@ def read_sam_from_file(fn, d_prefix_id_idx, cutoff=-2):
 	## return a sam whose index are arbituray id encoded in d_prefix_id_idx
 	mat = {}
 	c = 0
+	d_idx_prefix_id_sub = {}
 	with gzip.open(fn, 'rb') as f:
 		for line in f:
 			c += 1
 			sl = line.strip().split('\t')
 			if sl[0] not in prefix_ids_exclude and sl[1] not in prefix_ids_exclude:
-				i, j = d_prefix_id_idx[sl[0]], d_prefix_id_idx[sl[1]]
-				score = float(sl[2])
-				if score > cutoff:
-					mat[i, j] = score
+				if sl[0] in d_prefix_id_idx and sl[1] in d_prefix_id_idx:
+					i, j = d_prefix_id_idx[sl[0]], d_prefix_id_idx[sl[1]]
+					d_idx_prefix_id_sub[i] = sl[0]
+					d_idx_prefix_id_sub[j] = sl[1]					
+					score = float(sl[2])
+					if score > cutoff:
+						mat[i, j] = score
 				if c % 2000000 == 0:
 					print c
 	fn = fn.split('/')[-1]
 	print 'finished reading %s' % fn
-	return SparseAdjacencyMat(mat, fn)
+	return SparseAdjacencyMat(mat, fn), d_idx_prefix_id_sub
 
 
 def np2matrix(mat):
@@ -163,18 +167,16 @@ def rmatrix2np(rmat):
 	## convert an R matrix to numpy array
 	return np.array(rmat) - 1 # R is 1 indexed, python is 0 indexed
 
-def make_directed_json_graph(fn, depth=4, outfn=None):
-	sam = read_sam_from_file(fn, d_prefix_id_idx)
+
+def _cluster(fn):
+	## read a fn into sam, perform HC, and convert to Graph
+	sam, d_idx_prefix_id_sub = read_sam_from_file(fn, d_prefix_id_idx)
 	adj_matrix = sam.to_csr_matrix().toarray()
 	del sam
 	adj_matrix = np2matrix(adj_matrix)
 	edgelist = hc2network(adj_matrix, 'cosine', 'average')
 	edgelist = rmatrix2np(edgelist) # convert to numpy array
 	print 'finished generating edgelist'
-
-	prefix_ids = prefix_ids_include # ordered unique prefix_ids
-	all_idx = set(d_prefix_id_idx.values())
-
 	## convert the edgelist to DiGraph
 	G = nx.DiGraph()
 	for n1, n2 in edgelist:
@@ -187,6 +189,15 @@ def make_directed_json_graph(fn, depth=4, outfn=None):
 			root = n
 			break
 	print 'root found:', root
+	return G, root, d_idx_prefix_id_sub
+
+
+def make_directed_json_graph(fn, depth=4, outfn=None):
+	prefix_ids = prefix_ids_include # ordered unique prefix_ids
+	all_idx = set(d_prefix_id_idx.values())
+
+	G, root = _cluster(fn)
+
 	## trim internal branches to shorten the depth of the dendrogram
 	G_trimed = nx.DiGraph()
 	for leaf in all_idx: # all the leafs 
@@ -212,23 +223,92 @@ def make_directed_json_graph(fn, depth=4, outfn=None):
 	json.dump(graph_data, open(outfn, 'wb'))
 	return
 
-def make_directed_json_graph_cat(outfn=None):
-	# make directed graph based on category
-	prefix_ids = prefix_ids_include
-	G = nx.DiGraph()
-	# for i in range(len(umls_ids_kept)):
-	for prefix_id in prefix_ids:
-		label = d_prefix_id_label[prefix_id]
-		category = prefix_id.split(':')[0]
-		color = d_prefix_id_color[prefix_id]
-		size = d_prefix_id_size[prefix_id]
-		G.add_path(['root', category, prefix_id])
 
-		G.node[prefix_id]['label'] = label
-		G.node[prefix_id]['color'] = color
-		G.node[prefix_id]['size'] = size
-	graph_data = json_graph.tree_data(G,root='root')
+def make_directed_json_graph_cat(fn_gene, fn_dz, fn_drug, outfn=None):
+	# make directed graph based on category
+	depth = 4
+	prefix_ids = prefix_ids_include # ordered unique prefix_ids
+	all_idx = set(d_prefix_id_idx.values())
+
+	G_trimed = nx.DiGraph()
+	G, root, d_idx_prefix_id_sub = _cluster(fn_gene)
+
+	## trim internal branches to shorten the depth of the dendrogram
+	for leaf in d_idx_prefix_id_sub:
+		leaf_prefix_id = d_idx_prefix_id_sub[leaf]
+
+		category = leaf_prefix_id.split(':')[0]
+		shortest_path = nx.shortest_path(G, root, leaf)
+		leaf_label = d_prefix_id_label[leaf_prefix_id]
+		leaf_color = d_prefix_id_color[leaf_prefix_id]
+		leaf_size  = d_prefix_id_size[leaf_prefix_id]
+
+		if len(shortest_path) > depth:
+			shortest_path = shortest_path[0:depth-1] + [leaf_prefix_id] # remove intermediate nodes
+		else: # want the id of leaf node to be prefix_id
+			shortest_path[-1] = leaf_prefix_id
+
+		shortest_path = ['gene_root'] + ['1:%s' % node for node in shortest_path[1:-1]] + [shortest_path[-1]]
+		G_trimed.add_path(shortest_path)
+		G_trimed.node[leaf_prefix_id]['label'] = leaf_label
+		G_trimed.node[leaf_prefix_id]['color'] = leaf_color
+		G_trimed.node[leaf_prefix_id]['size'] = leaf_size		
+	del G
+
+	G, root, d_idx_prefix_id_sub = _cluster(fn_dz)
+
+	## trim internal branches to shorten the depth of the dendrogram
+	for leaf in d_idx_prefix_id_sub:
+		leaf_prefix_id = d_idx_prefix_id_sub[leaf]
+
+		category = leaf_prefix_id.split(':')[0]
+		shortest_path = nx.shortest_path(G, root, leaf)
+		leaf_label = d_prefix_id_label[leaf_prefix_id]
+		leaf_color = d_prefix_id_color[leaf_prefix_id]
+		leaf_size  = d_prefix_id_size[leaf_prefix_id]
+
+		if len(shortest_path) > depth:
+			shortest_path = shortest_path[0:depth-1] + [leaf_prefix_id] # remove intermediate nodes
+		else: # want the id of leaf node to be prefix_id
+			shortest_path[-1] = leaf_prefix_id
+
+		shortest_path = ['dz_root'] + ['2:%s' % node for node in shortest_path[1:-1]] + [shortest_path[-1]]
+		G_trimed.add_path(shortest_path)
+		G_trimed.node[leaf_prefix_id]['label'] = leaf_label
+		G_trimed.node[leaf_prefix_id]['color'] = leaf_color
+		G_trimed.node[leaf_prefix_id]['size'] = leaf_size		
+	del G
+
+	G, root,d_idx_prefix_id_sub = _cluster(fn_drug)
+	## trim internal branches to shorten the depth of the dendrogram
+	for leaf in d_idx_prefix_id_sub:
+		leaf_prefix_id = d_idx_prefix_id_sub[leaf]
+
+		category = leaf_prefix_id.split(':')[0]
+		shortest_path = nx.shortest_path(G, root, leaf)
+		leaf_label = d_prefix_id_label[leaf_prefix_id]
+		leaf_color = d_prefix_id_color[leaf_prefix_id]
+		leaf_size  = d_prefix_id_size[leaf_prefix_id]
+
+		if len(shortest_path) > depth:
+			shortest_path = shortest_path[0:depth-1] + [leaf_prefix_id] # remove intermediate nodes
+		else: # want the id of leaf node to be prefix_id
+			shortest_path[-1] = leaf_prefix_id
+
+		shortest_path = ['drug_root'] + ['3:%s' % node for node in shortest_path[1:-1]] + [shortest_path[-1]]
+		G_trimed.add_path(shortest_path)
+		G_trimed.node[leaf_prefix_id]['label'] = leaf_label
+		G_trimed.node[leaf_prefix_id]['color'] = leaf_color
+		G_trimed.node[leaf_prefix_id]['size'] = leaf_size		
+	del G
+
+	G_trimed.add_edge('root', 'gene_root')
+	G_trimed.add_edge('root', 'dz_root')
+	G_trimed.add_edge('root', 'drug_root')
+	print G_trimed.number_of_edges(), G_trimed.number_of_nodes()
+	graph_data = json_graph.tree_data(G_trimed,root='root')
 	json.dump(graph_data, open(outfn, 'wb'))
+
 	return
 
 ### testing
@@ -239,9 +319,12 @@ def make_directed_json_graph_cat(outfn=None):
 # print np.array(edgelist)
 
 ### making json graphs
-make_directed_json_graph('signed_jaccard_4066_unique_entries.txt.gz', 
-	depth=12, outfn='signature_digraph_depth12.json')
+# make_directed_json_graph('signed_jaccard_4066_unique_entries.txt.gz', 
+# 	depth=12, outfn='signature_digraph_depth12.json')
 
-make_directed_json_graph_cat(outfn='signature_digraph_cat.json')
+make_directed_json_graph_cat('signed_jaccard_2460_gene_unique_entries.txt.gz',
+	'signed_jaccard_839_dz_unique_entries.txt.gz',
+	'signed_jaccard_906_drug_unique_entries.txt.gz',
+	outfn='signature_digraph_cat.json')
 
 # print d_prefix_id_idx['gene:2165']
