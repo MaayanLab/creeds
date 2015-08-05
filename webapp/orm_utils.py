@@ -70,11 +70,19 @@ def find_name(doc):
 	uid = doc['id']
 	prefix = uid.split(':')[0]
 	if prefix == 'gene':
-		return doc['hs_gene_symbol']
+		if doc['organism'] == 'human':
+			name = doc['hs_gene_symbol']
+			if name is None:
+				name = doc['mm_gene_symbol']
+		else:
+			name = doc['mm_gene_symbol']
+			if name is None:
+				name = doc['hs_gene_symbol']
 	elif prefix == 'dz':
-		return doc['disease_name']
+		name = doc['disease_name']
 	else:
-		return doc['drug_name']
+		name = doc['drug_name']
+	return name
 
 
 class Signature(object):
@@ -187,6 +195,37 @@ class DBSignature(Signature):
 			shareId = resCD['shareId']
 			cds2_url = 'http://amp.pharm.mssm.edu/L1000CDS2/#/result/' + shareId
 		return cds2_url
+
+	def get_url(self):
+		## get the url of the signature's gene, disease or drug
+		url = ''
+		meta = self.meta
+		if meta['id'].startswith('gene:'):
+			organism = meta['organism']
+			if organism == 'human':
+				hs_gene_symbol = meta['hs_gene_symbol']
+				url = 'http://www.genecards.org/cgi-bin/carddisp.pl?gene=%s' % hs_gene_symbol
+			else:
+				mm_gene_symbol = self.meta['mm_gene_symbol']
+				url = 'http://www.informatics.jax.org/searchtool/Search.do?query=%s' % mm_gene_symbol
+		elif meta['id'].startswith('dz:'):
+			do_id = meta.get('do_id', None)
+			if do_id is not None:
+				url = 'http://disease-ontology.org/term/%s' % do_id
+			else:
+				url = 'https://www.google.com/search?q=%s' % self.name.replace(' ', '+')
+		else:
+			db_id = meta.get('drugbank_id', None)
+			pubchem_cid = meta.get('pubchem_cid', None)
+			if db_id is not None:
+				url = 'http://www.drugbank.ca/drugs/%s' % db_id
+			elif pubchem_cid is not None:
+				url = 'https://pubchem.ncbi.nlm.nih.gov/compound/%s' % pubchem_cid
+			else:
+				url = 'https://www.google.com/search?q=%s' % self.name.replace(' ', '+')
+		return url	
+
+
 
 def get_matrix(uids, genes, na_val=0):
 	## retrieve a matrix based on uids of signatures and genes

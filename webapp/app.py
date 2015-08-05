@@ -92,10 +92,14 @@ def search():
 		uid_data = [] # a list of meta data {} sorted by score
 		for uid, score in sorted(d_uid_score.items(), key=lambda x:x[1]): # small to large signed_jaccard
 			projection ={'geo_id':True, 'id':True, '_id':False,
-				'hs_gene_symbol':True, 'disease_name':True, 'drug_name':True}
+				'hs_gene_symbol':True, 'mm_gene_symbol':True, 'organism':True, 
+				'disease_name':True, 'drug_name':True, 'do_id':True,
+				'drugbank_id':True, 'pubchem_cid':True}
 			sig_ = DBSignature(uid, projection=projection)
-			meta = sig_.meta
-			meta['name'] = sig_.name
+			meta = {}
+			meta['id'] = sig_.meta['id']
+			meta['geo_id'] = sig_.meta['geo_id']
+			meta['name'] = [sig_.name, sig_.get_url()] # [name, url]
 			score = float('%.5f'%score)
 			meta['signed_jaccard'] = score
 			uid_data.append(meta)
@@ -145,6 +149,7 @@ def make_gene_sig_clustergram():
 @app.route(ENTER_POINT + '/appUrl', methods=['GET'])
 @crossdomain(origin='*')
 def get_link():
+	## to get L1000CDS2 and PAEA url for a DBSignature instance in DB 
 	if request.method == 'GET':
 		uid = request.args.get('id', '')
 		app_name = request.args.get('app', '')
