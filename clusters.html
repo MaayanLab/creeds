@@ -2,40 +2,21 @@
   <!-- clust instruct container -->
   <div id='clust_instruct_container' >
 
-  <h1 id='viz_website_title'>D3 Clustergram</h1>
-
-  <div id='viz_gmt_labels'></div>
+  <h1 id='viz_website_title'>Signature clusters</h1>
 
   <div id='title_viz_instruct_text'>About:</div>
-  <div class='viz_instruct_text'> Zoom into the clustergram using scroll. Reorder the clustergram using the toggle buttons or by clicking rows or columns. Double-click to programatically reset zoom/panning.  Search for a gene to zoom into the matrix. Change the size of the row/colum groups by moving the sliders. Click on row/column groups. See README for more information.</div>
-  <div class='viz_instruct_text'> D3 Clustergram is developed by Nick Fernandez at the <a href="http://icahn.mssm.edu/">Icahn School of Medicine at Mount Sinai</a> in the <a href="http://icahn.mssm.edu/research/labs/maayan-laboratory">Ma'ayan Lab</a> a <a href="http://lincs-dcic.org/">DCIC BD2K-LINCS</a> center. </div>
-
-    <!-- toggle clustergram order -->
-    <div id='toggle_order' class="btn-group" data-toggle="buttons" >
-      <label class="btn btn-primary active order_name" onclick="d3_clustergram.reorder_clust_rank('clust');">
-        <input type="radio" name="options" id="clust_button" autocomplete="off" checked > Cluster
-      </label>
-      <label class="btn btn-primary order_name" onclick="d3_clustergram.reorder_clust_rank('rank');">
-        <input type="radio" name="options" id="rank_button" autocomplete="off" > Rank
-      </label>
-      <label class="btn btn-primary order_name" onclick="d3_clustergram.reorder_clust_rank('class');">
-        <input type="radio" name="options" id="class_button" autocomplete="off" > Class
-      </label>
-    </div>
+  <div class='viz_instruct_text'> Zoom into the clustergram using scroll. Reorder the clustergram using the toggle buttons or by clicking rows or columns. Double-click to programatically reset zoom/panning.  Search for a signatures to zoom into the matrix. Change the size of the row/colum groups by moving the sliders. Click on row/column groups.
+  </div>
 
     <!-- input box for gene search -->
     <div id='gene_search_container' class='row'>
-        <input id='gene_search_box' type="text" class="form-control" placeholder="Input Gene" aria-describedby="sizing-addon2">
+        <input id='gene_search_box' type="text" class="form-control" placeholder="Input signature name" aria-describedby="sizing-addon2">
         <div id='gene_search_button' class="btn-group" data-toggle="buttons" >
           <label id='submit_gene_button' class="btn btn-primary active " onclick="d3_clustergram.find_gene_in_clust();">
             <input type="radio" name="options" id="" autocomplete="off" checked > Search
           </label>
         </div>
     </div>
-    <p>set column group size</p>
-    <div id="slider_col"></div>
-    <p>set column group size</p>
-    <div id="slider_row"></div>
 
   </div>
   <!-- end clust instruct container -->
@@ -75,8 +56,8 @@ d3.json('data/signed_jaccard_subset_clustergram_259.json', function(network_data
   var arguments_obj = {
     'network_data': network_data,
     'svg_div_id': 'svg_div',
-    'row_label':'Row-Data-Name',
-    'col_label':'Column-Data-Name',
+    'row_label':'Signatures',
+    'col_label':'Signatures',
     'outer_margins': outer_margins,
     'input_domain':0.2,
     'click_tile': click_tile_callback,

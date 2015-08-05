@@ -231,7 +231,8 @@ def get_matrix(uids, genes, na_val=0):
 	## retrieve a matrix based on uids of signatures and genes
 	mat = np.zeros((len(genes), len(uids)))
 	projection ={'id':True, '_id':False, 'chdir': True,
-		'hs_gene_symbol':True, 'disease_name':True, 'drug_name':True}
+		'hs_gene_symbol':True, 'mm_gene_symbol':True, 'organism':True,
+		'disease_name':True, 'drug_name':True}
 
 	for j, uid in enumerate(uids):
 		sig = DBSignature(uid, projection=projection)
