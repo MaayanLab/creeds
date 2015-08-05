@@ -54,6 +54,7 @@
 </div>
 
 <script src="js/typeahead.bundle.min.js"></script>
+<script src="js/jquery.blockUI.js"></script>
 <script>
 var exampleGenes = {
 	upGenes: ['KIAA0907','KDM5A','CDC25A','EGR1','GADD45B','RELB','TERF2IP','SMNDC1','TICAM1','NFKB2','RGS2','NCOA3','ICAM1','TEX10','CNOT4','ARID4B','CLPX','CHIC2','CXCL2','FBXO11','MTF2','CDK2','DNTTIP2','GADD45A','GOLT1B','POLR2K','NFKBIE','GABPB1','ECD','PHKG2','RAD9A','NET1','KIAA0753','EZH2','NRAS','ATP6V0B','CDK7','CCNH','SENP6','TIPARP','FOS','ARPP19','TFAP2A','KDM5B','NPC1','TP53BP2','NUSAP1'],
@@ -136,7 +137,15 @@ $("#geneSearchEgBtn").click(function(){
 		var upGenes = $('#upGenes').val();
 		var dnGenes = $('#dnGenes').val();
 		if (upGenes != '' && dnGenes !='') {
-
+			$.blockUI({ css: { 
+	            border: 'none', 
+	            padding: '15px', 
+	            backgroundColor: '#000', 
+	            '-webkit-border-radius': '10px', 
+	            '-moz-border-radius': '10px', 
+	            opacity: .5, 
+	            color: '#fff' 
+	        } });
 			var postPayLoad = {"up_genes": upGenes.split('\n'), "dn_genes": dnGenes.split('\n')}
 			$.ajax({
 
@@ -147,7 +156,7 @@ $("#geneSearchEgBtn").click(function(){
 				dataType: 'json',
 				success: function(results){
 					// display result
-					
+					$.unblockUI();
 					displayGeneSearchResult(results);
 					submitSelectedBtn();
 				},
@@ -176,7 +185,7 @@ function displayGeneSearchResult (results) { // to display results using gene li
 	d3.select("#searchResults").append('div')
 		.attr('id', 'searchResultsInner');	
 
-	headerLabels = ['id', 'name', 'geo_id', 'signed_jaccard']
+	headerLabels = ['ID', 'Name', 'GEO ID', 'Signed Jaccard Index ']
 	var table = $('<table>').addClass('table table-striped table-hover');
 
 	var thead = $('<thead>');
@@ -193,14 +202,26 @@ function displayGeneSearchResult (results) { // to display results using gene li
 
 	uids = [];
 
+	var columnsDef = [
+		{ "data": "id"},
+	    {
+	    	"data": "name", 
+			"render": function(data, type, full, meta){
+				return '<a target="_blank" href="'+data[1]+'">'+data[0]+'</a>';
+			}
+		},
+	    { 
+	    	"data": "geo_id",
+	    	"render": function(data, type, full, meta){
+	    		return '<a target="_blank" href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='+data+'">'+data+'</a>';
+	    	}
+	    },
+		{ "data": "signed_jaccard" },
+	];
+
 	rctable = table.dataTable({
 		"data": results,
-		"columns": [
-		{ "data": "id" },
-		{ "data": "name" },
-		{ "data": "geo_id" },
-		{ "data": "signed_jaccard" },
-		],
+		"columns": columnsDef,
 		"order": [[3, 'desc']],
 		"deferRender": true,
 		"sDom": 'T<"clear">lfrtip',
@@ -230,6 +251,10 @@ function displayGeneSearchResult (results) { // to display results using gene li
             		uids.splice(index, 1);
             	}
             },
+        },
+        "fnInitComplete": function(oSettings, json){ //DataTables has finished its initialisation.
+        	var infoIcon = $('<i title="Leverages the effect of directions between a pair of gene expression signatures. It has a range of [-1,1] where 1 represent completely same signatures and -1 represent signatures of reverse effects and 0 represent unrelated signatures." data-toggle="tooltip" data-placement="right" class="glyphicon glyphicon-info-sign"></i>');
+        	$('th').last().append(infoIcon);
         },
     });
 }
