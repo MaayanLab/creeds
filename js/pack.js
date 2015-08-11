@@ -116,6 +116,54 @@ var DotView = Backbone.View.extend({
 	    }
 
 	    var fmt = d3.format(this.formater);
+
+	    // make icons for Enrichr, L1000CDS2 and PAEA
+	    var divIcons = div.append('div').attr('class', 'col-xs-12');
+	    divIcons.append('h5').text('External links:')
+	    var dl = divIcons.append('dl').attr('class', 'dl-horizontal');
+
+	    var iconSize = '15px'
+
+	    dl.append('dt').text('Enrichr for up-genes')
+	    dl.append('dd').append('img')
+	    	.style('cursor', 'pointer')
+	    	.attr('src', 'img/enrichr.png').attr('width',iconSize)
+			.on('click', function(){
+				var upGeneStr = _.map(info['up_genes'], function(d){ return d[0]; });
+				upGeneStr = upGeneStr.join('\n');
+				var docStr = ['down-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
+				enrich({list: upGeneStr, description: docStr, popup: true});
+			});
+
+	    dl.append('dt').text('Enrichr for down-genes')
+	    dl.append('dd').append('img')
+	    	.style('cursor', 'pointer')
+	    	.attr('src', 'img/enrichr.png').attr('width',iconSize)
+			.on('click', function(){
+				var dnGeneStr = _.map(info['down_genes'], function(d){ return d[0]; });
+				dnGeneStr = dnGeneStr.join('\n');
+				var docStr = ['down-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
+				enrich({list: dnGeneStr, description: docStr, popup: true});
+			});
+
+		var id = info.id;
+		$.getJSON('/EGES4C/appUrl', {id: id, app: 'cds2'}, function(url){
+			dl.append('dt').text('L1000CDS2')
+			dl.append('dd')
+				.append('a')
+				.attr('target','_blank')
+				.attr('href',url)
+				.append('img').attr('src', 'img/l1000cds2.png').attr('width',iconSize)
+		});
+
+		$.getJSON('/EGES4C/appUrl', {id: id, app: 'paea'}, function(url){
+			dl.append('dt').text('PAEA')
+			dl.append('dd').append('a')
+				.attr('target','_blank')
+				.attr('href',url)			
+				.append('img').attr('src', 'img/paea.png').attr('width',iconSize)
+		});
+
 	    // make table for up/down genes
 	    var divLeft = div.append('div').attr('class', 'col-xs-6'); // column left
 	    var divUp = divLeft.append('div').style('overflow', 'auto').style('height', '350px');
@@ -140,13 +188,13 @@ var DotView = Backbone.View.extend({
 		trs.append('td').text(function(d){ return d[0]; });
 		trs.append('td').text(function(d){ return fmt(d[1]); });
 
-		divLeft.append('button').text('Enrichr')
-			.on('click', function(){
-				var upGeneStr = _.map(info['up_genes'], function(d){ return d[0]; });
-				upGeneStr = upGeneStr.join('\n');
-				var docStr = ['up-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
-				enrich({list: upGeneStr, description: docStr, popup: true});	
-			});
+		// divLeft.append('button').text('Enrichr')
+		// 	.on('click', function(){
+		// 		var upGeneStr = _.map(info['up_genes'], function(d){ return d[0]; });
+		// 		upGeneStr = upGeneStr.join('\n');
+		// 		var docStr = ['up-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
+		// 		enrich({list: upGeneStr, description: docStr, popup: true});	
+		// 	});
 
 		var divRight = div.append('div').attr('class', 'col-xs-6'); // column right
 		var divDn = divRight.append('div').style('overflow', 'auto').style('height', '350px');
@@ -170,32 +218,16 @@ var DotView = Backbone.View.extend({
 		trs.append('td').text(function(d){ return d[0]; });
 		trs.append('td').text(function(d){ return fmt(d[1]); });
 
-		divRight.append('button').text('Enrichr')
-			.on('click', function(){
-				var dnGeneStr = _.map(info['down_genes'], function(d){ return d[0]; });
-				dnGeneStr = dnGeneStr.join('\n');
-				var docStr = ['down-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
-				enrich({list: dnGeneStr, description: docStr, popup: true});
-			});
+		// divRight.append('button').text('Enrichr')
+		// 	.on('click', function(){
+		// 		var dnGeneStr = _.map(info['down_genes'], function(d){ return d[0]; });
+		// 		dnGeneStr = dnGeneStr.join('\n');
+		// 		var docStr = ['down-regulated genes', info[specificKeys[0]], info['geo_id']].join(' ');
+		// 		enrich({list: dnGeneStr, description: docStr, popup: true});
+		// 	});
 
 		// buttons for PAEA and L1000CDS2
-		var divBottom = div.append('div').attr('class', 'col-xs-12');
-		var id = info.id;
-		$.getJSON('/EGES4C/appUrl', {id: id, app: 'cds2'}, function(url){
-			divBottom.append('a')
-			.attr('target','_blank')
-			.attr('href',url)
-			.append('button')
-			.text('L1000CDS2')
-		});
-		
-		$.getJSON('/EGES4C/appUrl', {id: id, app: 'paea'}, function(url){
-			divBottom.append('a')
-			.attr('target','_blank')
-			.attr('href',url)
-			.append('button')
-			.text('PAEA')
-		});
+		// var divBottom = div.append('div').attr('class', 'col-xs-12');
 
 	},
 
