@@ -8,6 +8,9 @@ from orm_utils import *
 import clustergram
 from crossdomain import crossdomain
 
+make_all_download_files()
+
+
 ENTER_POINT = '/EGES4C'
 app = Flask(__name__, static_url_path=ENTER_POINT, static_folder=os.getcwd())
 app.debug = True
@@ -160,7 +163,8 @@ def get_link():
 				url = sig.post_to_paea(cutoff=2000)
 			elif app_name == 'cds2':
 				url = sig.post_to_cds2(cutoff=2000)
-		return json.dumps(url)
+		return json.dumps(url)	
+
 
 
 if __name__ == '__main__':

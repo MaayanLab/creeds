@@ -137,6 +137,17 @@ class DBSignature(Signature):
 			json_data['down_genes'] = self.dn_genes
 		return json.dumps(json_data)
 
+	def to_dict(self, format='gmt'):
+		## method to generate files for downloading
+		if format == 'gmt':
+			dict_data = {'name': self.name, 'id': self.meta['id']}			
+		else:
+			dict_data = self.meta
+		dict_data['up_genes'] = self.up_genes
+		dict_data['down_genes'] = self.dn_genes
+		return dict_data
+
+
 	def calc_all_scores(self, nprocs=4, cutoff=600):
 		## calcuated signed jaccard score for this signatures against 
 		## all signatures in the database
@@ -241,6 +252,46 @@ def get_matrix(uids, genes, na_val=0):
 	return mat
 
 
+def make_download_file(category, format, outfn):
+	## to generate files for downloading
+
+	all_sigs = []
+	for uid in ALL_UIDS:
+		if uid.startswith(category):
+			sig = DBSignature(uid) # Signature instance
+			if sig.has_chdir():
+				sig.fill_top_genes(600)
+				all_sigs.append(sig.to_dict(format=format))
+
+	if format == 'gmt':
+		with open (outfn, 'w') as out:
+			for dict_data in all_sigs:
+				line_up = [ dict_data['name'] + '-up', dict_data['id'] ] + map(lambda x:x[0], dict_data['up_genes'])
+				out.write('\t'.join(line_up) + '\n')
+				line_dn = [ dict_data['name'] + '-dn', dict_data['id'] ] + map(lambda x:x[0], dict_data['down_genes'])
+				out.write('\t'.join(line_dn) + '\n')
+	else:
+		json.dump(all_sigs, open(outfn, 'wb'))
+	return len(all_sigs)
+
+def make_all_download_files():
+	file_meta = {}
+	d_fn = {
+		'gene': 'Single_gene_perturbations',
+		'dz': 'Disease_signatures',
+		'drug': 'Single_drug_perturbations',
+	}
+
+	for category in ['gene', 'dz', 'drug']:
+		for format in ['json', 'gmt']:
+			outfn = 'downloads/%s.%s' % (d_fn[category], format)
+			if not os.path.isfile(outfn):
+				num_sigs = make_download_file(category, format, outfn)
+				print num_sigs
+			print category, format, 'finished'
+	return
+
+
 ## test
 # '''
 # gs = DBSignature('gene:24')
@@ -273,4 +324,7 @@ def get_matrix(uids, genes, na_val=0):
 # print gs.post_to_paea()
 # print gs.meta
 # print gs.post_to_cds2()
+
+# make_download_file('dz', 'json')
+# make_download_file('dz', 'gmt')
 # '''

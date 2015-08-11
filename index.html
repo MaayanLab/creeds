@@ -31,15 +31,15 @@
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav">
-                <li class="dropdown">
+                <li id="browse" class="dropdown">
                   <a class="dropdown-toggle" data-toggle="dropdown">Browse<span class="caret"></span></a>
                   <ul class="dropdown-menu" role="menu">
-                    <li><a href="#" class="tour-close">Bubble chart</a></li>
-                    <li class="divider"></li>
+                    <li><a href="#">Bubble chart</a></li>
                     <li><a href="#clusters">Clustergram</a></li>
                   </ul>
                 </li>                
                 <li id="similarity"><a href="#similarity">Search</a></li>
+                <li id="downloads"><a href="#downloads">Downloads</a></li>               
               </ul>
 
               </div><!-- /.navbar-collapse -->
@@ -67,7 +67,7 @@
 
               <div class="col-sm-6">
                 <h4>Share</h4>
-                <!-- <div class="addthis_sharing_toolbox"></div> -->
+                <div class="addthis_sharing_toolbox"></div>
               </div>  
 
             </div>
@@ -91,8 +91,9 @@
         <script src="js/backbone-min.js" ></script>
         <script src="js/router.js"></script>
         
+        <!-- Go to www.addthis.com/dashboard to customize your tools -->
+        <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55ca627be0f34a9a" async="async"></script>
 
-        <!-- <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5575a75363e11adb" async="async"></script> -->
         <script>
         $(document).ready(function(){
           $('[data-toggle="tooltip"]').tooltip()

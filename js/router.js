@@ -14,13 +14,14 @@ var Router = Backbone.Router.extend({
 		'similarity': 'similarity',
 		'drug/:id': 'drug',
 		'clustergram': 'clustergram',
-		'clusters': 'clusters'
+		'clusters': 'clusters',
+		'downloads': 'downloads'
 	},
 
 	home: function(){
 		$(this.el).load("home.html", function() {
 			removeActive();
-			$("#home").addClass("active");
+			$("#browse").addClass("active");
 		});
 	},
 
@@ -28,13 +29,6 @@ var Router = Backbone.Router.extend({
 		$(this.el).load("similarity.html", function() {
 			removeActive();
 			$("#similarity").addClass('active');
-		});
-	},
-
-	drug: function(id){
-		$(this.el).load("drug_profile.html", function() {
-			removeActive();
-			$("#browse").addClass('active');			
 		});
 	},
 
@@ -47,7 +41,14 @@ var Router = Backbone.Router.extend({
 	clusters: function() {
 		$(this.el).load("clusters.html", function() {
 			removeActive();
-			$('#clusters').addClass('active');	
+			$('#browse').addClass('active');	
+		})
+	},
+
+	downloads: function() {
+		$(this.el).load("downloads.html", function() {
+			removeActive();
+			$("#downloads").addClass('active');
 		})
 	},
 
