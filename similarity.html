@@ -118,7 +118,7 @@ $(document).ready(function(){
 
 $("#sigNameBtn").click(function(){
 	var searchStr = $("#sigNameInput").val();
-	$.getJSON('/geosigs/searchByStr', {search: searchStr}, function(results){
+	$.getJSON('/EGES4C/searchByStr', {search: searchStr}, function(results){
 		// console.log(results)
 		displayStrSearchResult(results);
 
@@ -150,7 +150,7 @@ $("#geneSearchEgBtn").click(function(){
 			$.ajax({
 
 				type: 'POST',
-				url: '/geosigs/search',
+				url: '/EGES4C/search',
 				contentType : 'application/json',
 				data: JSON.stringify(postPayLoad),
 				dataType: 'json',

@@ -8,7 +8,7 @@ from orm_utils import *
 import clustergram
 from crossdomain import crossdomain
 
-ENTER_POINT = '/geosigs'
+ENTER_POINT = '/EGES4C'
 app = Flask(__name__, static_url_path=ENTER_POINT, static_folder=os.getcwd())
 app.debug = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6

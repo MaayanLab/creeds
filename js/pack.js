@@ -43,7 +43,7 @@ var DotView = Backbone.View.extend({
 	defaults: {
 		nodeInfoSelector: '#nodeInfo',
 		info: '',
-		apiUrl: '/geosigs/api',
+		apiUrl: '/EGES4C/api',
 		formater: '.3f',
 	},
 
@@ -121,10 +121,18 @@ var DotView = Backbone.View.extend({
 	    var divUp = divLeft.append('div').style('overflow', 'auto').style('height', '350px');
 
 	    var table = divUp.append('table')
-			.attr('class', 'table table-hover table-striped table-condensed')
+			.attr('class', 'table')
+			.style('margin-bottom', '0px');
 		var th = table.append('thead').append('tr');
 		th.append('td').text('Up genes');
 		th.append('td').text('CD coefficient');
+
+		var table = divUp.append('div')
+			.style('overflow-y', 'auto')
+			.style('height', '270px')
+			.append('table')
+			.attr('class', 'table table-hover table-striped table-condensed');
+
 		var tbody = table.append('tbody');
 		var trs = tbody.selectAll('tr').data(info['up_genes'])
 			.enter()
@@ -143,10 +151,18 @@ var DotView = Backbone.View.extend({
 		var divRight = div.append('div').attr('class', 'col-xs-6'); // column right
 		var divDn = divRight.append('div').style('overflow', 'auto').style('height', '350px');
 	    var table = divDn.append('table')
-			.attr('class', 'table table-hover table-striped table-condensed')
+			.attr('class', 'table')
+			.style('margin-bottom', '0px');
 		var th = table.append('thead').append('tr');
 		th.append('td').text('Down genes');
 		th.append('td').text('CD coefficient');
+
+		var table = divDn.append('div')
+			.style('overflow-y', 'auto')
+			.style('height', '270px')
+			.append('table')
+			.attr('class', 'table table-hover table-striped table-condensed');
+
 		var tbody = table.append('tbody');
 		var trs = tbody.selectAll('tr').data(info['down_genes'])
 			.enter()
@@ -165,7 +181,7 @@ var DotView = Backbone.View.extend({
 		// buttons for PAEA and L1000CDS2
 		var divBottom = div.append('div').attr('class', 'col-xs-12');
 		var id = info.id;
-		$.getJSON('/geosigs/appUrl', {id: id, app: 'cds2'}, function(url){
+		$.getJSON('/EGES4C/appUrl', {id: id, app: 'cds2'}, function(url){
 			divBottom.append('a')
 			.attr('target','_blank')
 			.attr('href',url)
@@ -173,7 +189,7 @@ var DotView = Backbone.View.extend({
 			.text('L1000CDS2')
 		});
 		
-		$.getJSON('/geosigs/appUrl', {id: id, app: 'paea'}, function(url){
+		$.getJSON('/EGES4C/appUrl', {id: id, app: 'paea'}, function(url){
 			divBottom.append('a')
 			.attr('target','_blank')
 			.attr('href',url)
