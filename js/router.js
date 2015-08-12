@@ -15,7 +15,8 @@ var Router = Backbone.Router.extend({
 		'drug/:id': 'drug',
 		'clustergram': 'clustergram',
 		'clusters': 'clusters',
-		'downloads': 'downloads'
+		'downloads': 'downloads',
+		'contribute': 'contribute'
 	},
 
 	home: function(){
@@ -49,6 +50,13 @@ var Router = Backbone.Router.extend({
 		$(this.el).load("downloads.html", function() {
 			removeActive();
 			$("#downloads").addClass('active');
+		})
+	},
+
+	contribute: function() {
+		$(this.el).load("contribute.html", function() {
+			removeActive();
+			$("#contribute").addClass('active');
 		})
 	},
 
