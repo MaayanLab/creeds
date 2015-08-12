@@ -43,7 +43,7 @@ var DotView = Backbone.View.extend({
 	defaults: {
 		nodeInfoSelector: '#nodeInfo',
 		info: '',
-		apiUrl: '/EGES4C/api',
+		apiUrl: '/eges4c/api',
 		formater: '.3f',
 	},
 
@@ -147,7 +147,7 @@ var DotView = Backbone.View.extend({
 			});
 
 		var id = info.id;
-		$.getJSON('/EGES4C/appUrl', {id: id, app: 'cds2'}, function(url){
+		$.getJSON('/eges4c/appUrl', {id: id, app: 'cds2'}, function(url){
 			dl.append('dt').text('L1000CDS2')
 			dl.append('dd')
 				.append('a')
@@ -156,7 +156,7 @@ var DotView = Backbone.View.extend({
 				.append('img').attr('src', 'img/l1000cds2.png').attr('width',iconSize)
 		});
 
-		$.getJSON('/EGES4C/appUrl', {id: id, app: 'paea'}, function(url){
+		$.getJSON('/eges4c/appUrl', {id: id, app: 'paea'}, function(url){
 			dl.append('dt').text('PAEA')
 			dl.append('dd').append('a')
 				.attr('target','_blank')

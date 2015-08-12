@@ -11,7 +11,7 @@ from crossdomain import crossdomain
 make_all_download_files()
 
 
-ENTER_POINT = '/EGES4C'
+ENTER_POINT = '/eges4c'
 app = Flask(__name__, static_url_path=ENTER_POINT, static_folder=os.getcwd())
 app.debug = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
