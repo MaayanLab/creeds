@@ -194,7 +194,7 @@ class DBSignature(Signature):
 				"genes": map(lambda x: x.upper(), self.chdir['genes'][:cutoff]), 
 				"vals":  self.chdir['vals'][:cutoff]
 				}
-			config = {"aggravate":False,"searchMethod":"CD","share":True,"combination":True}
+			config = {"aggravate":False,"searchMethod":"CD","share":True,"combination":True,"db-version":"latest"}
 			metadata = [{"key":"name","value": self.name}]
 			for key, val in self.meta.items():
 				if key not in ['pert_ids', 'ctrl_ids', 'curator']:
