@@ -1,14 +1,13 @@
 <link rel="stylesheet" type="text/css" href="css/typeahead.css">
 <div class="container-fluid">
 	<div class="row">
-		<div class="col-sm-3">
-			<ul class="nav nav-tabs">
-				<li role="presentation" class="active"><a data-toggle="tab" href="#tab1">Search</a></li>
-				<li role="presentation"><a data-toggle="tab" href="#tab2">Find similar signatures</a></li>
-			</ul>
-
-			<div class="tab-content">
-				<div id="tab1" class="tab-pane fade in active">
+		<div class="col-sm-10 col-sm-offset-1">
+			<!-- top div.row -->
+			<div class="row">
+				<div class="alert alert-info">
+					<h4>Here you can search and prioritize signatures from the collection by either entering your own input lists of up and down genes, or by entering a term that will search the signatures meta-data</h4>
+				</div>				
+				<div class="col-sm-4">
 					<h3>Search signatures by name</h3>
 					<p>Signatures can be searched by the gene symbols of genes being perturbed, name of diseases for disease signatures, and name of drugs for drug perturbation signatures.</p>
 					<p>Examples: TP53, Breast cancer, Imatinib.</p>
@@ -16,39 +15,57 @@
 					<div class="input-group">
 						<input id="sigNameInput" type="text" class="form-control" placeholder="Search for signatures...">
 						<span class="input-group-btn">
-							<button id="sigNameBtn" class="btn btn-default" type="button">Go!</button>
+							<button id="sigNameBtn" class="btn btn-info" type="button">Search by name</button>
 						</span>
-					</div>
-
-
+					</div>					
 				</div>
-				<div id="tab2" class="tab-pane fade">
-					<h3>Signature search by input gene lists</h3>
-					<p>Signatures that are similar to a query signature from the user can be searched. The similarity between signatures are measured by signed Jaccard Index. </p>
-					<p>Once the search results are displayed, user can select signatures of interest by clicking on them and visualize them in a clustergram.</p>
-					<button id="geneSearchEgBtn" class="btn btn-default">Example</button>
-					<div class="form-group">
-						<label for="upGenes" class="control-label">Up genes</label>
-						<textarea class="form-control" id="upGenes" rows="10" placeholder="Up genes"></textarea>
-					</div>
 
-					<div class="form-group">
-						<label for="dnGenes" class="control-label">Down genes</label>
-						<textarea class="form-control" id="dnGenes" rows="10" placeholder="Down genes"></textarea>
+				<div class="col-sm-8">
+					<div class="row">
+						<div class="col-xs-12">
+							<h3>Signature search by input gene lists</h3>
+							<p>Signatures that are similar to a query signature from the user can be searched. The similarity between signatures are measured by signed Jaccard Index. </p>
+							<p>Once the search results are displayed, user can select signatures of interest by clicking on them and visualize them in a clustergram.</p>
+							<p><a id="geneSearchEgBtn">Try an example gene lists.</a></p>
+						</div>	
 					</div>
-
-					<button id="geneSearchBtn" class="btn btn-info">Search</button>
+					<!-- up/down gene input form -->
+					<div class="row">
+						<div class="form-group col-xs-12">
+							<div class="col-xs-6">
+								<div class="row">
+									<label for="upGenes" class="col-xs-12 control-label">Up genes</label>
+								</div>
+								<div class="row">
+									<div class="col-xs-12">
+										<textarea class="form-control" id="upGenes" rows="10" placeholder="Up genes"></textarea>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-6">
+								<div class="row">
+									<label for="dnGenes" class="col-xs-12 control-label">Down genes</label>
+								</div>
+								<div class="row">
+									<div class="col-xs-12">
+										<textarea class="form-control" id="dnGenes" rows="10" placeholder="Down genes"></textarea>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-12">
+							<button id="geneSearchBtn" class="btn btn-info pull-right">Search</button>
+						</div>
+					</div>
 				</div>
 			</div>
-
-		</div>
-
-		<div class="col-sm-9">
-			<div class="alert alert-info">
-				<h4>Here you can search and prioritize signatures from the collection by either entering your own input lists of up and down genes, or by entering a term that will search the signatures meta-data</h4>
+			<!-- bottom div.row -->
+			<div class="row">
+				<div id="searchResults"></div>
 			</div>
-			<h2>Search Results</h2>
-			<div id="searchResults"></div>
+
 		</div>
 	</div>
 </div>
