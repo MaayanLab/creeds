@@ -190,6 +190,11 @@ $("#geneSearchEgBtn").click(function(){
 	})
 });
 
+function scrollToResult() {
+	$('html, body').animate({
+		scrollTop: $("#searchResults").offset().top
+	}, 500);
+}
 
 function displayGeneSearchResult (results) { // to display results using gene list search
 	// prettify the results for displaying
@@ -276,6 +281,7 @@ function displayGeneSearchResult (results) { // to display results using gene li
         	$('th').last().append(infoIcon);
         },
     });
+	scrollToResult();
 }
 
 function submitSelectedBtn (){
@@ -369,7 +375,8 @@ function displayStrSearchResult(results){
 	    			.text(info[field]);
 	    	}
 	    }
-	};	    	
+	};
+	scrollToResult();    	
 }
 </script>
 
