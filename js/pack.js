@@ -1,3 +1,5 @@
+ENTER_POINT = '/creeds';
+
 var Dot = Backbone.Model.extend({
 	defaults:{
 		"size": 10,
@@ -43,7 +45,7 @@ var DotView = Backbone.View.extend({
 	defaults: {
 		nodeInfoSelector: '#nodeInfo',
 		info: '',
-		apiUrl: '/creeds/api',
+		apiUrl: ENTER_POINT+'/api',
 		formater: '.3f',
 	},
 
@@ -147,7 +149,7 @@ var DotView = Backbone.View.extend({
 			});
 
 		var id = info.id;
-		$.getJSON('/creeds/appUrl', {id: id, app: 'cds2'}, function(url){
+		$.getJSON(ENTER_POINT+'/appUrl', {id: id, app: 'cds2'}, function(url){
 			dl.append('dt').text('L1000CDS2')
 			dl.append('dd')
 				.append('a')
@@ -156,7 +158,7 @@ var DotView = Backbone.View.extend({
 				.append('img').attr('src', 'img/l1000cds2.png').attr('width',iconSize)
 		});
 
-		$.getJSON('/creeds/appUrl', {id: id, app: 'paea'}, function(url){
+		$.getJSON(ENTER_POINT+'/appUrl', {id: id, app: 'paea'}, function(url){
 			dl.append('dt').text('PAEA')
 			dl.append('dd').append('a')
 				.attr('target','_blank')
