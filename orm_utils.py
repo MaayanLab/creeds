@@ -6,8 +6,8 @@ import numpy as np
 from pymongo import MongoClient
 import requests
 
-# client = MongoClient('mongodb://127.0.0.1:27017/')
-client = MongoClient('mongodb://146.203.54.131:27017/')
+client = MongoClient('mongodb://127.0.0.1:27017/')
+# client = MongoClient('mongodb://146.203.54.131:27017/')
 db = client['microtask_signatures']
 COLL = db['signatures']
 ALL_UIDS = COLL.distinct('id')
@@ -65,6 +65,26 @@ def signed_jaccard_against_doc(gs, uid):
 	else:
 		return None
 
+def load_and_fill_sig(uid):
+	sig = DBSignature(uid)
+	if sig.has_chdir():
+		sig.fill_top_genes()
+		return sig
+	else:
+		return None
+
+def load_all_db_sigs(nprocs=4):
+	## load all signatures with chdir from the mongodb
+	d_uid_sigs = {}
+	if nprocs > 1:
+		sigs = parmap(load_and_fill_sig, ALL_UIDS, nprocs=nprocs)
+	else:
+		sigs = map(load_and_fill_sig, ALL_UIDS)
+	for uid, sig in zip(ALL_UIDS, sigs):
+		if sig is not None:
+			d_uid_sigs[uid] = sig
+	return d_uid_sigs
+
 def find_name(doc):
 	## find the name for a doc in the mongodb based on uid
 	uid = doc['id']
@@ -98,11 +118,13 @@ class Signature(object):
 		self.up_genes = up_genes
 		self.dn_genes = dn_genes
 
-	def calc_all_scores(self, nprocs=4):
+	def calc_all_scores(self, d_uid_sigs):
 		## calcuated signed jaccard score for this signatures against 
-		## all signatures in the database
-		uid_scores = parmap(lambda uid: (uid, signed_jaccard_against_doc(self, uid)), ALL_UIDS, nprocs=nprocs)
-		uid_scores = [(uid, score) for uid, score in uid_scores if score] # filter out None
+		## all signatures in d_uid_sigs
+		uid_scores = []
+		for uid, sig in d_uid_sigs.items():
+			score = signed_jaccard(self, sig)
+			uid_scores.append((uid, score))
 		return dict(uid_scores)
 
 class DBSignature(Signature):
@@ -148,12 +170,14 @@ class DBSignature(Signature):
 		return dict_data
 
 
-	def calc_all_scores(self, nprocs=4, cutoff=600):
+	def calc_all_scores(self, d_uid_sigs, cutoff=600):
 		## calcuated signed jaccard score for this signatures against 
 		## all signatures in the database
 		self.fill_top_genes(cutoff)
-		uid_scores = parmap(lambda uid: (uid, signed_jaccard_against_doc(self, uid)), ALL_UIDS, nprocs=nprocs)
-		uid_scores = [(uid, score) for uid, score in uid_scores if score] # filter out None
+		uid_scores = []
+		for uid, sig in d_uid_sigs.items():
+			score = signed_jaccard(self, sig)
+			uid_scores.append((uid, score))
 		return dict(uid_scores)
 
 	def get_gene_vals(self, genes, na_val=0):
@@ -295,17 +319,22 @@ def make_all_download_files():
 ## test
 # '''
 # gs = DBSignature('gene:24')
-# gs.get_top_genes(600)
-# print gs.to_json()
+# # gs.fill_top_genes(600)
+# # print gs.to_json()
 
 # t0 = time.time()
 
-# d_uid_scores = gs.calc_all_scores(4, 600)
-# print d_uid_scores.items()[:5]
+# # d_uid_scores = gs.calc_all_scores(4, 600)
+# # print d_uid_scores.items()[:5]
+# d_uid_sigs = load_all_db_sigs(nprocs=1)
 
 # tt = time.time()
-# print(len(d_uid_scores))
+# # print(len(d_uid_scores))
+# print len(d_uid_sigs)
 # print('time passed:', tt-t0)
+
+# res = gs.calc_all_scores(d_uid_sigs)
+# print res.items()[:4]
 
 # mat = get_matrix(['gene:24', 'dz:114'], ['TPM3', 'TNNT1', 'MYL2', 'ATP2A1'])
 # print mat
@@ -328,3 +357,6 @@ def make_all_download_files():
 # make_download_file('dz', 'json')
 # make_download_file('dz', 'gmt')
 # '''
+
+
+

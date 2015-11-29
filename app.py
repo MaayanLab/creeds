@@ -9,9 +9,11 @@ import clustergram
 from crossdomain import crossdomain
 
 make_all_download_files()
+global d_uid_sigs
+d_uid_sigs = load_all_db_sigs(nprocs=1)
+print 'd_uid_sigs loaded,', len(d_uid_sigs)
 
-
-ENTER_POINT = '/creeds'
+ENTER_POINT = '/CREEDS'
 app = Flask(__name__, static_url_path=ENTER_POINT, static_folder=os.getcwd())
 app.debug = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
@@ -25,6 +27,7 @@ def root():
 @app.route(ENTER_POINT + '/api', methods=['GET'])
 @crossdomain(origin='*')
 def retrieve_signature():
+	## to retrieve data and meta data given id of signature like `gene:24`
 	if request.method == 'GET':
 		uid = request.args.get('id', '')
 		cutoff = request.args.get('topn', '') # number of genes to return
@@ -44,8 +47,8 @@ def retrieve_signature():
 @app.route(ENTER_POINT + '/autoCompleteList', methods=['GET', 'POST'])
 @crossdomain(origin='*')
 def get_all_names():
+	## get a list of names for signatures in mongodb with chdir
 	if request.method == 'GET':
-		## get a list of names for signatures in mongodb with chdir
 		d_cat_names = {}
 		# catagory = request.args['catagory']
 		for uid in ALL_UIDS:
@@ -64,6 +67,7 @@ def get_all_names():
 @app.route(ENTER_POINT + '/searchByStr', methods=['GET'])
 @crossdomain(origin='*')
 def search_by_string():
+	## to search signatures by name
 	if request.method == 'GET':
 		search_string = request.args.get('search', '')
 		search_dict = {
@@ -91,7 +95,7 @@ def search_by_string():
 def search():
 	## handle searching signatures with either custom genes or a document in the db
 	def get_search_results(sig):
-		d_uid_score = sig.calc_all_scores()
+		d_uid_score = sig.calc_all_scores(d_uid_sigs)
 		uid_data = [] # a list of meta data {} sorted by score
 		for uid, score in sorted(d_uid_score.items(), key=lambda x:x[1]): # small to large signed_jaccard
 			projection ={'geo_id':True, 'id':True, '_id':False,

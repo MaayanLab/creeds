@@ -1,2 +1,2 @@
 // global variables for JS
-ENTER_POINT = '/creeds';
+ENTER_POINT = '/CREEDS';

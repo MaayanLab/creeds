@@ -1,4 +1,4 @@
-ENTER_POINT = '/creeds';
+ENTER_POINT = '/CREEDS';
 
 var Dot = Backbone.Model.extend({
 	defaults:{
