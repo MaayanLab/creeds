@@ -4,18 +4,14 @@
 		<div class="col-sm-10 col-sm-offset-1">
 			<!-- top div.row -->
 			<div class="row">
-				<div class="alert alert-info">
-					<h4>Here you can search and prioritize signatures from the collection by either entering your own input lists of up and down genes, or by entering a term that will search the signatures meta-data</h4>
-				</div>				
 				<div class="col-sm-4">
-					<h3>Search signatures by name</h3>
-					<p>Signatures can be searched by the gene symbols of genes being perturbed, name of diseases for disease signatures, and name of drugs for drug perturbation signatures.</p>
-					<p>Examples: TP53, Breast cancer, Imatinib.</p>
+					<h3>Search signatures by term</h3>
+					<p>Examples: <a class="exampleTerm">TP53</a>, <a class="exampleTerm">Breast cancer</a>, <a class="exampleTerm">Imatinib</a></p>
 
 					<div class="input-group">
 						<input id="sigNameInput" type="text" class="form-control" placeholder="Search for signatures...">
 						<span class="input-group-btn">
-							<button id="sigNameBtn" class="btn btn-info" type="button">Search by name</button>
+							<button id="sigNameBtn" class="btn btn-info" type="button">Search by term</button>
 						</span>
 					</div>					
 				</div>
@@ -23,10 +19,8 @@
 				<div class="col-sm-8">
 					<div class="row">
 						<div class="col-xs-12">
-							<h3>Signature search by input gene lists</h3>
-							<p>Signatures that are similar to a query signature from the user can be searched. The similarity between signatures are measured by signed Jaccard Index. </p>
-							<p>Once the search results are displayed, user can select signatures of interest by clicking on them and visualize them in a clustergram.</p>
-							<p><a id="geneSearchEgBtn">Try an example gene lists.</a></p>
+							<h3>Search signatures by up and down gene sets</h3>
+							<p><a id="geneSearchEgBtn">Try an example</a></p>
 						</div>	
 					</div>
 					<!-- up/down gene input form -->
@@ -144,6 +138,10 @@ $(document).ready(function(){
 		});
 	});
 
+	$(".exampleTerm").click(function(){
+		var term = $(this).text();
+		$("#sigNameInput").val(term);
+	})
 
 	$("#geneSearchEgBtn").click(function(){
 		$('#upGenes').val(exampleGenes.upGenes.join('\n'));
@@ -166,7 +164,6 @@ $(document).ready(function(){
 	        } });
 	        var direction = $(this).attr('direction');
 			var postPayLoad = {"up_genes": upGenes.split('\n'), "dn_genes": dnGenes.split('\n'), "direction":direction};
-			console.log(postPayLoad);
 			$.ajax({
 
 				type: 'POST',
@@ -178,7 +175,7 @@ $(document).ready(function(){
 					// display result
 					$.unblockUI();
 					displayGeneSearchResult(results);
-					submitSelectedBtn();
+					// submitSelectedBtn();
 				},				
 
 			});
@@ -262,19 +259,19 @@ function displayGeneSearchResult (results) { // to display results using gene li
         	}
         	],
             // to make rows selectable
-            "sRowSelect": "multi",
-            "fnRowSelected": function ( row ) {
-            	var rData = rctable.fnGetData(row);
-            	uids.push(rData.id);
-            },
-            "fnRowDeselected": function (row) {
-            	var rData = rctable.fnGetData(row);
-            	// remove from uids
-            	var index = uids.indexOf(rData.id);
-            	if (index > -1) {
-            		uids.splice(index, 1);
-            	}
-            },
+            // "sRowSelect": "multi",
+            // "fnRowSelected": function ( row ) {
+            // 	var rData = rctable.fnGetData(row);
+            // 	uids.push(rData.id);
+            // },
+            // "fnRowDeselected": function (row) {
+            // 	var rData = rctable.fnGetData(row);
+            // 	// remove from uids
+            // 	var index = uids.indexOf(rData.id);
+            // 	if (index > -1) {
+            // 		uids.splice(index, 1);
+            // 	}
+            // },
         },
         "fnInitComplete": function(oSettings, json){ //DataTables has finished its initialisation.
         	var infoIcon = $('<i title="Leverages the effect of directions between a pair of gene expression signatures. It has a range of [-1,1] where 1 represent completely same signatures and -1 represent signatures of reverse effects and 0 represent unrelated signatures." data-toggle="tooltip" data-placement="right" class="glyphicon glyphicon-info-sign"></i>');

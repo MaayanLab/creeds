@@ -8,10 +8,6 @@ from orm_utils import *
 import clustergram
 from crossdomain import crossdomain
 
-make_all_download_files()
-global d_uid_sigs
-d_uid_sigs = load_all_db_sigs(nprocs=1)
-print 'd_uid_sigs loaded,', len(d_uid_sigs)
 
 ENTER_POINT = '/CREEDS'
 app = Flask(__name__, static_url_path=ENTER_POINT, static_folder=os.getcwd())
@@ -115,7 +111,6 @@ def search():
 		scores = np.array(map(lambda x: x['signed_jaccard'], uid_data))
 		srt_idx = np.argsort(abs(scores))[::-1]
 		uid_data = np.array(uid_data)[srt_idx].tolist()
-		print uid_data[0:5]
 		return uid_data
 
 	if request.method == 'GET': # search using an id in the mongodb
@@ -188,4 +183,11 @@ if __name__ == '__main__':
 	else:
 		host = '127.0.0.1'
 		# host = '0.0.0.0'
+
+	make_all_download_files()
+	global d_uid_sigs
+	d_uid_sigs = load_all_db_sigs(nprocs=1)
+	print 'd_uid_sigs loaded,', len(d_uid_sigs)
+
 	app.run(host=host, port=port)
+
