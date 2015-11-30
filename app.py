@@ -1,16 +1,29 @@
 ## python API for the mongodb
 import os, sys, json
-# import numpy as np
-# from collections import OrderedDict
-from flask import Flask, request
 
 from orm_utils import *
 import clustergram
 from crossdomain import crossdomain
 
+import re
+from werkzeug.routing import Rule, RequestRedirect
+
+## super hacky way to make the URL of the app case insensitive...
+## http://librelist.com/browser/flask/2011/6/24/case-insensitive-routing/#198dd20c7198760b3e2f5d5ada19b7f9
+class CIRule(Rule):
+	def compile(self):
+		Rule.compile(self)
+		self._regex = re.compile(self._regex.pattern, 
+			re.UNICODE | re.IGNORECASE)
+
+from flask import Flask, request
+
+class CIFlask(Flask):
+    url_rule_class = CIRule
+
 
 ENTER_POINT = '/CREEDS'
-app = Flask(__name__, static_url_path=ENTER_POINT, static_folder=os.getcwd())
+app = CIFlask(__name__, static_url_path=ENTER_POINT, static_folder=os.getcwd())
 app.debug = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
 
@@ -18,7 +31,6 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
 @app.route(ENTER_POINT + '/')
 def root():
 	return app.send_static_file('index.html')
-
 
 @app.route(ENTER_POINT + '/api', methods=['GET'])
 @crossdomain(origin='*')
