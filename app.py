@@ -94,22 +94,28 @@ def search_by_string():
 @crossdomain(origin='*')
 def search():
 	## handle searching signatures with either custom genes or a document in the db
-	def get_search_results(sig):
+	def get_search_results(sig, direction='similar'):
 		d_uid_score = sig.calc_all_scores(d_uid_sigs)
 		uid_data = [] # a list of meta data {} sorted by score
-		for uid, score in sorted(d_uid_score.items(), key=lambda x:x[1]): # small to large signed_jaccard
-			projection ={'geo_id':True, 'id':True, '_id':False,
-				'hs_gene_symbol':True, 'mm_gene_symbol':True, 'organism':True, 
-				'disease_name':True, 'drug_name':True, 'do_id':True,
-				'drugbank_id':True, 'pubchem_cid':True}
-			sig_ = DBSignature(uid, projection=projection)
-			meta = {}
-			meta['id'] = sig_.meta['id']
-			meta['geo_id'] = sig_.meta['geo_id']
-			meta['name'] = [sig_.name, sig_.get_url()] # [name, url]
-			score = float('%.5f'%score)
-			meta['signed_jaccard'] = score
-			uid_data.append(meta)
+		for uid, score in d_uid_score.items(): # small to large signed_jaccard
+			if (direction == 'similar' and score > 0) or (direction == 'opposite' and score < 0):
+				projection ={'geo_id':True, 'id':True, '_id':False,
+					'hs_gene_symbol':True, 'mm_gene_symbol':True, 'organism':True, 
+					'disease_name':True, 'drug_name':True, 'do_id':True,
+					'drugbank_id':True, 'pubchem_cid':True}
+				sig_ = DBSignature(uid, projection=projection)
+				meta = {}
+				meta['id'] = sig_.meta['id']
+				meta['geo_id'] = sig_.meta['geo_id']
+				meta['name'] = [sig_.name, sig_.get_url()] # [name, url]
+				score = float('%.5f'%score)
+				meta['signed_jaccard'] = score
+				uid_data.append(meta)
+		## sort objects by absolute value of signed_jaccard
+		scores = np.array(map(lambda x: x['signed_jaccard'], uid_data))
+		srt_idx = np.argsort(abs(scores))[::-1]
+		uid_data = np.array(uid_data)[srt_idx].tolist()
+		print uid_data[0:5]
 		return uid_data
 
 	if request.method == 'GET': # search using an id in the mongodb
@@ -125,11 +131,12 @@ def search():
 		dn_genes = map(lambda x : x.upper(), data['dn_genes'])
 		name = data.get('name', None)
 		meta = data.get('meta', None)
+		direction = data.get('direction', 'similar')
 
 		sig = Signature(name, meta, up_genes, dn_genes)
 
 	if sig is not None:
-		uid_data = get_search_results(sig)
+		uid_data = get_search_results(sig, direction=direction)
 		return json.dumps(uid_data)
 	else:
 		return ('', 400, '')

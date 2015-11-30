@@ -56,7 +56,8 @@
 					</div>
 					<div class="row">
 						<div class="col-xs-12">
-							<button id="geneSearchBtn" class="btn btn-info pull-right">Search</button>
+							<button direction="similar" class="btn btn-info pull-right geneSearchBtn">Search similar signatures</button>
+							<button direction="opposite" class="btn btn-info geneSearchBtn">Search opposite signatures</button>
 						</div>
 					</div>
 				</div>
@@ -73,6 +74,7 @@
 <script src="js/typeahead.bundle.min.js"></script>
 <script src="js/jquery.blockUI.js"></script>
 <script>
+ENTER_POINT = '/CREEDS';
 var exampleGenes = {
 	upGenes: ['KIAA0907','KDM5A','CDC25A','EGR1','GADD45B','RELB','TERF2IP','SMNDC1','TICAM1','NFKB2','RGS2','NCOA3','ICAM1','TEX10','CNOT4','ARID4B','CLPX','CHIC2','CXCL2','FBXO11','MTF2','CDK2','DNTTIP2','GADD45A','GOLT1B','POLR2K','NFKBIE','GABPB1','ECD','PHKG2','RAD9A','NET1','KIAA0753','EZH2','NRAS','ATP6V0B','CDK7','CCNH','SENP6','TIPARP','FOS','ARPP19','TFAP2A','KDM5B','NPC1','TP53BP2','NUSAP1'],
 	dnGenes: ['SCCPDH','KIF20A','FZD7','USP22','PIP4K2B','CRYZ','GNB5','EIF4EBP1','PHGDH','RRAGA','SLC25A46','RPA1','HADH','DAG1','RPIA','P4HA2','MACF1','TMEM97','MPZL1','PSMG1','PLK1','SLC37A4','GLRX','CBR3','PRSS23','NUDCD3','CDC20','KIAA0528','NIPSNAP1','TRAM2','STUB1','DERA','MTHFD2','BLVRA','IARS2','LIPA','PGM1','CNDP2','BNIP3','CTSL1','CDC25B','HSPA8','EPRS','PAX8','SACM1L','HOXA5','TLE1','PYGL','TUBB6','LOXL1']
@@ -133,24 +135,23 @@ $(document).ready(function(){
 	});
 
 
-$("#sigNameBtn").click(function(){
-	var searchStr = $("#sigNameInput").val();
-	$.getJSON(ENTER_POINT+'/searchByStr', {search: searchStr}, function(results){
-		// console.log(results)
-		displayStrSearchResult(results);
+	$("#sigNameBtn").click(function(){
+		var searchStr = $("#sigNameInput").val();
+		$.getJSON(ENTER_POINT+'/searchByStr', {search: searchStr}, function(results){
+			// console.log(results)
+			displayStrSearchResult(results);
 
+		});
 	});
-});
 
 
-$("#geneSearchEgBtn").click(function(){
-	$('#upGenes').val(exampleGenes.upGenes.join('\n'));
-	$('#dnGenes').val(exampleGenes.dnGenes.join('\n'));
-});
+	$("#geneSearchEgBtn").click(function(){
+		$('#upGenes').val(exampleGenes.upGenes.join('\n'));
+		$('#dnGenes').val(exampleGenes.dnGenes.join('\n'));
+	});
 
 	// search sigs using up/dn genes
-	$("#geneSearchBtn").click(function(){
-
+	$(".geneSearchBtn").click(function(){
 		var upGenes = $('#upGenes').val();
 		var dnGenes = $('#dnGenes').val();
 		if (upGenes != '' && dnGenes !='') {
@@ -163,7 +164,9 @@ $("#geneSearchEgBtn").click(function(){
 	            opacity: .5, 
 	            color: '#fff' 
 	        } });
-			var postPayLoad = {"up_genes": upGenes.split('\n'), "dn_genes": dnGenes.split('\n')}
+	        var direction = $(this).attr('direction');
+			var postPayLoad = {"up_genes": upGenes.split('\n'), "dn_genes": dnGenes.split('\n'), "direction":direction};
+			console.log(postPayLoad);
 			$.ajax({
 
 				type: 'POST',
@@ -176,8 +179,7 @@ $("#geneSearchEgBtn").click(function(){
 					$.unblockUI();
 					displayGeneSearchResult(results);
 					submitSelectedBtn();
-				},
-				
+				},				
 
 			});
 
@@ -244,7 +246,7 @@ function displayGeneSearchResult (results) { // to display results using gene li
 	rctable = table.dataTable({
 		"data": results,
 		"columns": columnsDef,
-		"order": [[3, 'desc']],
+		"bSort": false,
 		"deferRender": true,
 		"sDom": 'T<"clear">lfrtip',
 		"oTableTools": {
