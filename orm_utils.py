@@ -6,12 +6,17 @@ import numpy as np
 from pymongo import MongoClient
 import requests
 
+from gene_converter import *
+
+## connect to mongodb
 # client = MongoClient('mongodb://127.0.0.1:27017/')
 client = MongoClient('mongodb://146.203.54.131:27017/')
 db = client['microtask_signatures']
 COLL = db['signatures']
 ALL_UIDS = COLL.distinct('id')
 
+## load gene symbol to gene ID conversion dict
+GENE_SYMBOLS = load_gene_symbol_dict()
 
 import multiprocessing
 ## the following two functions are used to avoid pickling error when using multiprocessing.map
@@ -238,11 +243,17 @@ class DBSignature(Signature):
 		if meta['id'].startswith('gene:'):
 			organism = meta['organism']
 			if organism == 'human':
-				hs_gene_symbol = meta['hs_gene_symbol']
-				url = 'http://www.genecards.org/cgi-bin/carddisp.pl?gene=%s' % hs_gene_symbol
+				gene_symbol = meta['hs_gene_symbol']
+				if gene_symbol is None:
+					gene_symbol = meta['mm_gene_symbol']
 			else:
-				mm_gene_symbol = self.meta['mm_gene_symbol']
-				url = 'http://www.informatics.jax.org/searchtool/Search.do?query=%s' % mm_gene_symbol
+				gene_symbol = meta['mm_gene_symbol']
+				if gene_symbol is None:
+					gene_symbol = meta['hs_gene_symbol']
+					
+			gene_id = GENE_SYMBOLS[gene_symbol]
+			url = 'http://www.ncbi.nlm.nih.gov/gene/%s' % gene_id
+
 		elif meta['id'].startswith('dz:'):
 			do_id = meta.get('do_id', None)
 			if do_id is not None:
