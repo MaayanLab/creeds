@@ -5,7 +5,7 @@
  "container": {
    "type": "DOCKER",
    "docker": {
-     "image": "maayanlab/geo_sigs",
+     "image": "maayanlab/geo_sigs2",
      "network": "BRIDGE",
      "portMappings": [
      {

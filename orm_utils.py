@@ -44,10 +44,9 @@ def parmap(f, X, nprocs = multiprocessing.cpu_count()):
 
 def jaccard(l1, l2):
 	## case insensitive jaccard
-	## l1, l2 are lists of tuples
-	s1, s2 = set(map(lambda x: x[0].upper(), l1)), set(map(lambda x: x[0].upper(), l2))
-	up = len(s1 & s2)
-	dn = len(s1 | s2)
+	## assumes l1, l2 are sets of upper case genes
+	up = len(l1 & l2)
+	dn = len(l1 | l2)
 	if dn == 0: # to prevent 0 division error
 		return 0
 	else:
@@ -55,11 +54,11 @@ def jaccard(l1, l2):
 
 def signed_jaccard(s1, s2):
 	## signed jaccard index for signatures
-	j1 = jaccard(s1.up_genes, s2.up_genes)
-	j2 = jaccard(s1.dn_genes, s2.dn_genes)
-	j3 = jaccard(s1.dn_genes, s2.up_genes)
-	j4 = jaccard(s1.up_genes, s2.dn_genes)
-	return (j1 + j2 - j3 - j4) / 2
+	j1 = jaccard(s1._up_genes, s2._up_genes)
+	j2 = jaccard(s1._dn_genes, s2._dn_genes)
+	j3 = jaccard(s1._dn_genes, s2._up_genes)
+	j4 = jaccard(s1._up_genes, s2._dn_genes)
+	return (j1 + j2 - j3 - j4) / 2	
 
 def signed_jaccard_against_doc(gs, uid):
 	## gs is a Signature instance, uid is an id of a doc in the mongodb
@@ -89,6 +88,7 @@ def load_all_db_sigs(nprocs=4):
 		if sig is not None:
 			d_uid_sigs[uid] = sig
 	return d_uid_sigs
+
 
 def find_name(doc):
 	## find the name for a doc in the mongodb based on uid
@@ -122,6 +122,8 @@ class Signature(object):
 		self.meta = meta
 		self.up_genes = up_genes
 		self.dn_genes = dn_genes
+		self._up_genes = set(map(lambda x: x[0].upper(), up_genes))
+		self._dn_genes = set(map(lambda x: x[0].upper(), dn_genes))
 
 	def calc_all_scores(self, d_uid_sigs):
 		## calcuated signed jaccard score for this signatures against 
@@ -131,6 +133,7 @@ class Signature(object):
 			score = signed_jaccard(self, sig)
 			uid_scores.append((uid, score))
 		return dict(uid_scores)
+
 
 class DBSignature(Signature):
 	## signature from mongodb
@@ -159,8 +162,13 @@ class DBSignature(Signature):
 		## get top up/dn genes based on a rank cutoff
 		if not self.is_filled():
 			for gene, val in zip(self.chdir['genes'], self.chdir['vals'])[:cutoff]:
-				if val > 0: self.up_genes.append( (gene, val) )
-				else: self.dn_genes.append( (gene, val) )
+				if val > 0: 
+					self.up_genes.append( (gene, val) )
+					self._up_genes.add( gene.upper() )
+				else: 
+					self.dn_genes.append( (gene, val) )
+					self._dn_genes.add( gene.upper() )
+
 
 	def to_json(self, meta_only=False):
 		## to export the document into json
@@ -193,6 +201,7 @@ class DBSignature(Signature):
 			score = signed_jaccard(self, sig)
 			uid_scores.append((uid, score))
 		return dict(uid_scores)
+
 
 	def get_gene_vals(self, genes, na_val=0):
 		## retrieve the values of a given list of genes
