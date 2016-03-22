@@ -134,10 +134,11 @@ class Signature(object):
 
 class DBSignature(Signature):
 	## signature from mongodb
-	def __init__(self, uid, projection={'_id':False, 'limma':False, 'fold_changes':False}):
+	def __init__(self, uid, projection={'_id':False, 'limma':False, 'fold_changes':False}, doc=None):
 		## the constructor also act as a way to query mongodb using
 		## the id and return desirable fields by specifying projection
-		doc = COLL.find_one({'id':uid}, projection)
+		if doc is None: ## if doc is given, do not retrieve from DB
+			doc = COLL.find_one({'id':uid}, projection)
 		name = find_name(doc)
 		if 'chdir' in doc:
 			chdir = doc['chdir']
@@ -150,16 +151,22 @@ class DBSignature(Signature):
 		if hasattr(self, 'chdir'): return True
 		else: return False
 
+	def is_filled(self):
+		## assert if top genes are filled
+		return len(self.up_genes) > 0 and len(self.dn_genes) > 0
+
 	def fill_top_genes(self, cutoff=600):
 		## get top up/dn genes based on a rank cutoff
-		for gene, val in zip(self.chdir['genes'], self.chdir['vals'])[:cutoff]:
-			if val > 0: self.up_genes.append( (gene, val) )
-			else: self.dn_genes.append( (gene, val) )
+		if not self.is_filled():
+			for gene, val in zip(self.chdir['genes'], self.chdir['vals'])[:cutoff]:
+				if val > 0: self.up_genes.append( (gene, val) )
+				else: self.dn_genes.append( (gene, val) )
 
 	def to_json(self, meta_only=False):
 		## to export the document into json
 		json_data = self.meta
 		if not meta_only:
+			self.fill_top_genes()
 			json_data['up_genes'] = self.up_genes
 			json_data['down_genes'] = self.dn_genes
 		return json.dumps(json_data)
@@ -170,6 +177,8 @@ class DBSignature(Signature):
 			dict_data = {'name': self.name, 'id': self.meta['id']}			
 		else:
 			dict_data = self.meta
+
+		self.fill_top_genes()
 		dict_data['up_genes'] = self.up_genes
 		dict_data['down_genes'] = self.dn_genes
 		return dict_data

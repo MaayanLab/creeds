@@ -92,25 +92,44 @@ def search():
 	## handle searching signatures with either custom genes or a document in the db
 	def get_search_results(sig, direction='similar'):
 		d_uid_score = sig.calc_all_scores(d_uid_sigs)
+		scores = np.array(d_uid_score.values())
+		uids = np.array(d_uid_score.keys())
 		uid_data = [] # a list of meta data {} sorted by score
-		for uid, score in d_uid_score.items(): # small to large signed_jaccard
-			if (direction == 'similar' and score > 0) or (direction == 'opposite' and score < 0):
-				projection ={'geo_id':True, 'id':True, '_id':False,
-					'hs_gene_symbol':True, 'mm_gene_symbol':True, 'organism':True, 
-					'disease_name':True, 'drug_name':True, 'do_id':True,
-					'drugbank_id':True, 'pubchem_cid':True}
-				sig_ = DBSignature(uid, projection=projection)
-				meta = {}
-				meta['id'] = sig_.meta['id']
-				meta['geo_id'] = sig_.meta['geo_id']
-				meta['name'] = [sig_.name, sig_.get_url()] # [name, url]
-				score = float('%.5f'%score)
-				meta['signed_jaccard'] = score
-				uid_data.append(meta)
-		## sort objects by absolute value of signed_jaccard
-		scores = np.array(map(lambda x: x['signed_jaccard'], uid_data))
-		srt_idx = np.argsort(abs(scores))[::-1]
-		uid_data = np.array(uid_data)[srt_idx].tolist()
+
+		# mask for signs of scores
+		if direction == 'similar':
+			score_sign_mask = scores > 0
+		elif direction == 'opposite':
+			score_sign_mask = scores < 0
+		# sort uids by abs(scores) in descending order
+		srt_idx = np.abs(scores[score_sign_mask]).argsort()[::-1]
+		scores = scores[score_sign_mask][srt_idx]
+		uids = uids[score_sign_mask][srt_idx]
+
+		# retrieve meta-data for all uids
+		projection ={'geo_id':True, 'id':True, '_id':False,
+			'hs_gene_symbol':True, 'mm_gene_symbol':True, 'organism':True, 
+			'disease_name':True, 'drug_name':True, 'do_id':True,
+			'drugbank_id':True, 'pubchem_cid':True}
+		uid_docs = COLL.find({'id': {'$in': uids.tolist()}}, projection)
+		uid_docs = list(uid_docs)
+		# make uid_docs have the same order of id with uids
+		uids = uids.tolist()
+		uid_docs_ = [None] * len(uid_docs)
+		for uid_doc in uid_docs:
+			idx = uids.index(uid_doc['id'])
+			uid_docs_[idx] = uid_doc
+		uid_docs = uid_docs_
+
+		for doc, score in zip(uid_docs, scores):
+			sig_ = DBSignature(None, doc=doc)
+			meta = {
+				'id': sig_.meta['id'],
+				'geo_id': sig_.meta['geo_id'],
+				'name': [sig_.name, sig_.get_url()], # [name, url]
+				'signed_jaccard': float('%.5f'%score)
+			}
+			uid_data.append(meta)
 		return uid_data
 
 	if request.method == 'GET': # search using an id in the mongodb
