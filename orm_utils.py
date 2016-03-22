@@ -326,6 +326,23 @@ def make_all_download_files():
 			print category, format, 'finished'
 	return
 
+def make_autocomplete():
+	## make the object required for autocomplete 
+	d_cat_names = {}
+	for uid in ALL_UIDS:
+		sig = DBSignature(uid)
+		if sig.has_chdir():
+			cat = uid.split(':')[0]
+			if cat not in d_cat_names:
+				d_cat_names[cat] = []
+			name = sig.name
+			d_cat_names[cat].append(name)
+
+	for cat, names in d_cat_names.items():
+		d_cat_names[cat] = list(set(names))
+
+	return d_cat_names
+
 
 ## test
 # '''
@@ -367,6 +384,8 @@ def make_all_download_files():
 
 # make_download_file('dz', 'json')
 # make_download_file('dz', 'gmt')
+# d_cat_names = make_autocomplete()
+# json.dump(d_cat_names, open('data/autoCompleteList.json', 'wb'))
 # '''
 
 

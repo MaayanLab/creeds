@@ -57,19 +57,7 @@ def retrieve_signature():
 def get_all_names():
 	## get a list of names for signatures in mongodb with chdir
 	if request.method == 'GET':
-		d_cat_names = {}
-		# catagory = request.args['catagory']
-		for uid in ALL_UIDS:
-			sig = DBSignature(uid)
-			if sig.has_chdir():
-				cat = uid.split(':')[0]
-				if cat not in d_cat_names:
-					d_cat_names[cat] = []
-				name = sig.name
-				d_cat_names[cat].append(name)
-
-		for cat, names in d_cat_names.items():
-			d_cat_names[cat] = list(set(names))
+		d_cat_names = make_autocomplete()
 		return json.dumps(d_cat_names)
 
 @app.route(ENTER_POINT + '/searchByStr', methods=['GET'])
