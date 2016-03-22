@@ -117,8 +117,10 @@ def search():
 		uid = request.args.get('id', '')
 		if uid in ALL_UIDS:
 			sig = DBSignature(uid) # Signature instance
+			uid_data = sig.to_dict(format='json')
 		else: # invalid uid
 			sig = None
+
 
 	elif request.method == 'POST': # search using custom up/dn gene list
 		data = json.loads(request.data)
@@ -129,9 +131,10 @@ def search():
 		direction = data.get('direction', 'similar')
 
 		sig = Signature(name, meta, up_genes, dn_genes)
+		uid_data = get_search_results(sig, direction=direction)
 
 	if sig is not None:
-		uid_data = get_search_results(sig, direction=direction)
+
 		return json.dumps(uid_data)
 	else:
 		return ('', 400, '')
