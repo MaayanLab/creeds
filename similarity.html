@@ -133,7 +133,7 @@ $(document).ready(function(){
 
 	$("#sigNameBtn").click(function(){
 		var searchStr = $("#sigNameInput").val();
-		$.getJSON(ENTER_POINT+'/searchByStr', {search: searchStr}, function(results){
+		$.getJSON(ENTER_POINT+'/search', {q: searchStr}, function(results){
 			// console.log(results)
 			displayStrSearchResult(results);
 

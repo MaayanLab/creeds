@@ -60,31 +60,6 @@ def get_all_names():
 		d_cat_names = make_autocomplete()
 		return json.dumps(d_cat_names)
 
-@app.route(ENTER_POINT + '/searchByStr', methods=['GET'])
-@crossdomain(origin='*')
-def search_by_string():
-	## to search signatures by name
-	if request.method == 'GET':
-		search_string = request.args.get('search', '')
-		search_dict = {
-			"$or":[
-				{'hs_gene_symbol' : {"$regex": search_string, "$options":"i"}},
-				{'mm_gene_symbol' : {"$regex": search_string, "$options":"i"}},
-				{'disease_name' : {"$regex": search_string, "$options":"i"}},
-				{'drug_name' : {"$regex": search_string, "$options":"i"}}
-				]
-			}
-		docs = []
-		# projection = {'_id':False,'limma':False, 'fold_changes':False,'chdir':False}
-		for doc in COLL.find(search_dict, {'id':True,'_id':False}):
-			uid = doc['id']
-			sig = DBSignature(uid) # Signature instance
-			if sig.has_chdir():
-				docs.append(sig.meta)
-
-		return json.dumps(docs)
-
-
 
 @app.route(ENTER_POINT + '/search', methods=['GET', 'POST'])
 @crossdomain(origin='*')
@@ -132,14 +107,24 @@ def search():
 			uid_data.append(meta)
 		return uid_data
 
-	if request.method == 'GET': # search using an id in the mongodb
-		uid = request.args.get('id', '')
-		if uid in ALL_UIDS:
+	if request.method == 'GET': # search signatures using string
+		search_string = request.args.get('q', '')
+		search_dict = {
+			"$or":[
+				{'hs_gene_symbol' : {"$regex": search_string, "$options":"i"}},
+				{'mm_gene_symbol' : {"$regex": search_string, "$options":"i"}},
+				{'disease_name' : {"$regex": search_string, "$options":"i"}},
+				{'drug_name' : {"$regex": search_string, "$options":"i"}}
+				]
+			}
+		docs = []
+		for doc in COLL.find(search_dict, {'id':True,'_id':False}):
+			uid = doc['id']
 			sig = DBSignature(uid) # Signature instance
-			uid_data = sig.to_dict(format='json')
-		else: # invalid uid
-			sig = None
+			if sig.has_chdir():
+				docs.append(sig.meta)
 
+		return json.dumps(docs)
 
 	elif request.method == 'POST': # search using custom up/dn gene list
 		data = json.loads(request.data)
@@ -153,7 +138,6 @@ def search():
 		uid_data = get_search_results(sig, direction=direction)
 
 	if sig is not None:
-
 		return json.dumps(uid_data)
 	else:
 		return ('', 400, '')
