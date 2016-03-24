@@ -137,10 +137,10 @@ def search():
 		sig = Signature(name, meta, up_genes, dn_genes)
 		uid_data = get_search_results(sig, direction=direction)
 
-	if sig is not None:
-		return json.dumps(uid_data)
-	else:
-		return ('', 400, '')
+		if sig is not None:
+			return json.dumps(uid_data)
+		else:
+			return ('', 400, '')
 
 
 @app.route(ENTER_POINT + '/geneSigClustergram', methods=['POST'])
