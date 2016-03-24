@@ -2,6 +2,7 @@
 
 import os, sys, json
 import time
+import cPickle as pickle
 import numpy as np
 from pymongo import MongoClient
 import requests
@@ -13,7 +14,7 @@ from gene_converter import *
 client = MongoClient('mongodb://146.203.54.131:27017/')
 db = client['microtask_signatures']
 COLL = db['signatures']
-ALL_UIDS = COLL.distinct('id')
+ALL_UIDS = COLL.find({'chdir': {'$exists': True}}, {'id': True}).distinct('id')
 
 ## load gene symbol to gene ID conversion dict
 GENE_SYMBOLS = load_gene_symbol_dict()
@@ -77,6 +78,19 @@ def load_and_fill_sig(uid):
 	else:
 		return None
 
+def load_and_fill_sigs(uids):
+	## retrieve signatures and chdir in batch
+	projection = {'_id':False, 'limma':False, 'fold_changes':False}
+	docs = COLL.find({'id': {'$in': uids}}, projection)
+	d_uid_sigs = {}
+	for doc in docs:
+		sig = DBSignature(None, doc=doc)
+		sig.fill_top_genes()
+		uid = doc['id']
+		d_uid_sigs[uid] = sig
+	return d_uid_sigs
+
+
 def load_all_db_sigs(nprocs=4):
 	## load all signatures with chdir from the mongodb
 	d_uid_sigs = {}
@@ -88,7 +102,6 @@ def load_all_db_sigs(nprocs=4):
 		if sig is not None:
 			d_uid_sigs[uid] = sig
 	return d_uid_sigs
-
 
 def find_name(doc):
 	## find the name for a doc in the mongodb based on uid
@@ -405,6 +418,3 @@ def make_autocomplete():
 # d_cat_names = make_autocomplete()
 # json.dump(d_cat_names, open('data/autoCompleteList.json', 'wb'))
 # '''
-
-
-
