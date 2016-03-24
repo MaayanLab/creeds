@@ -196,14 +196,6 @@ function scrollToResult() {
 }
 
 function displayGeneSearchResult (results) { // to display results using gene list search
-	// prettify the results for displaying
-	results = _.map(results, function(obj){
-		if (obj.id.startsWith('dz:')) {
-			obj.id = 'disease:' + obj.id.split(':')[1];
-		}
-		return obj;
-	});
-
 	d3.select('#searchResultsInner').remove();
 	d3.select("#searchResults").append('div')
 		.attr('id', 'searchResultsInner');	
@@ -226,7 +218,17 @@ function displayGeneSearchResult (results) { // to display results using gene li
 	uids = [];
 
 	var columnsDef = [
-		{ "data": "id"},
+		{ 
+			"data": "id",
+			"render": function(data, type, full, meta){
+				var profileUrl = ENTER_POINT + '/api?id=' + data;
+				if (data.startsWith('dz:')){
+					// prettify the results for displaying
+					data = 'disease:' + data.split(':')[1];
+				}
+				return '<a target="_blank" href="'+profileUrl+'">'+data+'</a>';
+			}
+		},
 	    {
 	    	"data": "name", 
 			"render": function(data, type, full, meta){
@@ -355,6 +357,13 @@ function displayStrSearchResult(results){
 			.attr('class', 'label')
 			.style('background-color', color)
 			.text(label);
+		
+		var profileUrl = ENTER_POINT + '/api?id=' + info['id'];
+		dl.append('dt').text('id');
+		dl.append('dd').append('a')
+			.attr('href', profileUrl)
+			.attr('target', '_blank')
+			.text(info['id']);
 
 		var keys = [{'geo_id': 'http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='}, 
 			'ctrl_ids', 'pert_ids', {'platform': 'http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='}, 
