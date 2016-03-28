@@ -88,7 +88,8 @@ var DotView = Backbone.View.extend({
 				break;
 		}
 
-		var keys = [{'geo_id': 'http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='}, 
+		var keys = [{'id': ENTER_POINT+'/api?id='},
+			{'geo_id': 'http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='}, 
 			'ctrl_ids', 'pert_ids', {'platform': 'http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='}, 
 			'organism', 'cell_type'] // the generic keys in info object
 		var allKeys = specificKeys.concat(keys)
