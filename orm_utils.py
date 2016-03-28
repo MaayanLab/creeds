@@ -4,6 +4,7 @@ import os, sys, json
 import time
 import cPickle as pickle
 import numpy as np
+import pandas as pd
 from pymongo import MongoClient
 import requests
 
@@ -336,6 +337,14 @@ def make_download_file(category, format, outfn):
 				out.write('\t'.join(line_up) + '\n')
 				line_dn = [ dict_data['name'] + '-dn', dict_data['id'] ] + map(lambda x:x[0], dict_data['down_genes'])
 				out.write('\t'.join(line_dn) + '\n')
+	elif format == 'csv': # annotations only
+		df = pd.DataFrame.from_records(all_sigs)\
+			.drop(['up_genes', 'down_genes'], axis=1)\
+			.set_index('id')
+		df['pert_ids'] = df['pert_ids'].map(lambda x: ','.join(x))
+		df['ctrl_ids'] = df['ctrl_ids'].map(lambda x: ','.join(x))
+		df.to_csv(outfn, encoding='utf-8')
+
 	else:
 		json.dump(all_sigs, open(outfn, 'wb'))
 	return len(all_sigs)
@@ -349,7 +358,7 @@ def make_all_download_files():
 	}
 
 	for category in ['gene', 'dz', 'drug']:
-		for format in ['json', 'gmt']:
+		for format in ['csv', 'json', 'gmt']:
 			outfn = 'downloads/%s.%s' % (d_fn[category], format)
 			if not os.path.isfile(outfn):
 				num_sigs = make_download_file(category, format, outfn)
