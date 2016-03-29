@@ -2,7 +2,7 @@
 import sqlite3
 
 ## this database is created based homologene, and data from HGNC and MGI
-HOMOLOGENE_DB = 'data/gene_symbols.db'
+HOMOLOGENE_DB = 'static/data/gene_symbols.db'
 
 def sqliteTable2dict(conn, query, key_idx, val_idx):
 	d = {}

@@ -23,7 +23,7 @@ class CIFlask(Flask):
 
 
 ENTER_POINT = '/CREEDS'
-app = CIFlask(__name__, static_url_path=ENTER_POINT, static_folder=os.getcwd())
+app = CIFlask(__name__, static_url_path=ENTER_POINT, static_folder='static')
 app.debug = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
 

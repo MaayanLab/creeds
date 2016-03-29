@@ -359,7 +359,7 @@ def make_all_download_files():
 
 	for category in ['gene', 'dz', 'drug']:
 		for format in ['csv', 'json', 'gmt']:
-			outfn = 'downloads/%s.%s' % (d_fn[category], format)
+			outfn = 'static/downloads/%s.%s' % (d_fn[category], format)
 			if not os.path.isfile(outfn):
 				num_sigs = make_download_file(category, format, outfn)
 				print num_sigs
