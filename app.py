@@ -16,7 +16,7 @@ class CIRule(Rule):
 		self._regex = re.compile(self._regex.pattern, 
 			re.UNICODE | re.IGNORECASE)
 
-from flask import Flask, request
+from flask import (Flask, request, Response)
 
 class CIFlask(Flask):
     url_rule_class = CIRule
@@ -24,7 +24,6 @@ class CIFlask(Flask):
 
 ENTER_POINT = '/CREEDS'
 app = CIFlask(__name__, static_url_path=ENTER_POINT, static_folder='static')
-app.debug = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
 
 
@@ -47,7 +46,7 @@ def retrieve_signature():
 		if uid in ALL_UIDS:
 			sig = DBSignature(uid) # Signature instance
 			sig.fill_top_genes(cutoff)
-			return sig.to_json(meta_only=False)
+			return Response(sig.to_json(meta_only=False), mimetype='application/json')
 		else: # bad request
 			return ('', 400, '')
 
@@ -124,7 +123,7 @@ def search():
 			if sig.has_chdir():
 				docs.append(sig.meta)
 
-		return json.dumps(docs)
+		return Response(json.dumps(docs), mimetype='application/json')
 
 	elif request.method == 'POST': # search using custom up/dn gene list
 		data = json.loads(request.data)
@@ -138,7 +137,7 @@ def search():
 		uid_data = get_search_results(sig, direction=direction)
 
 		if sig is not None:
-			return json.dumps(uid_data)
+			return Response(json.dumps(uid_data), mimetype='application/json')
 		else:
 			return ('', 400, '')
 
@@ -188,7 +187,16 @@ if __name__ == '__main__':
 		host = sys.argv[2]
 	else:
 		host = '127.0.0.1'
-		# host = '0.0.0.0'
+
+	if len(sys.argv) > 3:
+		mode = sys.argv[3]
+	else:
+		mode = 'dev'
+
+	if mode == 'dev':
+		app.debug = True
+	else:
+		app.debug = False	
 
 	make_all_download_files()
 	global d_uid_sigs
