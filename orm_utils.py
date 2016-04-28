@@ -15,7 +15,12 @@ from gene_converter import *
 client = MongoClient('mongodb://146.203.54.131:27017/')
 db = client['microtask_signatures']
 COLL = db['signatures']
-ALL_UIDS = COLL.find({'chdir': {'$exists': True}}, {'id': True}).distinct('id')
+ALL_UIDS = COLL.find(
+	{'$and': [
+		{'chdir': {'$exists': True}}, 
+		{'version': {'$exists': False}}, 
+	]},
+	{'id': True}).distinct('id')
 
 ## load gene symbol to gene ID conversion dict
 GENE_SYMBOLS = load_gene_symbol_dict()
@@ -151,7 +156,8 @@ class Signature(object):
 
 class DBSignature(Signature):
 	## signature from mongodb
-	def __init__(self, uid, projection={'_id':False, 'limma':False, 'fold_changes':False}, doc=None):
+	def __init__(self, uid, projection={'_id':False, 'limma':False, 'fold_changes':False, 
+		'chdir_sva_exp2':False, 'log2FC_norm':False, 'limma_sva':False, 'chdir_sva':False, 'limma_norm':False}, doc=None):
 		## the constructor also act as a way to query mongodb using
 		## the id and return desirable fields by specifying projection
 		if doc is None: ## if doc is given, do not retrieve from DB

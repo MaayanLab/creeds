@@ -11,7 +11,7 @@ var Router = Backbone.Router.extend({
 
 	routes: {
 		'': 'home',
-		'similarity': 'similarity',
+		'similarity(/)(:searchStr)': 'similarity',
 		'drug/:id': 'drug',
 		'clustergram': 'clustergram',
 		'clusters': 'clusters',
@@ -26,10 +26,13 @@ var Router = Backbone.Router.extend({
 		});
 	},
 
-	similarity: function(){
+	similarity: function(searchStr){
 		$(this.el).load("similarity.html", function() {
 			removeActive();
 			$("#similarity").addClass('active');
+			if (searchStr){
+				doStrSearch(searchStr);	
+			}
 		});
 	},
 
@@ -64,3 +67,4 @@ var Router = Backbone.Router.extend({
 
 var appRouter = new Router();
 Backbone.history.start(); 
+
