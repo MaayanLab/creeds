@@ -6,7 +6,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE)
 ```
 
 ## Load required packages
@@ -16,7 +16,9 @@ library(httr)
 library(jsonlite)
 library(Biobase)
 library(GEOquery)
+library(GeoDE)
 library(limma)
+library(ggplot2)
 ```
 
 ```{r}
@@ -64,7 +66,7 @@ Have a look at the search result
 head(response)
 ```
 
-3. Retrieve a signature using `id`
+## 3. Retrieve a signature using `id`
 ```{r}
 r <- GET(paste0(BASE_URL, 'api'), query=list(id= response[1, 'id']))
 sig <- fromJSON(httr::content(r, 'text'))
@@ -75,3 +77,87 @@ sig <- fromJSON(httr::content(r, 'text'))
 names(sig)
 ```
 
+## 4. Retrieve a gene expression dataset from GEO and perform some analyses
+### 4.0. Prepare data
+Look at the meta-data required to retrieve dataset from GEO
+```{r}
+cat('GEO id:', sig$geo_id)
+cat('Control GSMs:', sig$ctrl_ids)
+cat('Perturbation GSMs:', sig$pert_ids)
+```
+
+Retrieve the GEO series using `GEOquery::getGEO` function, which return a `list` of `ExpressionSet` instance. The `ExpressionSet` object contains a data.frame with rows being probes and columns being samples.
+```{r}
+eset <- getGEO(sig$geo_id, GSEMatrix=TRUE, AnnotGPL=TRUE)
+eset <- eset[[1]]
+print(dim(eset))
+```
+
+Subset the columnseset with `ctrl_ids` and `pert_ids`.
+```{r}
+eset <- eset[, c(sig$ctrl_ids, sig$pert_ids)]
+print(dim(eset))
+```
+
+### 4.1. Explanatory analyses
+Visualize the gene expression values across samples using density plot
+```{r}
+expr_df <- as.data.frame(exprs(eset))
+dfs <- stack(expr_df)
+colnames(dfs) <- c('Gene_expression', 'Sample')
+ggplot(dfs, aes(x=Gene_expression)) + geom_density(aes(group=Sample, colour=Sample))
+```
+
+Visualize using PCA plot
+```{r}
+# Make a list labeling the whether the samples are controls or perturbations
+n_ctrls <- length(sig$ctrl_ids)
+n_perts <- length(sig$pert_ids)
+sample_classes <- factor(c(rep('CTRL', n_ctrls), rep('PERT', n_perts)))
+# also make a integer version of sample_classes using 1 for 'CTRL' and 2 for 'PERT'
+sample_classes_i <- factor(c(rep(1, n_ctrls), rep(2, n_perts)))
+# Perform PCA on the expression transposed expression data.frame (samples x genes)
+pca <- prcomp(t(exprs(eset)), scale=T)
+# Get the coordinates
+pca_coords <- data.frame(sample_classes, pca$x[,1:3])
+qplot(x=PC1, y=PC2, data=pca_coords, colour=sample_classes)
+```
+
+
+### 4.2. Perform differential expression analysis
+#### 4.2.1. Use the Characteristic Direcion (CD)
+```{r}
+expr_df <- as.data.frame(exprs(eset))
+expr_df <- cbind(rownames(expr_df), expr_df)
+chdir_result <- chdirAnalysis(expr_df, sample_classes_i, gamma=0.5)
+```
+
+#### 4.2.2. Use Limma
+First construct design matrix
+```{r}
+design <- model.matrix(~sample_classes + 0, eset)
+colnames(design) <- levels(sample_classes)
+print(design)
+```
+
+Fit limma model and make volcano plot
+```{r}
+fit <- lmFit(eset, design)
+cont.matrix <- makeContrasts(PERT-CTRL, levels=design)
+fit2 <- contrasts.fit(fit, cont.matrix)
+fit2 <- eBayes(fit2)
+volcanoplot(fit2, highlight=5)
+```
+
+Examine top DEGs 
+```{r}
+topDEGs <- topTable(fit2, adjust="fdr")
+# Only display probe ID and Gene.symbol
+topDEGs <- topDEGs[,c('ID','Gene.symbol', 'logFC', 'AveExpr', 't', 'P.Value', 'adj.P.Val', 'B')]
+print(topDEGs)
+```
+
+**Built with**
+```{r}
+sessionInfo()
+```
