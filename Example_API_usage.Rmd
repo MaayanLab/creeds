@@ -1,6 +1,7 @@
 ---
 title: "Example CREEDS API Usages Walk-Through"
 author: "Zichen Wang"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document: default
 ---
@@ -27,13 +28,16 @@ BASE_URL <- 'http://amp.pharm.mssm.edu/CREEDS/'
 
 ## 1. Search signatures using text
 
+The `/search` endpoint handles the search of the meta-data associated with gene expression signatures. You can use a query term of interest such as 'breast cancer' to perform search using HTTP GET request.
+
+The `GET` function perform HTTP GET request and return a response object. The `httr::content` method retrieve the content within the response object. Unfortunately the `content` method is masked by `Biobase::content`, we will have to use add namespace when using it.
 ```{r}
 r <- GET(paste0(BASE_URL, 'search'), query=list(q ='breast cancer'))
 response <- fromJSON(httr::content(r, 'text'))
 print(r$status_code)
 ```
 
-`response` is an R `data.frame`, have a look at the search result
+The `response` is an R `data.frame`, have a look at the search result
 
 ```{r}
 head(response)
@@ -41,7 +45,7 @@ head(response)
 
 ## 2. Query the signature database using up/down gene sets to find similar/opposite signatures
 
-Get vectors of up and down genes to query against the CREEDS database:
+Signatures can also be queried against using a pair of up/down gene lists from the `/search` endpoint using HTTP POST request. Here we generate vectors of up and down genes to query against the CREEDS database:
 
 ```{r}
 ## Get some up and down gene lists 
@@ -86,14 +90,14 @@ cat('Control GSMs:', sig$ctrl_ids)
 cat('Perturbation GSMs:', sig$pert_ids)
 ```
 
-Retrieve the GEO series using `GEOquery::getGEO` function, which return a `list` of `ExpressionSet` instance. The `ExpressionSet` object contains a data.frame with rows being probes and columns being samples.
+Retrieve the GEO series using `GEOquery::getGEO` function, which return a `list` of `ExpressionSet` instance. The `ExpressionSet` object contains a `matrix` with rows being probes and columns being samples, and can be accessed by the `exprs` method.
 ```{r}
 eset <- getGEO(sig$geo_id, GSEMatrix=TRUE, AnnotGPL=TRUE)
 eset <- eset[[1]]
 print(dim(eset))
 ```
 
-Subset the columnseset with `ctrl_ids` and `pert_ids`.
+Subset the columns of the eset with `ctrl_ids` and `pert_ids`.
 ```{r}
 eset <- eset[, c(sig$ctrl_ids, sig$pert_ids)]
 print(dim(eset))
@@ -125,14 +129,14 @@ qplot(x=PC1, y=PC2, data=pca_coords, colour=sample_classes)
 
 
 ### 4.2. Perform differential expression analysis
-#### 4.2.1. Use the Characteristic Direcion (CD)
+#### 4.2.1. Use the Characteristic Direcion (CD) using the `chdirAnalysis` in the [`GeoDE`](https://cran.r-project.org/web/packages/GeoDE/index.html) package.
 ```{r}
 expr_df <- as.data.frame(exprs(eset))
 expr_df <- cbind(rownames(expr_df), expr_df)
 chdir_result <- chdirAnalysis(expr_df, sample_classes_i, gamma=0.5)
 ```
 
-#### 4.2.2. Use Limma
+#### 4.2.2. Use [`Limma`](https://bioconductor.org/packages/release/bioc/html/limma.html)
 First construct design matrix
 ```{r}
 design <- model.matrix(~sample_classes + 0, eset)
