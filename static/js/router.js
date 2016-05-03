@@ -16,7 +16,7 @@ var Router = Backbone.Router.extend({
 		'clustergram': 'clustergram',
 		'clusters': 'clusters',
 		'downloads': 'downloads',
-		'contribute': 'contribute'
+		'help': 'help'
 	},
 
 	home: function(){
@@ -56,10 +56,10 @@ var Router = Backbone.Router.extend({
 		})
 	},
 
-	contribute: function() {
-		$(this.el).load("contribute.html", function() {
+	help: function() {
+		$(this.el).load("help.html", function() {
 			removeActive();
-			$("#contribute").addClass('active');
+			$("#help").addClass('active');
 		})
 	},
 
