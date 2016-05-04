@@ -10,3 +10,8 @@
 .parameters > tbody > tr > td:nth-child(1) {
 	font-weight: bold;
 }
+
+.json {
+	height: 250px;
+	overflow-y: scroll;
+}
