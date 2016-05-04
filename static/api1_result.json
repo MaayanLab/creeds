@@ -1,0 +1,105 @@
+[
+    {
+        "cell_type": "type II alveolar cells", 
+        "pert_ids": [
+            "GSM157806", 
+            "GSM157807", 
+            "GSM157834"
+        ], 
+        "hs_gene_symbol": "STAT3", 
+        "curator": "cadimo", 
+        "geo_id": "GSE6846", 
+        "platform": "GPL1261", 
+        "ctrl_ids": [
+            "GSM157835", 
+            "GSM157836", 
+            "GSM157837"
+        ], 
+        "mm_gene_symbol": "Stat3", 
+        "organism": "mouse", 
+        "id": "gene:85", 
+        "pert_type": "deficiency"
+    }, 
+    {
+        "cell_type": "Esophagus cell line OE33", 
+        "pert_ids": [
+            "GSM1156632", 
+            "GSM1156633", 
+            "GSM1156634"
+        ], 
+        "hs_gene_symbol": "STAT3", 
+        "curator": "gszeto", 
+        "geo_id": "GSE47763", 
+        "platform": "GPL10558", 
+        "ctrl_ids": [
+            "GSM1156629", 
+            "GSM1156630", 
+            "GSM1156631"
+        ], 
+        "mm_gene_symbol": "Stat3", 
+        "organism": "human", 
+        "id": "gene:1790", 
+        "pert_type": "KD"
+    }, 
+    {
+        "cell_type": "A549", 
+        "pert_ids": [
+            "GSM1054353", 
+            "GSM1054354"
+        ], 
+        "hs_gene_symbol": "STAT3", 
+        "curator": "Kevin", 
+        "geo_id": "GSE42979", 
+        "platform": "GPL571", 
+        "ctrl_ids": [
+            "GSM1054357", 
+            "GSM1054358"
+        ], 
+        "mm_gene_symbol": "Stat3", 
+        "organism": "human", 
+        "id": "gene:2148", 
+        "pert_type": "KD"
+    }, 
+    {
+        "cell_type": "na&Atilde;&macr;ve CD4+ T cells", 
+        "pert_ids": [
+            "GSM940864", 
+            "GSM940865", 
+            "GSM940866"
+        ], 
+        "hs_gene_symbol": "STAT3", 
+        "curator": "maroulisv", 
+        "geo_id": "GSE38375", 
+        "platform": "GPL1261", 
+        "ctrl_ids": [
+            "GSM940846", 
+            "GSM940847", 
+            "GSM940848"
+        ], 
+        "mm_gene_symbol": "Stat3", 
+        "organism": "mouse", 
+        "id": "gene:2479", 
+        "pert_type": "KO"
+    }, 
+    {
+        "cell_type": "Liver", 
+        "pert_ids": [
+            "GSM526603", 
+            "GSM526605", 
+            "GSM526678"
+        ], 
+        "hs_gene_symbol": "STAT3", 
+        "curator": "VICENTE", 
+        "geo_id": "GSE21060", 
+        "platform": "GPL6246", 
+        "ctrl_ids": [
+            "GSM526561", 
+            "GSM526562", 
+            "GSM526602"
+        ], 
+        "mm_gene_symbol": "Stat3", 
+        "organism": "mouse", 
+        "id": "gene:3063", 
+        "pert_type": "Actvation of gene product"
+    }
+]

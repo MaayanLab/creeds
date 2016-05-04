@@ -1,0 +1,12 @@
+.parameters {
+	font-size: 14px;
+}
+
+.parameters > tbody > tr > td {
+	border-top: 0;
+	padding: 2px;
+}
+
+.parameters > tbody > tr > td:nth-child(1) {
+	font-weight: bold;
+}

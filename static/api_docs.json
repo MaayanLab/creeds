@@ -1,0 +1,16 @@
+[
+	{
+		"name": "Search signatures using texts",
+		"Method": "GET",
+		"URL": "/CREEDS/search",
+		"Returns": "JSON array of signature objects.",
+		"Parameters": [
+			["q", "String", "A string of the search term."]
+		],
+		"Example code": {
+			"Python": "api1.py",
+			"R": "api1.R"
+		},
+		"Example result": "api1_result.json"
+	}
+]
