@@ -15,7 +15,6 @@ function loadScript(scriptPath, obj){
 		dataType: 'text',
 		success: function(script){
 			var suffix = scriptPath.split('.')[1];
-			console.log(suffix)
 			switch (suffix){
 				case 'py':
 					var scriptType = 'python';
@@ -40,8 +39,8 @@ function renderParams(data){
 	for (var i = 0; i < params.length; i++) {
 		var param = params[i];
 		var tr = $('<tr>');
-		for (var i = 0; i < param.length; i++) {
-			tr.append( $('<td>').html(param[i]) )
+		for (var j = 0; j < param.length; j++) {
+			tr.append( $('<td>').html(param[j]) )
 		};
 		table.append(tr)
 	};
@@ -87,7 +86,7 @@ function renderApiDoc(data){
 		'Example code',
 		'Example result',
 		];
-	var li = $('<li>');
+	var li = $('<li>').attr('id', data['id']);
 	var h4 = $('<h4>').html(data['name']);
 	var dl = $('<dl>').addClass('dl-horizontal');
 	li = li.append(h4)
@@ -122,7 +121,6 @@ function renderApiDoc(data){
 
 function renderAllApiDocs(){
 	$.getJSON('api_docs.json', function(apiDocs){
-		console.log(apiDocs)
 		for (var i = 0; i < apiDocs.length; i++) {
 			var li = renderApiDoc(apiDocs[i]);
 			$('#api-docs').append(li);
@@ -130,7 +128,6 @@ function renderAllApiDocs(){
 			for (var key in apiDocs[i]['Example code']){
 				var scriptPath = apiDocs[i]['Example code'][key];
 				var id = scriptPath.replace('.', '-');
-				console.log(scriptPath)
 				loadScript(scriptPath, $('#' + id));
 			}
 			// append result

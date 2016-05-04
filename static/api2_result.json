@@ -1,0 +1,47 @@
+[
+    {
+        "signed_jaccard": 0.00289, 
+        "id": "gene:2008", 
+        "geo_id": "GSE8747", 
+        "name": [
+            "Met", 
+            "http://www.ncbi.nlm.nih.gov/gene/17295"
+        ]
+    }, 
+    {
+        "signed_jaccard": 0.00251, 
+        "id": "gene:84", 
+        "geo_id": "GSE10516", 
+        "name": [
+            "Lmx1b", 
+            "http://www.ncbi.nlm.nih.gov/gene/16917"
+        ]
+    }, 
+    {
+        "signed_jaccard": 0.00207, 
+        "id": "gene:2314", 
+        "geo_id": "GSE53388", 
+        "name": [
+            "Arhgap5", 
+            "http://www.ncbi.nlm.nih.gov/gene/11855"
+        ]
+    }, 
+    {
+        "signed_jaccard": 0.00178, 
+        "id": "gene:2916", 
+        "geo_id": "GSE40377", 
+        "name": [
+            "Pde10a", 
+            "http://www.ncbi.nlm.nih.gov/gene/23984"
+        ]
+    }, 
+    {
+        "signed_jaccard": 0.00162, 
+        "id": "gene:601", 
+        "geo_id": "GSE13590", 
+        "name": [
+            "MIR140", 
+            "http://www.ncbi.nlm.nih.gov/gene/406932"
+        ]
+    }
+]

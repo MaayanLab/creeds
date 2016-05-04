@@ -1,5 +1,6 @@
 [
 	{
+		"id": "api1",
 		"name": "Search signatures using texts",
 		"Method": "GET",
 		"URL": "/CREEDS/search",
@@ -12,5 +13,37 @@
 			"R": "api1.R"
 		},
 		"Example result": "api1_result.json"
+	},
+	{
+		"id": "api2",
+		"name": "Query the CREEDS database using up/down gene sets",
+		"Method": "POST",
+		"URL": "/CREEDS/search",
+		"Returns": "JSON array of signature objects together with signed Jaccard Index.",
+		"Parameters": [
+			["up_genes", "Array", "An array of strings of gene symbols"],
+			["dn_genes", "Array", "An array of strings of gene symbols"],
+			["direction", "String", "Can be either 'similar' or 'opposite'"]
+		],
+		"Example code": {
+			"Python": "api2.py",
+			"R": "api2.R"
+		},
+		"Example result": "api2_result.json"
+	},
+	{
+		"id": "api3",
+		"name": "Retrieve a signature from CREEDS",
+		"Method": "GET",
+		"URL": "/CREEDS/api",
+		"Returns": "JSON array of signature objects together with signed Jaccard Index.",
+		"Parameters": [
+			["id", "String", "id of a signature in CREEDS like 'gene:2008'"]
+		],
+		"Example code": {
+			"Python": "api3.py",
+			"R": "api3.R"
+		},
+		"Example result": "api3_result.json"	
 	}
 ]
