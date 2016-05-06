@@ -16,13 +16,9 @@ from StringIO import StringIO
 from files import SOFTFile, ANNOTFile
 
 
-def download(accession, metadata):
+def download(accession):
 	"""Downloads GEO file based on accession number. Returns a SOFTFile or ANNOTFile
-	instance with optional metadata as annotations.
-
-	While `metadata` is optional, optional arguments are handled at the
-	endpoints, meaning that `RequestParams` will set `metadata` to an empty
-	dict if no metadata is provided.
+	instance.
 
 	For reading and unzipping binary chunks, see:
 		http://stackoverflow.com/a/27053335/1830334
@@ -31,7 +27,7 @@ def download(accession, metadata):
 
 	import os
 	if 'GPL' not in accession: # soft file
-		geo_file = SOFTFile(accession, metadata)
+		geo_file = SOFTFile(accession)
 		if 'GDS' in accession:
 			url = _construct_GDS_url(accession)
 		else:
