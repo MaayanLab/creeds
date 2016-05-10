@@ -1,6 +1,10 @@
 '''
 Utils for computing similarity and etc.
 '''
+from itertools import chain
+
+from orm import *
+
 def get_matrix(uids, genes, na_val=0):
 	## retrieve a matrix based on uids of signatures and genes
 	mat = np.zeros((len(genes), len(uids)))
@@ -18,7 +22,7 @@ def make_autocomplete(db_collections):
 	`db_collections`: a list of DBSignatureCollection instances
 	'''
 	d_cat_names = {}
-	for uid, sig in [dbc.items() for dbc in db_collections]:
+	for uid, sig in chain(*[dbc.iteritems() for dbc in db_collections]):
 		if sig.has_chdir():
 			cat = uid.split(':')[0]
 			if cat not in d_cat_names:

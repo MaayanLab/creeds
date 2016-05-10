@@ -4,6 +4,7 @@ ORMs for signature, signatures in the MongoDB and collection of signatures.
 
 import os, sys, json
 import time
+from itertools import chain
 import cPickle as pickle
 import numpy as np
 import pandas as pd
@@ -20,7 +21,8 @@ COLL = db['signatures']
 ALL_UIDS = COLL.find(
 	{'$and': [
 		{'chdir_sva_exp2': {'$exists': True}}, 
-		{'version': '1.0'}, 
+		{'version': {'$in':['1.0', '1.2']}},
+		{"incorrect": {"$ne": True}}
 	]},
 	{'id': True}).distinct('id')
 
@@ -154,17 +156,74 @@ class Signature(object):
 		self.meta = meta
 		self.up_genes = up_genes
 		self.dn_genes = dn_genes
-		self._up_genes = set(map(lambda x: x[0].upper(), up_genes))
-		self._dn_genes = set(map(lambda x: x[0].upper(), dn_genes))
+		self._up_genes = set(map(lambda x: x.upper(), up_genes))
+		self._dn_genes = set(map(lambda x: x.upper(), dn_genes))
 
-	def calc_all_scores(self, d_uid_sigs):
-		## calcuated signed jaccard score for this signatures against 
-		## all signatures in d_uid_sigs
+	def calc_all_scores(self, db_sig_collection_iteritems):
+		'''
+		Calcuated signed jaccard score for this signatures against 
+		all DBsignatures in `db_sig_collection_iteritems`, generator from 
+		a DBSignatureCollection instance or a list of DBSignatureCollections.
+		'''
 		uid_scores = []
-		for uid, sig in d_uid_sigs.items():
+		for uid, sig in db_sig_collection_iteritems:
 			score = signed_jaccard(self, sig)
 			uid_scores.append((uid, score))
 		return dict(uid_scores)
+
+	def get_query_results(self, db_sig_collection, direction='similar'):
+		'''
+		Handle querying signatures from the DB with custom up/down genes,
+		return a list of objects
+		'''
+		if type(db_sig_collection) == list:
+			db_sig_collection_iteritems = chain(*[dbc.iteritems() for dbc in db_sig_collection])
+		else:
+			db_sig_collection_iteritems = db_sig_collection.iteritems()
+		
+
+		d_uid_score = self.calc_all_scores(db_sig_collection_iteritems)
+
+		scores = np.array(d_uid_score.values())
+		uids = np.array(d_uid_score.keys())
+		uid_data = [] # a list of meta data {} sorted by score
+
+		# mask for signs of scores
+		if direction == 'similar':
+			score_sign_mask = scores > 0
+		elif direction == 'opposite':
+			score_sign_mask = scores < 0
+		# sort uids by abs(scores) in descending order
+		srt_idx = np.abs(scores[score_sign_mask]).argsort()[::-1]
+		scores = scores[score_sign_mask][srt_idx]
+		uids = uids[score_sign_mask][srt_idx]
+
+		# retrieve meta-data for all uids
+		projection ={'geo_id':True, 'id':True, '_id':False,
+			'hs_gene_symbol':True, 'mm_gene_symbol':True, 'organism':True, 
+			'disease_name':True, 'drug_name':True, 'do_id':True,
+			'drugbank_id':True, 'pubchem_cid':True}
+		uid_docs = COLL.find({'id': {'$in': uids.tolist()}}, projection)
+
+		uid_docs = list(uid_docs)
+		# make uid_docs have the same order of id with uids
+		uids = uids.tolist()
+		uid_docs_ = [None] * len(uid_docs)
+		for uid_doc in uid_docs:
+			idx = uids.index(uid_doc['id'])
+			uid_docs_[idx] = uid_doc
+		uid_docs = uid_docs_
+
+		for doc, score in zip(uid_docs, scores):
+			sig_ = DBSignature(None, doc=doc)
+			meta = {
+				'id': sig_.meta['id'],
+				'geo_id': sig_.meta['geo_id'],
+				'name': [sig_.name, sig_.get_url()], # [name, url]
+				'signed_jaccard': float('%.5f'%score)
+			}
+			uid_data.append(meta)
+		return uid_data
 
 
 class DBSignature(Signature):
@@ -228,12 +287,12 @@ class DBSignature(Signature):
 		return dict_data
 
 
-	def calc_all_scores(self, d_uid_sigs, cutoff=600):
+	def calc_all_scores(self, db_sig_collection, cutoff=600):
 		## calcuated signed jaccard score for this signatures against 
 		## all signatures in the database
 		self.fill_top_genes(cutoff)
 		uid_scores = []
-		for uid, sig in d_uid_sigs.items():
+		for uid, sig in db_sig_collection.items():
 			score = signed_jaccard(self, sig)
 			uid_scores.append((uid, score))
 		return dict(uid_scores)
