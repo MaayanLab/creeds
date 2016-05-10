@@ -1,4 +1,6 @@
-## ORMs and utils for computing similarity and etc.
+'''
+ORMs for signature, signatures in the MongoDB and collection of signatures.
+'''
 
 import os, sys, json
 import time
@@ -392,81 +394,6 @@ class DBSignatureCollection(dict):
 				print outfn, 'finished'
 		return
 
-
-def get_matrix(uids, genes, na_val=0):
-	## retrieve a matrix based on uids of signatures and genes
-	mat = np.zeros((len(genes), len(uids)))
-
-	for j, uid in enumerate(uids):
-		sig = DBSignature(uid, projection=PROJECTION_EXCLUDE)
-		vals = sig.get_gene_vals(genes, na_val=na_val)
-		mat[:, j] = vals
-	return mat
-
-
-def make_download_file(category, format, outfn):
-	## to generate files for downloading
-
-	all_sigs = []
-	for uid in ALL_UIDS:
-		if uid.startswith(category):
-			sig = DBSignature(uid) # Signature instance
-			if sig.has_chdir():
-				sig.fill_top_genes(600)
-				all_sigs.append(sig.to_dict(format=format))
-
-	if format == 'gmt':
-		with open (outfn, 'w') as out:
-			for dict_data in all_sigs:
-				line_up = [ dict_data['name'] + '-up', dict_data['id'] ] + map(lambda x:x[0], dict_data['up_genes'])
-				out.write('\t'.join(line_up) + '\n')
-				line_dn = [ dict_data['name'] + '-dn', dict_data['id'] ] + map(lambda x:x[0], dict_data['down_genes'])
-				out.write('\t'.join(line_dn) + '\n')
-	elif format == 'csv': # annotations only
-		df = pd.DataFrame.from_records(all_sigs)\
-			.drop(['up_genes', 'down_genes'], axis=1)\
-			.set_index('id')
-		df['pert_ids'] = df['pert_ids'].map(lambda x: ','.join(x))
-		df['ctrl_ids'] = df['ctrl_ids'].map(lambda x: ','.join(x))
-		df.to_csv(outfn, encoding='utf-8')
-
-	else:
-		json.dump(all_sigs, open(outfn, 'wb'))
-	return len(all_sigs)
-
-def make_all_download_files():
-	file_meta = {}
-	d_fn = {
-		'gene': 'Single_gene_perturbations',
-		'dz': 'Disease_signatures',
-		'drug': 'Single_drug_perturbations',
-	}
-
-	for category in ['gene', 'dz', 'drug']:
-		for format in ['csv', 'json', 'gmt']:
-			outfn = 'static/downloads/%s.%s' % (d_fn[category], format)
-			if not os.path.isfile(outfn):
-				num_sigs = make_download_file(category, format, outfn)
-				print num_sigs
-			print category, format, 'finished'
-	return
-
-def make_autocomplete():
-	## make the object required for autocomplete 
-	d_cat_names = {}
-	for uid in ALL_UIDS:
-		sig = DBSignature(uid)
-		if sig.has_chdir():
-			cat = uid.split(':')[0]
-			if cat not in d_cat_names:
-				d_cat_names[cat] = []
-			name = sig.name
-			d_cat_names[cat].append(name)
-
-	for cat, names in d_cat_names.items():
-		d_cat_names[cat] = list(set(names))
-
-	return d_cat_names
 
 
 ## test
