@@ -166,9 +166,11 @@ class Signature(object):
 
 
 class DBSignature(Signature):
-	## signature from mongodb
+	'''
+	Signature instance from the mongodb.
+	'''
 	chdir_field = 'chdir_sva_exp2'
-	
+
 	def __init__(self, uid, projection=PROJECTION_EXCLUDE, doc=None):
 		## the constructor also act as a way to query mongodb using
 		## the id and return desirable fields by specifying projection
@@ -321,6 +323,74 @@ class DBSignature(Signature):
 				url = 'https://www.google.com/search?q=%s' % self.name.replace(' ', '+')
 		return url	
 
+
+class DBSignatureCollection(dict):
+	'''
+	A collection of DBSignature from the mongodb
+	'''
+	formats = ['csv', 'json', 'gmt']
+	category2name = {
+		'gene': 'Single_gene_perturbations',
+		'dz': 'Disease_signatures',
+		'drug': 'Single_drug_perturbations',
+		}
+	outfn_path = 'static/downloads/'
+
+	def __init__(self, filter_, name):
+		'''
+		`filter_` should be a mongo query
+		'''
+		self.filter_ = filter_
+		self.name = name
+
+		cur = COLL.find(self.filter_, PROJECTION_EXCLUDE)
+		uids = cur.distinct('id')
+		# Load signatures 
+		for doc in cur:
+			sig = DBSignature(None, doc=doc)
+			sig.fill_top_genes()
+			uid = doc['id']
+			self[uid] = sig
+
+		categories = map(lambda x:x.split(':')[0], self.keys())
+		self.categories = set(categories)
+
+	def make_download_file(self, category, format, outfn):
+		'''to generate files for downloading
+		'''
+		sigs_this_category = [sig.to_dict(format=format) for uid, sig in self.items() if uid.startswith(category)]
+		if format == 'gmt':
+			with open (outfn, 'w') as out:
+				for dict_data in sigs_this_category:
+					line_up = [ dict_data['name'] + '-up', dict_data['id'] ] + map(lambda x:x[0], dict_data['up_genes'])
+					out.write('\t'.join(line_up) + '\n')
+					line_dn = [ dict_data['name'] + '-dn', dict_data['id'] ] + map(lambda x:x[0], dict_data['down_genes'])
+					out.write('\t'.join(line_dn) + '\n')
+		
+		elif format == 'csv': # annotations only
+			df = pd.DataFrame.from_records(sigs_this_category)\
+				.drop(['up_genes', 'down_genes'], axis=1)\
+				.set_index('id')
+			df['pert_ids'] = df['pert_ids'].map(lambda x: ','.join(x))
+			df['ctrl_ids'] = df['ctrl_ids'].map(lambda x: ','.join(x))
+			df.to_csv(outfn, encoding='utf-8')
+
+		else:
+			json.dump(sigs_this_category, open(outfn, 'wb'))
+		return
+
+	def make_all_download_files(self):
+		'''to generate all 3 formats of files for each category
+		'''
+		for category in self.categories:
+			for format in self.formats:
+				outfn = '%s/%s-%s.%s' % (self.outfn_path, 
+					self.category2name[category], self.name, format)
+				if not os.path.isfile(outfn):
+					num_sigs = self.make_download_file(category, format, outfn)
+					print num_sigs
+				print outfn, 'finished'
+		return
 
 
 def get_matrix(uids, genes, na_val=0):
