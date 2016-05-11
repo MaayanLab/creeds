@@ -1,6 +1,7 @@
 $(document).ready(function(){
 	hljs.initHighlightingOnLoad();
 	renderAllApiDocs();
+
 })
 
 function loadScript(scriptPath, obj){
@@ -130,5 +131,12 @@ function renderAllApiDocs(){
 			loadScript(resultPath, $('#' + id))
 			
 		};
+
+		// scrollspy
+		$('body').scrollspy({
+			target: '.sidebar',
+			offset: 200
+		});
+
 	});	
 }

@@ -15,3 +15,18 @@
 	height: 250px;
 	overflow-y: scroll;
 }
+
+.fixed {
+    position: fixed;
+}
+/* sidebar */
+.sidebar {
+    padding-left: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.sidebar .nav>.active>a { 
+	text-decoration: none;
+	background-color: #eeeeee;
+}
