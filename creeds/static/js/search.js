@@ -77,9 +77,12 @@ $(document).ready(function(){
 	});
 
 	// search sigs using up/dn genes
-	$(".geneSearchBtn").click(function(){
+	$(".geneSearchBtn").click(function(e){
+		e.preventDefault();
 		var upGenes = $('#upGenes').val();
 		var dnGenes = $('#dnGenes').val();
+		var dbVersion = $("#dbVersion").val();
+
 		if (upGenes != '' && dnGenes !='') {
 			$.blockUI({ css: { 
 	            border: 'none', 
@@ -91,7 +94,8 @@ $(document).ready(function(){
 	            color: '#fff' 
 	        } });
 	        var direction = $(this).attr('direction');
-			var postPayLoad = {"up_genes": upGenes.split('\n'), "dn_genes": dnGenes.split('\n'), "direction":direction};
+			var postPayLoad = {"up_genes": upGenes.split('\n'), "dn_genes": dnGenes.split('\n'), 
+				"direction":direction, "db_version": dbVersion};
 			$.ajax({
 
 				type: 'POST',
