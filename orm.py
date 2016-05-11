@@ -364,7 +364,7 @@ class DBSignature(Signature):
 				if gene_symbol is None:
 					gene_symbol = meta['hs_gene_symbol']
 					
-			gene_id = GENE_SYMBOLS[gene_symbol]
+			gene_id = GENE_SYMBOLS.get(gene_symbol, '')
 			url = 'http://www.ncbi.nlm.nih.gov/gene/%s' % gene_id
 
 		elif meta['id'].startswith('dz:'):

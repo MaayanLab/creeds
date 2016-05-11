@@ -1,7 +1,8 @@
 ## python API for the mongodb
 import os, sys, json
 
-from orm_utils import *
+from orm import *
+from utils import *
 import clustergram
 from crossdomain import crossdomain
 
@@ -63,59 +64,20 @@ def get_all_names():
 @app.route(ENTER_POINT + '/search', methods=['GET', 'POST'])
 @crossdomain(origin='*')
 def search():
-	## handle searching signatures with either custom genes or a document in the db
-	def get_search_results(sig, direction='similar'):
-		d_uid_score = sig.calc_all_scores(d_uid_sigs)
-		scores = np.array(d_uid_score.values())
-		uids = np.array(d_uid_score.keys())
-		uid_data = [] # a list of meta data {} sorted by score
-
-		# mask for signs of scores
-		if direction == 'similar':
-			score_sign_mask = scores > 0
-		elif direction == 'opposite':
-			score_sign_mask = scores < 0
-		# sort uids by abs(scores) in descending order
-		srt_idx = np.abs(scores[score_sign_mask]).argsort()[::-1]
-		scores = scores[score_sign_mask][srt_idx]
-		uids = uids[score_sign_mask][srt_idx]
-
-		# retrieve meta-data for all uids
-		projection ={'geo_id':True, 'id':True, '_id':False,
-			'hs_gene_symbol':True, 'mm_gene_symbol':True, 'organism':True, 
-			'disease_name':True, 'drug_name':True, 'do_id':True,
-			'drugbank_id':True, 'pubchem_cid':True}
-		uid_docs = COLL.find({'id': {'$in': uids.tolist()}}, projection)
-		uid_docs = list(uid_docs)
-		# make uid_docs have the same order of id with uids
-		uids = uids.tolist()
-		uid_docs_ = [None] * len(uid_docs)
-		for uid_doc in uid_docs:
-			idx = uids.index(uid_doc['id'])
-			uid_docs_[idx] = uid_doc
-		uid_docs = uid_docs_
-
-		for doc, score in zip(uid_docs, scores):
-			sig_ = DBSignature(None, doc=doc)
-			meta = {
-				'id': sig_.meta['id'],
-				'geo_id': sig_.meta['geo_id'],
-				'name': [sig_.name, sig_.get_url()], # [name, url]
-				'signed_jaccard': float('%.5f'%score)
-			}
-			uid_data.append(meta)
-		return uid_data
-
+	## handle searching signatures using string and query signatures with up/down genes 
 	if request.method == 'GET': # search signatures using string
 		search_string = request.args.get('q', '')
-		search_dict = {
-			"$or":[
+		search_dict = {'$and': [
+			{'chdir_sva_exp2': {'$exists': True}},
+			{"incorrect": {"$ne": True}},
+			{"$or":[
 				{'hs_gene_symbol' : {"$regex": search_string, "$options":"i"}},
 				{'mm_gene_symbol' : {"$regex": search_string, "$options":"i"}},
 				{'disease_name' : {"$regex": search_string, "$options":"i"}},
 				{'drug_name' : {"$regex": search_string, "$options":"i"}}
-				]
-			}
+				]}
+		]}
+		
 		docs = []
 		for doc in COLL.find(search_dict, {'id':True,'_id':False}):
 			uid = doc['id']
@@ -132,9 +94,13 @@ def search():
 		name = data.get('name', None)
 		meta = data.get('meta', None)
 		direction = data.get('direction', 'similar')
+		db_version = data.get('db_version', 'v1.0')
 
 		sig = Signature(name, meta, up_genes, dn_genes)
-		uid_data = get_search_results(sig, direction=direction)
+		if db_version == 'v1.0':
+			uid_data = sig.get_query_results(d_uid_sigs, direction=direction)
+		else:
+			uid_data = sig.get_query_results([d_uid_sigs, d_uid_sigs2], direction=direction)
 
 		if sig is not None:
 			return Response(json.dumps(uid_data), mimetype='application/json')
@@ -198,10 +164,24 @@ if __name__ == '__main__':
 	else:
 		app.debug = False	
 
-	make_all_download_files()
-	global d_uid_sigs
-	d_uid_sigs = load_all_db_sigs(nprocs=1)
-	print 'd_uid_sigs loaded,', len(d_uid_sigs)
+
+	global d_uid_sigs, d_uid_sigs2
+
+	d_uid_sigs = DBSignatureCollection({'$and':[
+		{'chdir_sva_exp2': {'$exists': True}}, 
+		{'version': '1.0'},
+		{"incorrect": {"$ne": True}}
+		]}, name='v1.0')
+
+	d_uid_sigs2 = DBSignatureCollection({'$and': [
+		{'chdir_sva_exp2': {'$exists': True}}, 
+		{'version': '1.2'}
+		]}, name='DM')
+
+	d_uid_sigs.make_all_download_files()
+	d_uid_sigs2.make_all_download_files()
+
+	print 'd_uid_sigs loaded,', len(d_uid_sigs), len(d_uid_sigs2)
 
 	app.run(host=host, port=port)
 
