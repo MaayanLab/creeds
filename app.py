@@ -1,8 +1,8 @@
 ## python API for the mongodb
 import os, sys, json
 
-from orm import *
-from utils import *
+# from orm import *
+# from utils import *
 import clustergram
 from crossdomain import crossdomain
 
@@ -23,10 +23,16 @@ class CIFlask(Flask):
     url_rule_class = CIRule
 
 
+from mongokit import Connection
+
 ENTER_POINT = '/CREEDS'
 app = CIFlask(__name__, static_url_path=ENTER_POINT, static_folder='static')
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 6
+app.config.from_object('config.TestingConfig')
 
+conn = Connection(app.config['DATABASE_URI'])
+
+from orm import *
+from utils import *
 
 @app.route(ENTER_POINT + '/')
 def root():
@@ -145,43 +151,18 @@ def get_link():
 
 
 if __name__ == '__main__':
-	if len(sys.argv) > 1:
-		port = int(sys.argv[1])
-	else:
-		port = 5000
-	if len(sys.argv) > 2:
-		host = sys.argv[2]
-	else:
-		host = '127.0.0.1'
-
-	if len(sys.argv) > 3:
-		mode = sys.argv[3]
-	else:
-		mode = 'dev'
-
-	if mode == 'dev':
-		app.debug = True
-	else:
-		app.debug = False	
-
 
 	global d_uid_sigs, d_uid_sigs2
 
-	d_uid_sigs = DBSignatureCollection({'$and':[
-		{'chdir_sva_exp2': {'$exists': True}}, 
-		{'version': '1.0'},
-		{"incorrect": {"$ne": True}}
-		]}, name='v1.0')
+	d_uid_sigs = DBSignatureCollection(*app.config['DBSC_PARAMS'][0])
+	d_uid_sigs2 = DBSignatureCollection(*app.config['DBSC_PARAMS'][1])
 
-	d_uid_sigs2 = DBSignatureCollection({'$and': [
-		{'chdir_sva_exp2': {'$exists': True}}, 
-		{'version': '1.2'}
-		]}, name='DM')
-
-	d_uid_sigs.make_all_download_files()
-	d_uid_sigs2.make_all_download_files()
+	# d_uid_sigs.make_all_download_files()
+	# d_uid_sigs2.make_all_download_files()
 
 	print 'd_uid_sigs loaded,', len(d_uid_sigs), len(d_uid_sigs2)
 
+	host = app.config['HOST']
+	port = app.config['PORT']
 	app.run(host=host, port=port)
 

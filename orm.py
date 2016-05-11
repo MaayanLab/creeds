@@ -13,11 +13,17 @@ import requests
 
 from gene_converter import *
 
+## connect to mongodb via mongokit.Connection imported from app.py
+from app import conn
+COLL = conn['microtask_signatures'].signatures
+
+
 ## connect to mongodb
-client = MongoClient('mongodb://127.0.0.1:27017/')
-# client = MongoClient('mongodb://146.203.54.131:27017/')
-db = client['microtask_signatures']
-COLL = db['signatures']
+# client = MongoClient('mongodb://127.0.0.1:27017/')
+# # client = MongoClient('mongodb://146.203.54.131:27017/')
+# db = client['microtask_signatures']
+# COLL = db['signatures']
+
 ALL_UIDS = COLL.find(
 	{'$and': [
 		{'chdir_sva_exp2': {'$exists': True}}, 
@@ -27,6 +33,7 @@ ALL_UIDS = COLL.find(
 	{'id': True}).distinct('id')
 
 print len(ALL_UIDS)
+
 
 ## load gene symbol to gene ID conversion dict
 GENE_SYMBOLS = load_gene_symbol_dict()
