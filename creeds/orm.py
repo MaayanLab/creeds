@@ -13,16 +13,9 @@ import requests
 
 from gene_converter import *
 
-## connect to mongodb via mongokit.Connection imported from app.py
-from app import conn
+## connect to mongodb via mongokit.Connection imported from the module
+from creeds import conn
 COLL = conn['microtask_signatures'].signatures
-
-
-## connect to mongodb
-# client = MongoClient('mongodb://127.0.0.1:27017/')
-# # client = MongoClient('mongodb://146.203.54.131:27017/')
-# db = client['microtask_signatures']
-# COLL = db['signatures']
 
 ALL_UIDS = COLL.find(
 	{'$and': [

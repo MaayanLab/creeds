@@ -1,4 +1,5 @@
 ## to convert gene symbols to Entrez gene ID
+import os
 import sqlite3
 
 ## this database is created based homologene, and data from HGNC and MGI
@@ -14,7 +15,9 @@ def sqliteTable2dict(conn, query, key_idx, val_idx):
 	return d
 
 def load_gene_symbol_dict():
-	HOMOLOGENE_DB = 'static/data/gene_symbols.db'
+	script_path = os.path.dirname(os.path.realpath(__file__))
+	HOMOLOGENE_DB = script_path + '/static/data/gene_symbols.db'
+
 	conn = sqlite3.connect(HOMOLOGENE_DB)
 	d_hs = sqliteTable2dict(conn, 'SELECT * FROM hgnc', 1,3) # all human symbols 
 	d_mm = sqliteTable2dict(conn, """SELECT * FROM mgi WHERE type='Gene'""", 1,4) # all mouse symbols
