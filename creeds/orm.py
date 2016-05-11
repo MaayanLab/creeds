@@ -5,6 +5,7 @@ ORMs for signature, signatures in the MongoDB and collection of signatures.
 import os, sys, json
 import time
 from itertools import chain
+from collections import Counter
 import cPickle as pickle
 import numpy as np
 import pandas as pd
@@ -415,6 +416,27 @@ class DBSignatureCollection(dict):
 
 		categories = map(lambda x:x.split(':')[0], self.keys())
 		self.categories = set(categories)
+		self.category_count = dict(Counter(categories))
+		self.get_download_file_meta()
+
+	def get_download_file_meta(self):
+		'''to store metadata for generated download files
+		'''
+		self.download_file_meta = []
+		for category, num_sigs in self.category_count.items():
+			category_name = self.category2name[category]
+
+			filenames = {format: '%s-%s.%s' % (category_name, 
+				self.name, format) for format in self.formats}
+			meta = {
+				'name': self.name,
+				'category': category_name,
+				'filenames': filenames,
+				'num_sigs': num_sigs
+				}
+
+			self.download_file_meta.append(meta)
+
 
 	def make_download_file(self, category, format, outfn):
 		'''to generate files for downloading
@@ -438,7 +460,7 @@ class DBSignatureCollection(dict):
 
 		else:
 			json.dump(sigs_this_category, open(outfn, 'wb'))
-		return
+		return (outfn, len(sigs_this_category))
 
 	def make_all_download_files(self):
 		'''to generate all 3 formats of files for each category
@@ -448,8 +470,8 @@ class DBSignatureCollection(dict):
 				outfn = '%s/%s-%s.%s' % (self.outfn_path, 
 					self.category2name[category], self.name, format)
 				if not os.path.isfile(outfn):
-					num_sigs = self.make_download_file(category, format, outfn)
-					print num_sigs
+					(filename, num_sigs) = self.make_download_file(category, format, outfn)
+					print filename, num_sigs
 				print outfn, 'finished'
 		return
 

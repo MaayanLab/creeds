@@ -15,11 +15,13 @@ class CIRule(Rule):
 		self._regex = re.compile(self._regex.pattern, 
 			re.UNICODE | re.IGNORECASE)
 
-from flask import (Flask, request, Response)
+from flask import (Flask, request, Response, send_from_directory)
 
 class CIFlask(Flask):
     url_rule_class = CIRule
 
+
+SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 from mongokit import Connection
 
@@ -34,10 +36,11 @@ conn = Connection(app.config['DATABASE_URI'])
 from orm import *
 from utils import *
 
+
 @app.before_first_request
 def load_globals():
 	# Load globals DBSignatureCollection instances
-	global d_uid_sigs, d_uid_sigs2
+	global d_uid_sigs, d_uid_sigs2	
 
 	d_uid_sigs = DBSignatureCollection(*app.config['DBSC_PARAMS'][0])
 	d_uid_sigs2 = DBSignatureCollection(*app.config['DBSC_PARAMS'][1])
@@ -128,6 +131,19 @@ def search():
 			return Response(json.dumps(uid_data), mimetype='application/json')
 		else:
 			return ('', 400, '')
+
+@app.route(ENTER_POINT + '/download', methods=['GET'])
+def send_download_meta():
+	## send meta data for files to download
+	all_download_file_meta = d_uid_sigs.download_file_meta + d_uid_sigs2.download_file_meta
+	return json.dumps(all_download_file_meta)
+
+
+@app.route(ENTER_POINT + '/download/<path:filename>')
+def download_file(filename):
+	## safely send the file for download
+	return send_from_directory(SCRIPT_PATH+'/static/downloads', 
+		filename, as_attachment=True)
 
 
 @app.route(ENTER_POINT + '/geneSigClustergram', methods=['POST'])
