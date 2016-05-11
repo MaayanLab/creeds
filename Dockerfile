@@ -17,4 +17,4 @@ WORKDIR /my_application
 
 # Set the default command to execute    
 # when creating a new container
-CMD python app.py 5000 0.0.0.0 production
+CMD python run.py production

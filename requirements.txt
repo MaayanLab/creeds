@@ -3,4 +3,5 @@ scipy==0.16.1
 pandas==0.16.0
 requests==2.6.2
 flask==0.10.1
-pymongo==3.0.2
+pymongo==2.8
+mongokit==0.9.1.1
