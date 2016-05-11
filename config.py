@@ -27,6 +27,8 @@ class Config(object):
 			'DM'
 			)
 	]
+	# whether to generate files for downloading from DBSC instances
+	MAKE_DOWNLOAD_FILES = True
 
 
 class ProductionConfig(Config):
@@ -58,5 +60,6 @@ class TestingConfig(DevelopmentConfig):
 			'DM'
 			)
 	]
+	MAKE_DOWNLOAD_FILES = False
 
 		

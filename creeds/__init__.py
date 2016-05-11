@@ -33,16 +33,21 @@ conn = Connection(app.config['DATABASE_URI'])
 # Import models and utils
 from orm import *
 from utils import *
-# Load globals
-global d_uid_sigs, d_uid_sigs2
 
-d_uid_sigs = DBSignatureCollection(*app.config['DBSC_PARAMS'][0])
-d_uid_sigs2 = DBSignatureCollection(*app.config['DBSC_PARAMS'][1])
+@app.before_first_request
+def load_globals():
+	# Load globals DBSignatureCollection instances
+	global d_uid_sigs, d_uid_sigs2
 
-# d_uid_sigs.make_all_download_files()
-# d_uid_sigs2.make_all_download_files()
+	d_uid_sigs = DBSignatureCollection(*app.config['DBSC_PARAMS'][0])
+	d_uid_sigs2 = DBSignatureCollection(*app.config['DBSC_PARAMS'][1])
 
-print 'd_uid_sigs loaded,', len(d_uid_sigs), len(d_uid_sigs2)
+	if app.config['MAKE_DOWNLOAD_FILES']:
+		d_uid_sigs.make_all_download_files()
+		d_uid_sigs2.make_all_download_files()
+
+	print 'd_uid_sigs loaded,', len(d_uid_sigs), len(d_uid_sigs2)
+	return
 
 
 @app.route(ENTER_POINT + '/')
