@@ -25,6 +25,13 @@
     margin-top: 20px;
     margin-bottom: 20px;
 }
+/* nested links */
+.sidebar .nav .nav>li>a {
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 30px;
+    font-size: 12px;
+}
 
 .sidebar .nav>.active>a { 
 	text-decoration: none;

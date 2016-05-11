@@ -1,7 +1,5 @@
 $(document).ready(function(){
-	hljs.initHighlightingOnLoad();
 	renderAllApiDocs();
-
 })
 
 function loadScript(scriptPath, obj){
@@ -24,6 +22,12 @@ function loadScript(scriptPath, obj){
 			codeBlock = codeBlock.html(script).addClass(scriptType);
 			codeBlock = $('<pre>').append(codeBlock)
 			obj.append(codeBlock);
+
+			// highlight this block of codes
+			codeBlock.each(function(i, block) {
+				hljs.highlightBlock(block);
+			});
+
 		}
 	});
 }
