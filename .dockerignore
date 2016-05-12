@@ -1,0 +1,5 @@
+*.pyc
+*/*.pyc
+creeds/static/downloads/*.csv
+creeds/static/downloads/*.json
+creeds/static/downloads/*.gmt
