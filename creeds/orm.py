@@ -396,7 +396,8 @@ class DBSignatureCollection(dict):
 		'dz': 'Disease_signatures',
 		'drug': 'Single_drug_perturbations',
 		}
-	outfn_path = 'static/downloads/'
+
+	outfn_path = os.path.dirname(os.path.realpath(__file__)) + '/static/downloads/'
 
 	def __init__(self, filter_, name):
 		'''

@@ -38,7 +38,6 @@ var FileMetasView = Backbone.View.extend({
 	},
 
 	render: function(){
-		console.log(this.collection)
 		this.collection.each(function(fileMeta){
 			var fileMetaView = new FileMetaView({model: fileMeta});
 			this.$el.append(fileMetaView.el);
