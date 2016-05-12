@@ -2,7 +2,7 @@
 import os, sys, json
 
 import clustergram
-from crossdomain import crossdomain
+from .crossdomain import crossdomain
 
 import re
 from werkzeug.routing import Rule, RequestRedirect
@@ -33,8 +33,8 @@ app.config.from_object(os.environ['CONFIG_OBJ'])
 # Make connection with MongoDB
 conn = Connection(app.config['DATABASE_URI'])
 # Import models and utils
-from orm import *
-from utils import *
+from .orm import *
+from .utils import *
 
 
 @app.before_first_request

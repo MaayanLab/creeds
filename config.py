@@ -60,6 +60,6 @@ class TestingConfig(DevelopmentConfig):
 			'DM'
 			)
 	]
-	MAKE_DOWNLOAD_FILES = False
+	MAKE_DOWNLOAD_FILES = True
 
 		

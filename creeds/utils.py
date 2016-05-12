@@ -3,7 +3,7 @@ Utils for computing similarity and etc.
 '''
 from itertools import chain
 
-from orm import *
+from .orm import *
 
 def get_matrix(uids, genes, na_val=0):
 	## retrieve a matrix based on uids of signatures and genes

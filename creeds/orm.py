@@ -12,7 +12,7 @@ import pandas as pd
 from pymongo import MongoClient
 import requests
 
-from gene_converter import *
+from .gene_converter import *
 
 ## connect to mongodb via mongokit.Connection imported from the module
 from creeds import conn
