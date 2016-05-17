@@ -1,5 +1,10 @@
 ## To test the speed for up/down gene set queries
-from orm_utils import *
+import os
+os.environ['CONFIG_OBJ'] = 'config.TestingConfig'
+import numpy as np
+import requests
+
+from creeds.orm import GENE_SYMBOLS
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 rcParams['pdf.fonttype'] = 42 
@@ -17,7 +22,8 @@ def generate_random_signature(size):
 
 def query_signatures(up_genes, dn_genes):
 	## hit the POST API endpoint to query signatures with up/down genes
-	URL = 'http://amp.pharm.mssm.edu/CREEDS/search'
+	# URL = 'http://amp.pharm.mssm.edu/CREEDS/search'
+	URL = 'http://127.0.0.1:5000/CREEDS/search'
 	res = requests.post(URL, 
 		json={'up_genes': up_genes, 'dn_genes': dn_genes, 'direction':'similar'})
 	assert res.status_code == 200
