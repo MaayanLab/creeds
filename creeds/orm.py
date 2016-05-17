@@ -9,12 +9,11 @@ from collections import Counter
 import cPickle as pickle
 import numpy as np
 import pandas as pd
-from pymongo import MongoClient
 import requests
 
 from .gene_converter import *
 
-## connect to mongodb via mongokit.Connection imported from the module
+## connect to mongodb via pymongo.MongoClient imported from the module
 from creeds import conn
 COLL = conn['microtask_signatures'].signatures
 

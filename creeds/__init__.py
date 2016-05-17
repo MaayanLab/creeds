@@ -23,7 +23,7 @@ class CIFlask(Flask):
 
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-from mongokit import Connection
+from pymongo import MongoClient
 
 ENTER_POINT = '/CREEDS'
 app = CIFlask(__name__, static_url_path=ENTER_POINT, static_folder='static')
@@ -31,7 +31,7 @@ app = CIFlask(__name__, static_url_path=ENTER_POINT, static_folder='static')
 # Get config from object
 app.config.from_object(os.environ['CONFIG_OBJ'])
 # Make connection with MongoDB
-conn = Connection(app.config['DATABASE_URI'])
+conn = MongoClient(app.config['DATABASE_URI'])
 # Import models and utils
 from .orm import *
 from .utils import *
