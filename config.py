@@ -55,7 +55,7 @@ class TestingConfig(DevelopmentConfig):
 			{'$and':[
 				{'chdir_sva_exp2': {'$exists': True}}, 
 				{'version': '1.2'},
-				{'id': {'$in': ['drug:DM0', 'drug:DM1', 'drug:DM10']}}
+				{'id': {'$in': ['drug:DM0', 'drug:DM1', 'drug:DM10', 'drug:DM11', 'drug:DM12']}}
 			]},
 			'DM'
 			)
