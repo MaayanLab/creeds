@@ -11,6 +11,8 @@ if __name__ == '__main__':
 		os.environ['CONFIG_OBJ'] = 'config.DevelopmentConfig'
 	elif mode == 'test':
 		os.environ['CONFIG_OBJ'] = 'config.TestingConfig'
+	elif mode == 'speed_test':
+		os.environ['CONFIG_OBJ'] = 'config.SpeedTestingConfig'
 	else:
 		os.environ['CONFIG_OBJ'] = 'config.ProductionConfig'
 

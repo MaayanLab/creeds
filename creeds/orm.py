@@ -10,6 +10,7 @@ import cPickle as pickle
 import numpy as np
 import pandas as pd
 import requests
+from joblib import Parallel, delayed
 
 from .gene_converter import *
 
@@ -143,6 +144,11 @@ def find_name(doc):
 		name = doc['drug_name']
 	return name
 
+def _calc_score(sig0, uid, sig):
+	## function to be used in delayed
+	score = signed_jaccard(sig0, sig)
+	return (uid, score)
+
 
 class Signature(object):
 	def __init__(self, name=None, meta=None, up_genes=None, dn_genes=None):
@@ -159,19 +165,25 @@ class Signature(object):
 		self._up_genes = set(map(lambda x: x.upper(), up_genes))
 		self._dn_genes = set(map(lambda x: x.upper(), dn_genes))
 
-	def calc_all_scores(self, db_sig_collection_iteritems):
+
+	def calc_all_scores(self, db_sig_collection_iteritems, nprocs=1):
 		'''
 		Calcuated signed jaccard score for this signatures against 
 		all DBsignatures in `db_sig_collection_iteritems`, generator from 
 		a DBSignatureCollection instance or a list of DBSignatureCollections.
 		'''
-		uid_scores = []
-		for uid, sig in db_sig_collection_iteritems:
-			score = signed_jaccard(self, sig)
-			uid_scores.append((uid, score))
+		if nprocs == 1:
+			uid_scores = []
+			for uid, sig in db_sig_collection_iteritems:
+				score = signed_jaccard(self, sig)
+				uid_scores.append((uid, score))
+		else:
+			uid_scores = Parallel(n_jobs=nprocs, backend='multiprocessing')(delayed(_calc_score)(self, uid, sig)
+				for uid, sig in db_sig_collection_iteritems)
+
 		return dict(uid_scores)
 
-	def get_query_results(self, db_sig_collection, direction='similar'):
+	def get_query_results(self, db_sig_collection, direction='similar', nprocs=1):
 		'''
 		Handle querying signatures from the DB with custom up/down genes,
 		return a list of objects
@@ -182,7 +194,7 @@ class Signature(object):
 			db_sig_collection_iteritems = db_sig_collection.iteritems()
 		
 
-		d_uid_score = self.calc_all_scores(db_sig_collection_iteritems)
+		d_uid_score = self.calc_all_scores(db_sig_collection_iteritems, nprocs=nprocs)
 
 		scores = np.array(d_uid_score.values())
 		uids = np.array(d_uid_score.keys())
@@ -398,14 +410,17 @@ class DBSignatureCollection(dict):
 
 	outfn_path = os.path.dirname(os.path.realpath(__file__)) + '/static/downloads/'
 
-	def __init__(self, filter_, name):
+	def __init__(self, filter_, name, limit=None):
 		'''
 		`filter_` should be a mongo query
 		'''
 		self.filter_ = filter_
 		self.name = name
 
-		cur = COLL.find(self.filter_, PROJECTION_EXCLUDE)
+		if not limit:
+			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE)
+		else:
+			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE).limit(limit)
 		uids = cur.distinct('id')
 		# Load signatures 
 		for doc in cur:

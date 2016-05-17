@@ -123,9 +123,9 @@ def search():
 
 		sig = Signature(name, meta, up_genes, dn_genes)
 		if db_version == 'v1.0':
-			uid_data = sig.get_query_results(d_uid_sigs, direction=direction)
+			uid_data = sig.get_query_results(d_uid_sigs, direction=direction, nprocs=app.config['N_JOBS'])
 		else:
-			uid_data = sig.get_query_results([d_uid_sigs, d_uid_sigs2], direction=direction)
+			uid_data = sig.get_query_results([d_uid_sigs, d_uid_sigs2], direction=direction, nprocs=app.config['N_JOBS'])
 
 		if sig is not None:
 			return Response(json.dumps(uid_data), mimetype='application/json')

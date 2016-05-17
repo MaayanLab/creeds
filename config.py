@@ -29,12 +29,12 @@ class Config(object):
 	]
 	# whether to generate files for downloading from DBSC instances
 	MAKE_DOWNLOAD_FILES = True
-
+	N_JOBS = 1
 
 class ProductionConfig(Config):
 	DATABASE_URI = 'mongodb://146.203.54.131:27017/'
 	HOST = '0.0.0.0'
-
+	N_JOBS = 4
 
 class DevelopmentConfig(Config):
 	DEBUG = True
@@ -61,5 +61,29 @@ class TestingConfig(DevelopmentConfig):
 			)
 	]
 	MAKE_DOWNLOAD_FILES = True
-
+	N_JOBS = 2
 		
+
+class SpeedTestingConfig(DevelopmentConfig):
+	'''
+	Used for speed test.
+	'''
+	DBSC_PARAMS = [
+		(
+			{'$and':[ 
+				{'chdir_sva_exp2': {'$exists': True}}, 
+				{'version': '1.0'},
+				{"incorrect": {"$ne": True}},
+			]},
+			'v1.0', 500),
+
+		(
+			{'$and':[
+				{'chdir_sva_exp2': {'$exists': True}}, 
+				{'version': '1.2'},
+			]},
+			'DM', 100)
+	]
+	N_JOBS = 8
+
+
