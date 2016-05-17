@@ -34,7 +34,7 @@ class Config(object):
 class ProductionConfig(Config):
 	DATABASE_URI = 'mongodb://146.203.54.131:27017/'
 	HOST = '0.0.0.0'
-	N_JOBS = 4
+	N_JOBS = 1
 
 class DevelopmentConfig(Config):
 	DEBUG = True

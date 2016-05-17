@@ -114,8 +114,9 @@ def search():
 
 	elif request.method == 'POST': # search using custom up/dn gene list
 		data = json.loads(request.data)
-		up_genes = map(lambda x : x.upper(), data['up_genes'])
-		dn_genes = map(lambda x : x.upper(), data['dn_genes'])
+		up_genes = data['up_genes']
+		dn_genes = data['dn_genes']
+
 		name = data.get('name', None)
 		meta = data.get('meta', None)
 		direction = data.get('direction', 'similar')
