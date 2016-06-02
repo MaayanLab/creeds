@@ -132,7 +132,7 @@ def find_name(doc):
 	if type(name) == list: # predicted signatures
 		# extract name fields and convert to string
 		name = [item['name'] for item in name]
-		name = ','.join(name)
+		# name = ','.join(name)
 	return name
 
 def _calc_score(sig0, uid, sig):
@@ -543,9 +543,16 @@ class DBSignatureCollection(dict):
 		if format == 'gmt':
 			with open (outfn, 'w') as out:
 				for dict_data in sigs_this_category:
-					line_up = [ dict_data['name'] + '-up', dict_data['id'] ] + map(lambda x:x[0], dict_data['up_genes'])
+					if type(dict_data['name']) == list: # join list to string for v2.0
+						term_up = '|'.join(dict_data['name']) + '-up'
+						term_dn = '|'.join(dict_data['name']) + '-dn'
+					else:
+						term_up = dict_data['name'] + '-up'
+						term_dn = dict_data['name'] + '-dn'
+
+					line_up = [ term_up, dict_data['id'] ] + map(lambda x:x[0], dict_data['up_genes'])
+					line_dn = [ term_dn, dict_data['id'] ] + map(lambda x:x[0], dict_data['down_genes'])
 					out.write('\t'.join(line_up) + '\n')
-					line_dn = [ dict_data['name'] + '-dn', dict_data['id'] ] + map(lambda x:x[0], dict_data['down_genes'])
 					out.write('\t'.join(line_dn) + '\n')
 		
 		elif format == 'csv': # annotations only
