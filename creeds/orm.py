@@ -535,11 +535,23 @@ class DBSignatureCollection(dict):
 					out.write('\t'.join(line_dn) + '\n')
 		
 		elif format == 'csv': # annotations only
+			if 'entities' in sigs_this_category[0]:
+				# predicted signatures
+				# need to unpack fields that are dict
+				sigs_this_category_ = []
+				for doc in sigs_this_category:
+					del doc['entities']
+					for field in ['hs_gene_symbol', 'disease_name', 'drug_name', 'cell_type']:
+						if field in doc:
+							doc[field] = '|'.join([item['name'] for item in doc[field]])
+					sigs_this_category_.append(doc)
+				sigs_this_category = sigs_this_category_ 
+
 			df = pd.DataFrame.from_records(sigs_this_category)\
 				.drop(['up_genes', 'down_genes'], axis=1)\
 				.set_index('id')
-			df['pert_ids'] = df['pert_ids'].map(lambda x: ','.join(x))
-			df['ctrl_ids'] = df['ctrl_ids'].map(lambda x: ','.join(x))
+			df['pert_ids'] = df['pert_ids'].map(lambda x: '|'.join(x))
+			df['ctrl_ids'] = df['ctrl_ids'].map(lambda x: '|'.join(x))
 			df.to_csv(outfn, encoding='utf-8')
 
 		else:
