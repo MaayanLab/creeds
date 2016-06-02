@@ -40,16 +40,20 @@ from .utils import *
 @app.before_first_request
 def load_globals():
 	# Load globals DBSignatureCollection instances
-	global d_uid_sigs, d_uid_sigs2	
+	global d_dbsc
+	d_dbsc = {} # {name : DBSignatureCollection instance}
+	for params in app.config['DBSC_PARAMS']:
+		collection_name = params[1]
+		d_dbsc[collection_name] = DBSignatureCollection(*params)
 
-	d_uid_sigs = DBSignatureCollection(*app.config['DBSC_PARAMS'][0])
-	d_uid_sigs2 = DBSignatureCollection(*app.config['DBSC_PARAMS'][1])
 
 	if app.config['MAKE_DOWNLOAD_FILES']:
-		d_uid_sigs.make_all_download_files()
-		d_uid_sigs2.make_all_download_files()
+		for dbsc in d_dbsc.values():
+			dbsc.make_all_download_files()
 
-	print 'd_uid_sigs loaded,', len(d_uid_sigs), len(d_uid_sigs2)
+	print 'd_dbsc loaded:'
+	for collection_name, dbsc in d_dbsc.items():
+		print collection_name, len(dbsc)
 	return
 
 
@@ -97,9 +101,12 @@ def search():
 			{"incorrect": {"$ne": True}},
 			{"$or":[
 				{'hs_gene_symbol' : {"$regex": search_string, "$options":"i"}},
+				{'hs_gene_symbol' : {'$elemMatch': {'name': {"$regex": search_string, "$options":"i"}}}},
 				{'mm_gene_symbol' : {"$regex": search_string, "$options":"i"}},
 				{'disease_name' : {"$regex": search_string, "$options":"i"}},
-				{'drug_name' : {"$regex": search_string, "$options":"i"}}
+				{'disease_name' : {'$elemMatch': {'name': {"$regex": search_string, "$options":"i"}}}},
+				{'drug_name' : {"$regex": search_string, "$options":"i"}},
+				{'drug_name' : {'$elemMatch': {'name': {"$regex": search_string, "$options":"i"}}}},
 				]}
 		]}
 		
@@ -123,10 +130,11 @@ def search():
 
 		sig = Signature(name, meta, up_genes, dn_genes)
 		sig.init_vectors()
-		if db_version == 'v1.0':
-			uid_data = sig.get_query_results(d_uid_sigs, direction=direction)
+
+		if type(db_version) != list:
+			uid_data = sig.get_query_results(d_dbsc[db_version], direction=direction)
 		else:
-			uid_data = sig.get_query_results([d_uid_sigs, d_uid_sigs2], direction=direction)
+			uid_data = sig.get_query_results([d_dbsc[v] for v in db_version], direction=direction)
 
 		if sig is not None:
 			return Response(json.dumps(uid_data), mimetype='application/json')
@@ -136,7 +144,9 @@ def search():
 @app.route(ENTER_POINT + '/download', methods=['GET'])
 def send_download_meta():
 	## send meta data for files to download
-	all_download_file_meta = d_uid_sigs.download_file_meta + d_uid_sigs2.download_file_meta
+	all_download_file_meta = []
+	for dbsc in d_dbsc.values():
+		all_download_file_meta.extend(dbsc.download_file_meta)
 	return json.dumps(all_download_file_meta)
 
 

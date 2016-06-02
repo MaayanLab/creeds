@@ -7,11 +7,24 @@ from creeds import app
 
 ENTRY_POINT = '/creeds'
 
+UP_GENES = ['KIAA0907','KDM5A','CDC25A','EGR1','GADD45B','RELB','TERF2IP','SMNDC1','TICAM1','NFKB2',
+	'RGS2','NCOA3','ICAM1','TEX10','CNOT4','ARID4B','CLPX','CHIC2','CXCL2','FBXO11','MTF2',
+	'CDK2','DNTTIP2','GADD45A','GOLT1B','POLR2K','NFKBIE','GABPB1','ECD','PHKG2','RAD9A',
+	'NET1','KIAA0753','EZH2','NRAS','ATP6V0B','CDK7','CCNH','SENP6','TIPARP','FOS','ARPP19',
+	'TFAP2A','KDM5B','NPC1','TP53BP2','NUSAP1']
+
+DN_GENES = ['SCCPDH','KIF20A','FZD7','USP22','PIP4K2B','CRYZ','GNB5','EIF4EBP1','PHGDH','RRAGA',
+	'SLC25A46','RPA1','HADH','DAG1','RPIA','P4HA2','MACF1','TMEM97','MPZL1','PSMG1','PLK1',
+	'SLC37A4','GLRX','CBR3','PRSS23','NUDCD3','CDC20','KIAA0528','NIPSNAP1','TRAM2','STUB1',
+	'DERA','MTHFD2','BLVRA','IARS2','LIPA','PGM1','CNDP2','BNIP3','CTSL1','CDC25B','HSPA8',
+	'EPRS','PAX8','SACM1L','HOXA5','TLE1','PYGL','TUBB6','LOXL1']
+
 class TestApiRequests(unittest.TestCase):
 	def test_get_request_args(self):
 		with app.test_request_context(ENTRY_POINT +'/api?id=gene:27'):
 			self.assertEquals(request.path, ENTRY_POINT + '/api')
 			self.assertEquals(request.args['id'], 'gene:27')
+
 
 
 class TestStringSearch(unittest.TestCase):
@@ -44,21 +57,10 @@ class TestQueryUsingGeneLists(unittest.TestCase):
 	'''
 	Test the API handling query of DB using up/down gene lists
 	'''
-	up_genes = ['KIAA0907','KDM5A','CDC25A','EGR1','GADD45B','RELB','TERF2IP','SMNDC1','TICAM1','NFKB2',
-		'RGS2','NCOA3','ICAM1','TEX10','CNOT4','ARID4B','CLPX','CHIC2','CXCL2','FBXO11','MTF2',
-		'CDK2','DNTTIP2','GADD45A','GOLT1B','POLR2K','NFKBIE','GABPB1','ECD','PHKG2','RAD9A',
-		'NET1','KIAA0753','EZH2','NRAS','ATP6V0B','CDK7','CCNH','SENP6','TIPARP','FOS','ARPP19',
-		'TFAP2A','KDM5B','NPC1','TP53BP2','NUSAP1']
-
-	dn_genes = ['SCCPDH','KIF20A','FZD7','USP22','PIP4K2B','CRYZ','GNB5','EIF4EBP1','PHGDH','RRAGA',
-		'SLC25A46','RPA1','HADH','DAG1','RPIA','P4HA2','MACF1','TMEM97','MPZL1','PSMG1','PLK1',
-		'SLC37A4','GLRX','CBR3','PRSS23','NUDCD3','CDC20','KIAA0528','NIPSNAP1','TRAM2','STUB1',
-		'DERA','MTHFD2','BLVRA','IARS2','LIPA','PGM1','CNDP2','BNIP3','CTSL1','CDC25B','HSPA8',
-		'EPRS','PAX8','SACM1L','HOXA5','TLE1','PYGL','TUBB6','LOXL1']
 
 	payload = {
-		'up_genes': up_genes,
-		'dn_genes': dn_genes,
+		'up_genes': UP_GENES,
+		'dn_genes': DN_GENES,
 		'direction': 'opposite',
 		'db_version': 'v1.0'
 		}
@@ -88,15 +90,22 @@ class TestQueryUsingGeneLists(unittest.TestCase):
 		self.assertTrue(all(signatures['signed_jaccard'] < 0))
 
 	def test_db_version(self):
-		payload = self.payload.copy()
-		payload['db_version'] = 'v1.1'
+		payload1 = self.payload.copy()
+		payload2 = self.payload.copy()
+
+		payload1['db_version'] = ['v1.0']
+		payload2['db_version'] = ['v1.0','DM']
 
 		resp, signatures = self.post_and_parse_resp(self.payload)
-		resp1, signatures1 = self.post_and_parse_resp(payload)
-		self.assertEquals(resp1.status_code, 200)
-		self.assertEquals(resp1.mimetype, 'application/json')
-		# Make sure db_version = v1.1 has more results than v1.0
-		self.assertTrue(signatures1.shape[0] > signatures.shape[0])
+		resp1, signatures1 = self.post_and_parse_resp(payload1)
+		resp2, signatures2 = self.post_and_parse_resp(payload2)
+		self.assertEquals(resp2.status_code, 200)
+		self.assertEquals(resp2.mimetype, 'application/json')
+		# Make sure db_version = 'v1.0' is equivalent to ['v1.0']
+		self.assertEquals(signatures1.shape[0], signatures.shape[0])
+
+		# Make sure db_version = ['v1.0','DM'] has more results than v1.0
+		self.assertTrue(signatures2.shape[0] > signatures.shape[0])
 
 
 class TestRetrieveUsingId(unittest.TestCase):

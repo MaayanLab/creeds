@@ -14,7 +14,7 @@ class Config(object):
 		(
 			{'$and':[ 
 				{'chdir_sva_exp2': {'$exists': True}}, 
-				{'version': '1.0'},
+				{'version': {'$in': ['1.0', '1.1']}},
 				{"incorrect": {"$ne": True}},
 			]},
 			'v1.0'),
@@ -25,16 +25,23 @@ class Config(object):
 				{'version': '1.2'},
 			]},
 			'DM'
+			),
+		(
+			{'$and':[
+				{'chdir_sva_exp2': {'$exists': True}},
+				{'version': '2.0'}
+			]},
+			'v2.0'
 			)
 	]
 	# whether to generate files for downloading from DBSC instances
 	MAKE_DOWNLOAD_FILES = True
-	N_JOBS = 1
+
 
 class ProductionConfig(Config):
 	DATABASE_URI = 'mongodb://146.203.54.131:27017/'
 	HOST = '0.0.0.0'
-	N_JOBS = 1
+
 
 class DevelopmentConfig(Config):
 	DEBUG = True
@@ -58,10 +65,17 @@ class TestingConfig(DevelopmentConfig):
 				{'id': {'$in': ['drug:DM0', 'drug:DM1', 'drug:DM10', 'drug:DM11', 'drug:DM12']}}
 			]},
 			'DM'
+			),
+		(
+			{'$and':[
+				{'chdir_sva_exp2': {'$exists': True}},
+				{'version': '2.0'},
+				{'id': {'$in': ['gene:P9030', 'dz:P1814', 'drug:P2341']}}
+			]},
+			'v2.0'
 			)
 	]
 	MAKE_DOWNLOAD_FILES = True
-	N_JOBS = 2
 		
 
 class SpeedTestingConfig(DevelopmentConfig):
@@ -82,8 +96,13 @@ class SpeedTestingConfig(DevelopmentConfig):
 				{'chdir_sva_exp2': {'$exists': True}}, 
 				{'version': '1.2'},
 			]},
-			'DM', 100)
+			'DM', 100),
+		(
+			{'$and':[
+				{'chdir_sva_exp2': {'$exists': True}},
+				{'version': '2.0'}
+			]},
+			'v2.0', 300)
 	]
-	N_JOBS = 8
 
 

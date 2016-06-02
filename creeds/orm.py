@@ -30,7 +30,7 @@ ALL_GENES_I = np.array(ALL_GENES_I)
 ALL_UIDS = COLL.find(
 	{'$and': [
 		{'chdir_sva_exp2': {'$exists': True}}, 
-		{'version': {'$in':['1.0', '1.2']}},
+		{'version': {'$in':['1.0', '1.1', '1.2', '2.0']}},
 		{"incorrect": {"$ne": True}}
 	]},
 	{'id': True}).distinct('id')
@@ -121,13 +121,18 @@ def find_name(doc):
 			if name is None:
 				name = doc['mm_gene_symbol']
 		else:
-			name = doc['mm_gene_symbol']
+			name = doc.get('mm_gene_symbol', None)
 			if name is None:
 				name = doc['hs_gene_symbol']
 	elif prefix == 'dz':
 		name = doc['disease_name']
 	else:
 		name = doc['drug_name']
+
+	if type(name) == list: # predicted signatures
+		# extract name fields and convert to string
+		name = [item['name'] for item in name]
+		name = ','.join(name)
 	return name
 
 def _calc_score(sig0, uid, sig):
