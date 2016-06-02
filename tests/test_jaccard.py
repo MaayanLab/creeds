@@ -1,5 +1,6 @@
 import os
 import unittest
+from sklearn.metrics import pairwise_distances
 from creeds.matrix_ops import *
 
 class TestJaccardIndex(unittest.TestCase):

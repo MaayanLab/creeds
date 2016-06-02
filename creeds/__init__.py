@@ -61,6 +61,7 @@ def load_globals():
 def root():
 	return app.send_static_file('index.html')
 
+
 @app.route(ENTER_POINT + '/api', methods=['GET'])
 @crossdomain(origin='*')
 def retrieve_signature():
@@ -141,6 +142,7 @@ def search():
 		else:
 			return ('', 400, '')
 
+
 @app.route(ENTER_POINT + '/download', methods=['GET'])
 def send_download_meta():
 	## send meta data for files to download
@@ -172,9 +174,6 @@ def make_gene_sig_clustergram():
 		return json.dumps(json_data)
 
 
-# @app.route('/sigSigClustergram', methods=['GET', 'POST'])
-# @crossdomain(origin='*')
-## this one shoud probably be pre-computed
 @app.route(ENTER_POINT + '/appUrl', methods=['GET'])
 @crossdomain(origin='*')
 def get_link():

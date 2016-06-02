@@ -5,7 +5,6 @@ from __future__ import division
 
 import numpy as np
 import scipy.sparse as sp
-from sklearn.metrics import pairwise_distances
 
 
 def simulate_matrix(n_rows, n_cols, n_ones_per_row=300, sparse=True):

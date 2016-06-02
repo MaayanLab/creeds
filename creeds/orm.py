@@ -1,12 +1,9 @@
 '''
 ORMs for signature, signatures in the MongoDB and collection of signatures.
 '''
-
 import os, sys, json
-import time
-from itertools import chain
 from collections import Counter
-import cPickle as pickle
+
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
@@ -18,7 +15,8 @@ from .matrix_ops import (fast_jaccard, fast_signed_jaccard)
 
 ## connect to mongodb via pymongo.MongoClient imported from the module
 from creeds import conn
-## globals
+
+################################ Global variables ################################
 COLL = conn['microtask_signatures'].signatures
 COLL_GENES = conn['microtask_signatures'].genes
 
@@ -51,66 +49,7 @@ FIELDS_EXCLUDE = ['_id',
 
 PROJECTION_EXCLUDE = dict(zip(FIELDS_EXCLUDE, [False] * len(FIELDS_EXCLUDE)))
 
-
-def jaccard(l1, l2):
-	## case insensitive jaccard
-	## assumes l1, l2 are sets of upper case genes
-	up = len(l1 & l2)
-	dn = len(l1 | l2)
-	if dn == 0: # to prevent 0 division error
-		return 0
-	else:
-		return float(up)/dn
-
-def signed_jaccard(s1, s2):
-	## signed jaccard index for signatures
-	j1 = jaccard(s1._up_genes, s2._up_genes)
-	j2 = jaccard(s1._dn_genes, s2._dn_genes)
-	j3 = jaccard(s1._dn_genes, s2._up_genes)
-	j4 = jaccard(s1._up_genes, s2._dn_genes)
-	return (j1 + j2 - j3 - j4) / 2	
-
-def signed_jaccard_against_doc(gs, uid):
-	## gs is a Signature instance, uid is an id of a doc in the mongodb
-	sig = DBSignature(uid)
-	if sig.has_chdir():
-		sig.fill_top_genes()
-		return signed_jaccard(gs, sig)
-	else:
-		return None
-
-def load_and_fill_sig(uid):
-	sig = DBSignature(uid)
-	if sig.has_chdir():
-		sig.fill_top_genes()
-		return sig
-	else:
-		return None
-
-def load_and_fill_sigs(uids):
-	## retrieve signatures and chdir in batch
-	docs = COLL.find({'id': {'$in': uids}}, PROJECTION_EXCLUDE)
-	d_uid_sigs = {}
-	for doc in docs:
-		sig = DBSignature(None, doc=doc)
-		sig.fill_top_genes()
-		uid = doc['id']
-		d_uid_sigs[uid] = sig
-	return d_uid_sigs
-
-
-def load_all_db_sigs(nprocs=4):
-	## load all signatures with chdir from the mongodb
-	d_uid_sigs = {}
-	if nprocs > 1:
-		sigs = parmap(load_and_fill_sig, ALL_UIDS, nprocs=nprocs)
-	else:
-		sigs = map(load_and_fill_sig, ALL_UIDS)
-	for uid, sig in zip(ALL_UIDS, sigs):
-		if sig is not None:
-			d_uid_sigs[uid] = sig
-	return d_uid_sigs
-
+################################ Util functions ################################
 def find_name(doc):
 	## find the name for a doc in the mongodb based on uid
 	uid = doc['id']
@@ -132,15 +71,10 @@ def find_name(doc):
 	if type(name) == list: # predicted signatures
 		# extract name fields and convert to string
 		name = [item['name'] for item in name]
-		# name = ','.join(name)
 	return name
 
-def _calc_score(sig0, uid, sig):
-	## function to be used in delayed
-	score = signed_jaccard(sig0, sig)
-	return (uid, score)
 
-
+################################ Classes ################################
 class Signature(object):
 	def __init__(self, name=None, meta=None, up_genes=None, dn_genes=None):
 		## defaults:
@@ -153,8 +87,7 @@ class Signature(object):
 		self.meta = meta
 		self.up_genes = up_genes
 		self.dn_genes = dn_genes
-		# self._up_genes = set(map(lambda x: x.upper(), up_genes))
-		# self._dn_genes = set(map(lambda x: x.upper(), dn_genes))
+
 
 	def init_vectors(self):	
 		'''Init binary vectors representing of the siganture, 
@@ -201,10 +134,6 @@ class Signature(object):
 		Handle querying signatures from the DB with custom up/down genes,
 		return a list of objects
 		'''
-		# if type(db_sig_collection) == list:
-		# 	db_sig_collection_iteritems = chain(*[dbc.iteritems() for dbc in db_sig_collection])
-		# else:
-		# 	db_sig_collection_iteritems = db_sig_collection.iteritems()
 
 		d_uid_score = self.calc_all_scores(db_sig_collection)
 
@@ -347,31 +276,6 @@ class DBSignature(Signature):
 		dict_data['down_genes'] = dn_genes
 		return dict_data
 
-
-	# def calc_all_scores(self, db_sig_collection, cutoff=600):
-	# 	## calcuated signed jaccard score for this signatures against 
-	# 	## all signatures in the database
-	# 	self.fill_top_genes(cutoff)
-	# 	uid_scores = []
-	# 	for uid, sig in db_sig_collection.items():
-	# 		score = signed_jaccard(self, sig)
-	# 		uid_scores.append((uid, score))
-	# 	return dict(uid_scores)
-
-
-	# def get_gene_vals(self, genes, na_val=0):
-	# 	## retrieve the values of a given list of genes
-	# 	if self.has_chdir():
-	# 		vals = []
-	# 		genes_upper = map(lambda x: x.upper(), self.chdir['genes'])
-	# 		for gene in genes:
-	# 			if gene in genes_upper:
-	# 				idx = genes_upper.index(gene)
-	# 				val = self.chdir['vals'][idx]
-	# 			else:
-	# 				val = na_val
-	# 			vals.append(val)
-	# 	return vals
 
 	def post_to_paea(self, cutoff=2000):
 		## post top n genes to PAEA and return a PAEA url
@@ -534,6 +438,7 @@ class DBSignatureCollection(dict):
 				}
 
 			self.download_file_meta.append(meta)
+		return
 
 
 	def make_download_file(self, category, format, outfn):
@@ -593,47 +498,3 @@ class DBSignatureCollection(dict):
 		return
 
 
-
-## test
-# '''
-# gs = DBSignature('gene:24')
-# # gs.fill_top_genes(600)
-# # print gs.to_json()
-
-# t0 = time.time()
-
-# # d_uid_scores = gs.calc_all_scores(4, 600)
-# # print d_uid_scores.items()[:5]
-# d_uid_sigs = load_all_db_sigs(nprocs=1)
-
-# tt = time.time()
-# # print(len(d_uid_scores))
-# print len(d_uid_sigs)
-# print('time passed:', tt-t0)
-
-# res = gs.calc_all_scores(d_uid_sigs)
-# print res.items()[:4]
-
-# mat = get_matrix(['gene:24', 'dz:114'], ['TPM3', 'TNNT1', 'MYL2', 'ATP2A1'])
-# print mat
-
-# search_string = 'tp5'
-# search_dict = {
-# 	"$or":[
-# 		{'hs_gene_symbol' : {"$regex": search_string,"$options":"i"}},
-# 		{'mm_gene_symbol' : {"$regex": search_string,"$options":"i"}},
-# 		# 'disease_name' : {"$regex": search_string},
-# 		# 'drug_name' : {"$regex": search_string},
-# 	]
-# 	}
-# docs = COLL.find(search_dict)
-# print docs.count()
-# print gs.post_to_paea()
-# print gs.meta
-# print gs.post_to_cds2()
-
-# make_download_file('dz', 'json')
-# make_download_file('dz', 'gmt')
-# d_cat_names = make_autocomplete()
-# json.dump(d_cat_names, open('data/autoCompleteList.json', 'wb'))
-# '''
