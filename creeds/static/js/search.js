@@ -81,9 +81,16 @@ $(document).ready(function(){
 		e.preventDefault();
 		var upGenes = $('#upGenes').val();
 		var dnGenes = $('#dnGenes').val();
-		var dbVersion = $("#dbVersion").val();
+		var dbVersion = [];
+		$.each($(".dbVersion input:checked"), function(){
+			dbVersion.push($(this).val());
+		});
 
-		if (upGenes != '' && dnGenes !='') {
+		if (dbVersion.length === 0) {
+			alert('Please select at least one Database version');
+		} 
+
+		else if (upGenes != '' && dnGenes !='') {
 			$.blockUI({ css: { 
 	            border: 'none', 
 	            padding: '15px', 

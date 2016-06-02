@@ -417,35 +417,47 @@ class DBSignature(Signature):
 		## get the url of the signature's gene, disease or drug
 		url = ''
 		meta = self.meta
-		if meta['id'].startswith('gene:'):
-			organism = meta['organism']
-			if organism == 'human':
-				gene_symbol = meta['hs_gene_symbol']
-				if gene_symbol is None:
-					gene_symbol = meta['mm_gene_symbol']
-			else:
-				gene_symbol = meta['mm_gene_symbol']
-				if gene_symbol is None:
+		uid = meta['id']
+		if ':P' not in uid: # not v2.0 signature
+			if uid.startswith('gene:'):
+				organism = meta['organism']
+				if organism == 'human':
 					gene_symbol = meta['hs_gene_symbol']
-					
-			gene_id = GENE_SYMBOLS.get(gene_symbol, '')
-			url = 'http://www.ncbi.nlm.nih.gov/gene/%s' % gene_id
+					if gene_symbol is None:
+						gene_symbol = meta['mm_gene_symbol']
+				else:
+					gene_symbol = meta['mm_gene_symbol']
+					if gene_symbol is None:
+						gene_symbol = meta['hs_gene_symbol']
+						
+				gene_id = GENE_SYMBOLS.get(gene_symbol, '')
+				url = 'http://www.ncbi.nlm.nih.gov/gene/%s' % gene_id
 
-		elif meta['id'].startswith('dz:'):
-			do_id = meta.get('do_id', None)
-			if do_id is not None:
-				url = 'http://disease-ontology.org/term/%s' % do_id
+			elif uid.startswith('dz:'):
+				do_id = meta.get('do_id', None)
+				if do_id is not None:
+					url = 'http://disease-ontology.org/term/%s' % do_id
+				else:
+					url = 'https://www.google.com/search?q=%s' % self.name.replace(' ', '+')
 			else:
-				url = 'https://www.google.com/search?q=%s' % self.name.replace(' ', '+')
-		else:
-			db_id = meta.get('drugbank_id', None)
-			pubchem_cid = meta.get('pubchem_cid', None)
-			if db_id is not None:
-				url = 'http://www.drugbank.ca/drugs/%s' % db_id
-			elif pubchem_cid is not None:
-				url = 'https://pubchem.ncbi.nlm.nih.gov/compound/%s' % pubchem_cid
-			else:
-				url = 'https://www.google.com/search?q=%s' % self.name.replace(' ', '+')
+				db_id = meta.get('drugbank_id', None)
+				pubchem_cid = meta.get('pubchem_cid', None)
+				if db_id is not None:
+					url = 'http://www.drugbank.ca/drugs/%s' % db_id
+				elif pubchem_cid is not None:
+					url = 'https://pubchem.ncbi.nlm.nih.gov/compound/%s' % pubchem_cid
+				else:
+					url = 'https://www.google.com/search?q=%s' % self.name.replace(' ', '+')
+
+		else: # v2.0 signature
+			if uid.startswith('gene:'): key = 'hs_gene_symbol'
+			elif uid.startswith('dz:'): key = 'disease_name'
+			else: key = 'drug_name'
+			# becas concept ids
+			cids = [':'.join(item['cid'].split(':')[:2]) for item in meta[key]]
+			url_root = 'http://bioinformatics.ua.pt/becas/api/concept/redirect/'
+			url = [url_root + cid for cid in cids]
+
 		return url	
 
 
