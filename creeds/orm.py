@@ -180,7 +180,7 @@ class Signature(object):
 			# a single DBSignatureCollection instance
 			scores = fast_signed_jaccard(db_sig_collection.mat_up, db_sig_collection.mat_dn, 
 				self.v_up, self.v_dn)
-			uids = db_sig_collection.keys()
+			uids = db_sig_collection.uids
 
 		else:
 			# a list of DBSignatureCollection instances
@@ -191,7 +191,7 @@ class Signature(object):
 				self.v_up, self.v_dn)
 			uids = []
 			for dbsc in db_sig_collection:
-				uids.extend(dbsc.keys())
+				uids.extend(dbsc.uids)
 		
 		uid_scores = zip(uids, scores)
 		return dict(uid_scores)
@@ -473,10 +473,11 @@ class DBSignatureCollection(dict):
 			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE)
 		else:
 			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE).limit(limit)
-		uids = cur.distinct('id')
+		# to preserve orders
+		self.uids = cur.distinct('id')
 		
 		# sparse matrices
-		sparse_mat_shape = (len(uids), len(ALL_GENES_I))
+		sparse_mat_shape = (len(self.uids), len(ALL_GENES_I))
 		mat_up = sp.lil_matrix(sparse_mat_shape, dtype=np.int8)
 		mat_dn = sp.lil_matrix(sparse_mat_shape, dtype=np.int8)
 
@@ -497,6 +498,7 @@ class DBSignatureCollection(dict):
 		# convert to CSR format for fast compuatation
 		self.mat_up = mat_up.tocsr()
 		self.mat_dn = mat_dn.tocsr()
+		del mat_up, mat_dn
 
 		categories = map(lambda x:x.split(':')[0], self.keys())
 		self.categories = set(categories)
