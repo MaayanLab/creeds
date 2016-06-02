@@ -169,7 +169,21 @@ function displayGeneSearchResult (results) { // to display results using gene li
 	    {
 	    	"data": "name", 
 			"render": function(data, type, full, meta){
-				return '<a target="_blank" href="'+data[1]+'">'+data[0]+'</a>';
+				if (_.isArray(data[0])){
+					html = '';
+					for (var i = 0; i < data[0].length; i++) {
+						var url = data[1][i];
+						var name = data[0][i];
+						var a = '<a target="_blank" href="'+url+'">'+name+'</a><br>';
+						html += a;
+					};
+					html += ''
+					return html;
+
+				}else {
+					return '<a target="_blank" href="'+data[1]+'">'+data[0]+'</a>';	
+				}
+				
 			}
 		},
 	    { 

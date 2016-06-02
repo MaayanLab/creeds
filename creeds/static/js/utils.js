@@ -73,7 +73,18 @@ function displayStrSearchResult(results){
 	    	var key = allKeys[ii]
 	    	if(typeof(key) === 'string'){
 		    	dl.append('dt').text(key);
-		    	dl.append('dd').text(info[key]);	    		
+		    	var value = info[key];
+		    	if (typeof(value) !== 'string' && value !== undefined){
+		    		if (_.isObject(value[0])){ // array of objects for v2.0 signaturess
+		    			var texts = _.map(info[key], function(d){ return d['name']; });
+		    		} else {
+		    			var texts = value;
+		    		}
+					dl.append('dd').text(texts.join(', '));
+		    	} else { 
+		    		dl.append('dd').text(info[key]);
+		    	}
+		    	
 	    	} else { // add hyperlinks for key that is object
 	    		var field = Object.keys(key)[0];
 	    		var url = key[field] + info[field];
