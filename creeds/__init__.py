@@ -71,7 +71,7 @@ def retrieve_signature():
 
 		if uid in ALL_UIDS:
 			sig = DBSignature(uid) # Signature instance
-			sig.fill_top_genes(cutoff)
+			sig.init_cs_vectors(cutoff)
 			return Response(sig.to_json(meta_only=False), mimetype='application/json')
 		else: # bad request
 			return ('', 400, '')
@@ -107,8 +107,7 @@ def search():
 		for doc in COLL.find(search_dict, {'id':True,'_id':False}):
 			uid = doc['id']
 			sig = DBSignature(uid) # Signature instance
-			if sig.has_chdir():
-				docs.append(sig.meta)
+			docs.append(sig.meta)
 
 		return Response(json.dumps(docs), mimetype='application/json')
 
@@ -123,10 +122,11 @@ def search():
 		db_version = data.get('db_version', 'v1.0')
 
 		sig = Signature(name, meta, up_genes, dn_genes)
+		sig.init_vectors()
 		if db_version == 'v1.0':
-			uid_data = sig.get_query_results(d_uid_sigs, direction=direction, nprocs=app.config['N_JOBS'])
+			uid_data = sig.get_query_results(d_uid_sigs, direction=direction)
 		else:
-			uid_data = sig.get_query_results([d_uid_sigs, d_uid_sigs2], direction=direction, nprocs=app.config['N_JOBS'])
+			uid_data = sig.get_query_results([d_uid_sigs, d_uid_sigs2], direction=direction)
 
 		if sig is not None:
 			return Response(json.dumps(uid_data), mimetype='application/json')
@@ -175,6 +175,7 @@ def get_link():
 		url = None
 		if uid in ALL_UIDS:
 			sig = DBSignature(uid) # Signature instance
+			sig.init_cs_vectors(cutoff=2000)
 			if app_name == 'paea':
 				url = sig.post_to_paea(cutoff=2000)
 			elif app_name == 'cds2':

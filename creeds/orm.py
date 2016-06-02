@@ -9,14 +9,23 @@ from collections import Counter
 import cPickle as pickle
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 import requests
 from joblib import Parallel, delayed
 
 from .gene_converter import *
+from .matrix_ops import (fast_jaccard, fast_signed_jaccard)
 
 ## connect to mongodb via pymongo.MongoClient imported from the module
 from creeds import conn
+## globals
 COLL = conn['microtask_signatures'].signatures
+COLL_GENES = conn['microtask_signatures'].genes
+
+ALL_GENES = COLL_GENES.find_one({'case_sensitive': {'$exists':True}})['case_sensitive']
+ALL_GENES = np.array(ALL_GENES)
+ALL_GENES_I = COLL_GENES.find_one({'case_insensitive': {'$exists':True}})['case_insensitive']
+ALL_GENES_I = np.array(ALL_GENES_I)
 
 ALL_UIDS = COLL.find(
 	{'$and': [
@@ -26,7 +35,8 @@ ALL_UIDS = COLL.find(
 	]},
 	{'id': True}).distinct('id')
 
-print len(ALL_UIDS)
+print '# signatures: %d, # genes(s): %d, # genes(i) : %d' \
+	% (len(ALL_UIDS), len(ALL_GENES), len(ALL_GENES_I))
 
 
 ## load gene symbol to gene ID conversion dict
@@ -40,30 +50,6 @@ FIELDS_EXCLUDE = ['_id',
 	'pvca', 'pvca_sva', 'pvca_combat']
 
 PROJECTION_EXCLUDE = dict(zip(FIELDS_EXCLUDE, [False] * len(FIELDS_EXCLUDE)))
-
-
-import multiprocessing
-## the following two functions are used to avoid pickling error when using multiprocessing.map
-## http://stackoverflow.com/questions/3288595/multiprocessing-using-pool-map-on-a-function-defined-in-a-class
-def fun(f,q_in,q_out):
-    while True:
-        i,x = q_in.get()
-        if i is None:
-            break
-        q_out.put((i,f(x)))
-
-def parmap(f, X, nprocs = multiprocessing.cpu_count()):
-	q_in   = multiprocessing.Queue(1)
-	q_out  = multiprocessing.Queue()
-	proc = [multiprocessing.Process(target=fun,args=(f,q_in,q_out)) for _ in range(nprocs)]
-	for p in proc:
-		p.daemon = True
-		p.start()
-	sent = [q_in.put((i,x)) for i,x in enumerate(X)]
-	[q_in.put((None,None)) for _ in range(nprocs)]
-	res = [q_out.get() for _ in range(len(sent))]
-	[p.join() for p in proc]
-	return [x for i,x in sorted(res)]
 
 
 def jaccard(l1, l2):
@@ -162,39 +148,60 @@ class Signature(object):
 		self.meta = meta
 		self.up_genes = up_genes
 		self.dn_genes = dn_genes
-		self._up_genes = set(map(lambda x: x.upper(), up_genes))
-		self._dn_genes = set(map(lambda x: x.upper(), dn_genes))
+		# self._up_genes = set(map(lambda x: x.upper(), up_genes))
+		# self._dn_genes = set(map(lambda x: x.upper(), dn_genes))
 
+	def init_vectors(self):	
+		'''Init binary vectors representing of the siganture, 
+		for fast computation of jaccard.'''
+		v_up = np.zeros(len(ALL_GENES_I), dtype=np.int8)
+		up_genes_i = map(lambda x: x.upper(), self.up_genes)
+		v_up[np.in1d(ALL_GENES_I, up_genes_i)] = 1
 
-	def calc_all_scores(self, db_sig_collection_iteritems, nprocs=1):
+		v_dn = np.zeros(len(ALL_GENES_I), dtype=np.int8)
+		dn_genes_i = map(lambda x: x.upper(), self.dn_genes)
+		v_dn[np.in1d(ALL_GENES_I, dn_genes_i)] = 1
+
+		self.v_up = v_up
+		self.v_dn = v_dn
+
+	def calc_all_scores(self, db_sig_collection):
 		'''
 		Calcuated signed jaccard score for this signatures against 
-		all DBsignatures in `db_sig_collection_iteritems`, generator from 
-		a DBSignatureCollection instance or a list of DBSignatureCollections.
+		a DBSignatureCollection instance or a list of DBSignatureCollection instances.
 		'''
-		if nprocs == 1:
-			uid_scores = []
-			for uid, sig in db_sig_collection_iteritems:
-				score = signed_jaccard(self, sig)
-				uid_scores.append((uid, score))
-		else:
-			uid_scores = Parallel(n_jobs=nprocs, backend='multiprocessing')(delayed(_calc_score)(self, uid, sig)
-				for uid, sig in db_sig_collection_iteritems)
+		uid_scores = []
+		if type(db_sig_collection) != list: 
+			# a single DBSignatureCollection instance
+			scores = fast_signed_jaccard(db_sig_collection.mat_up, db_sig_collection.mat_dn, 
+				self.v_up, self.v_dn)
+			uids = db_sig_collection.keys()
 
+		else:
+			# a list of DBSignatureCollection instances
+			# stack sparse matrices first
+			mat_up = sp.vstack([dbsc.mat_up for dbsc in db_sig_collection])
+			mat_dn = sp.vstack([dbsc.mat_dn for dbsc in db_sig_collection])
+			scores = fast_signed_jaccard(mat_up, mat_dn, 
+				self.v_up, self.v_dn)
+			uids = []
+			for dbsc in db_sig_collection:
+				uids.extend(dbsc.keys())
+		
+		uid_scores = zip(uids, scores)
 		return dict(uid_scores)
 
-	def get_query_results(self, db_sig_collection, direction='similar', nprocs=1):
+	def get_query_results(self, db_sig_collection, direction='similar'):
 		'''
 		Handle querying signatures from the DB with custom up/down genes,
 		return a list of objects
 		'''
-		if type(db_sig_collection) == list:
-			db_sig_collection_iteritems = chain(*[dbc.iteritems() for dbc in db_sig_collection])
-		else:
-			db_sig_collection_iteritems = db_sig_collection.iteritems()
-		
+		# if type(db_sig_collection) == list:
+		# 	db_sig_collection_iteritems = chain(*[dbc.iteritems() for dbc in db_sig_collection])
+		# else:
+		# 	db_sig_collection_iteritems = db_sig_collection.iteritems()
 
-		d_uid_score = self.calc_all_scores(db_sig_collection_iteritems, nprocs=nprocs)
+		d_uid_score = self.calc_all_scores(db_sig_collection)
 
 		scores = np.array(d_uid_score.values())
 		uids = np.array(d_uid_score.keys())
@@ -256,34 +263,71 @@ class DBSignature(Signature):
 			self.chdir = chdir
 		Signature.__init__(self, name, doc)
 
+
 	def has_chdir(self):
 		## assert if a signature has the chdir field
 		if hasattr(self, 'chdir'): return True
 		else: return False
 
-	def is_filled(self):
-		## assert if top genes are filled
-		return len(self.up_genes) > 0 and len(self.dn_genes) > 0
+	def get_vector_indexes(self, cutoff=600):
+		'''
+		Get indexes of up and down genes in ALL_GENES_I
+		Used for construction of sparse matices in DBSignatureCollection.mat_*
+		'''	
+		genes_i = np.array(map(lambda x:x.upper(), self.chdir['genes'][:cutoff]))
+		vals = np.array(self.chdir['vals'][:cutoff])
+		up_genes_i = genes_i[vals > 0]
+		dn_genes_i = genes_i[vals < 0]
+		return np.in1d(ALL_GENES_I, up_genes_i), np.in1d(ALL_GENES_I, dn_genes_i)
 
-	def fill_top_genes(self, cutoff=600):
-		## get top up/dn genes based on a rank cutoff
-		if not self.is_filled():
-			for gene, val in zip(self.chdir['genes'], self.chdir['vals'])[:cutoff]:
-				if val > 0: 
-					self.up_genes.append( (gene, val) )
-					self._up_genes.add( gene.upper() )
-				else: 
-					self.dn_genes.append( (gene, val) )
-					self._dn_genes.add( gene.upper() )
+	def init_cs_vectors(self, cutoff=600):
+		'''Init case sensitive vectors with CD values. 
+		This vector is intended to for exporting purpose used in to_json, to_dict.
+		'''
+		if not hasattr(self, 'v_cs'):
+			v_cs = np.zeros(len(ALL_GENES), dtype=np.float32)
+			genes = self.chdir['genes'][:cutoff]
+			genes, uniq_idx = np.unique(genes, return_index=True)
+			vals = np.array(self.chdir['vals'][:cutoff])[uniq_idx]
 
+			v_cs[np.in1d(ALL_GENES, genes)] = vals
+			self.v_cs = sp.lil_matrix(v_cs)
+
+	def fill_top_genes(self):
+		'''Get top up/dn genes from `v_cs`
+		'''
+		# get mask of non zero index
+		mask_non_zero = (self.v_cs != 0).toarray().ravel()
+		# retrieve CD vals and genes
+		vals = self.v_cs[0, mask_non_zero].toarray().ravel()
+		genes = ALL_GENES[mask_non_zero]
+		# sort CD vals on abs(vals)
+		srt_idx = np.abs(vals).argsort()[::-1]
+
+		up_genes = []
+		dn_genes = []
+		for gene, val in zip(genes[srt_idx].tolist(), vals[srt_idx].tolist()):
+			if val > 0: 
+				up_genes.append( (gene, val) )
+			else: 
+				dn_genes.append( (gene, val) )
+		return up_genes, dn_genes
+
+
+	def clear(self, cutoff=600):
+		'''Clear unnecessary fields to reduce RAM usage
+		'''
+		self.init_cs_vectors(cutoff=cutoff)
+		del self.chdir
 
 	def to_json(self, meta_only=False):
 		## to export the document into json
 		json_data = self.meta
 		if not meta_only:
-			self.fill_top_genes()
-			json_data['up_genes'] = self.up_genes
-			json_data['down_genes'] = self.dn_genes
+			up_genes, dn_genes = self.fill_top_genes()
+			json_data['up_genes'] = up_genes
+			json_data['down_genes'] = dn_genes
+
 		return json.dumps(json_data)
 
 	def to_dict(self, format='gmt'):
@@ -293,36 +337,36 @@ class DBSignature(Signature):
 		else:
 			dict_data = self.meta
 
-		self.fill_top_genes()
-		dict_data['up_genes'] = self.up_genes
-		dict_data['down_genes'] = self.dn_genes
+		up_genes, dn_genes = self.fill_top_genes()
+		dict_data['up_genes'] = up_genes
+		dict_data['down_genes'] = dn_genes
 		return dict_data
 
 
-	def calc_all_scores(self, db_sig_collection, cutoff=600):
-		## calcuated signed jaccard score for this signatures against 
-		## all signatures in the database
-		self.fill_top_genes(cutoff)
-		uid_scores = []
-		for uid, sig in db_sig_collection.items():
-			score = signed_jaccard(self, sig)
-			uid_scores.append((uid, score))
-		return dict(uid_scores)
+	# def calc_all_scores(self, db_sig_collection, cutoff=600):
+	# 	## calcuated signed jaccard score for this signatures against 
+	# 	## all signatures in the database
+	# 	self.fill_top_genes(cutoff)
+	# 	uid_scores = []
+	# 	for uid, sig in db_sig_collection.items():
+	# 		score = signed_jaccard(self, sig)
+	# 		uid_scores.append((uid, score))
+	# 	return dict(uid_scores)
 
 
-	def get_gene_vals(self, genes, na_val=0):
-		## retrieve the values of a given list of genes
-		if self.has_chdir():
-			vals = []
-			genes_upper = map(lambda x: x.upper(), self.chdir['genes'])
-			for gene in genes:
-				if gene in genes_upper:
-					idx = genes_upper.index(gene)
-					val = self.chdir['vals'][idx]
-				else:
-					val = na_val
-				vals.append(val)
-		return vals
+	# def get_gene_vals(self, genes, na_val=0):
+	# 	## retrieve the values of a given list of genes
+	# 	if self.has_chdir():
+	# 		vals = []
+	# 		genes_upper = map(lambda x: x.upper(), self.chdir['genes'])
+	# 		for gene in genes:
+	# 			if gene in genes_upper:
+	# 				idx = genes_upper.index(gene)
+	# 				val = self.chdir['vals'][idx]
+	# 			else:
+	# 				val = na_val
+	# 			vals.append(val)
+	# 	return vals
 
 	def post_to_paea(self, cutoff=2000):
 		## post top n genes to PAEA and return a PAEA url
@@ -331,9 +375,11 @@ class DBSignature(Signature):
 		base_url = 'http://amp.pharm.mssm.edu/PAEA?id='
 		paea_url = None
 		if self.has_chdir():
-			gene_list = ''
-			for gene, coef in zip(self.chdir['genes'], self.chdir['vals'])[:cutoff]:
-				gene_list += '%s,%s\n'% (gene, coef)
+			up_genes, dn_genes = self.fill_top_genes()
+			gene_list = []
+			for gene, coef in up_genes + dn_genes:
+				gene_list.append( '%s,%s\n'% (gene, coef) )
+			gene_list = ''.join(gene_list)
 			data = {'list': gene_list, 'inputMethod': "PAEA", 'description': self.name}
 			r = requests.post(post_url, files=data)
 			paea_url = base_url + str(json.loads(r.text)['userListId'])
@@ -344,9 +390,10 @@ class DBSignature(Signature):
 		url = 'http://amp.pharm.mssm.edu/L1000CDS2/query'
 		cds2_url = None
 		if self.has_chdir():
+			up_genes, dn_genes = self.fill_top_genes()
 			data = {
-				"genes": map(lambda x: x.upper(), self.chdir['genes'][:cutoff]), 
-				"vals":  self.chdir['vals'][:cutoff]
+				"genes": map(lambda x: x[0].upper(), up_genes + dn_genes), 
+				"vals":  map(lambda x: x[1], up_genes + dn_genes)
 				}
 			config = {"aggravate":False,"searchMethod":"CD","share":True,"combination":True,"db-version":"latest"}
 			metadata = [{"key":"name","value": self.name}]
@@ -422,12 +469,29 @@ class DBSignatureCollection(dict):
 		else:
 			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE).limit(limit)
 		uids = cur.distinct('id')
+		
+		# sparse matrices
+		sparse_mat_shape = (len(uids), len(ALL_GENES_I))
+		mat_up = sp.lil_matrix(sparse_mat_shape, dtype=np.int8)
+		mat_dn = sp.lil_matrix(sparse_mat_shape, dtype=np.int8)
+
 		# Load signatures 
-		for doc in cur:
+		for i, doc in enumerate(cur):
 			sig = DBSignature(None, doc=doc)
-			sig.fill_top_genes()
+			# sig.fill_top_genes()
+			# fill the sparse matrices
+			up_idx, dn_idx = sig.get_vector_indexes()
+			mat_up[i, up_idx] = 1
+			mat_dn[i, dn_idx] = 1
+			# clear `chdir` field and add `v_cs` for exporting
+			sig.clear(cutoff=600)
+
 			uid = doc['id']
 			self[uid] = sig
+
+		# convert to CSR format for fast compuatation
+		self.mat_up = mat_up.tocsr()
+		self.mat_dn = mat_dn.tocsr()
 
 		categories = map(lambda x:x.split(':')[0], self.keys())
 		self.categories = set(categories)
