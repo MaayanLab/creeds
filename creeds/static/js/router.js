@@ -12,18 +12,24 @@ var Router = Backbone.Router.extend({
 	routes: {
 		'': 'home',
 		'similarity(/)(:searchStr)': 'similarity',
-		'drug/:id': 'drug',
 		'clustergram': 'clustergram',
+		'bubble': 'bubble',
 		'clusters': 'clusters',
 		'downloads': 'downloads',
 		'help': 'help'
 	},
 
 	home: function(){
+		$(this.el).load("landing.html", function() {
+			removeActive();
+		});
+	},
+
+	bubble: function(){
 		$(this.el).load("home.html", function() {
 			removeActive();
 			$("#browse").addClass("active");
-		});
+		});		
 	},
 
 	similarity: function(searchStr){
