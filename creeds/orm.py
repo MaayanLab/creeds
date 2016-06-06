@@ -56,15 +56,15 @@ def find_name(doc):
 		if doc['organism'] == 'human':
 			name = doc.get('hs_gene_symbol', None)
 			if name is None:
-				name = doc['mm_gene_symbol']
+				name = doc.get('mm_gene_symbol', None)
 		else:
 			name = doc.get('mm_gene_symbol', None)
 			if name is None:
 				name = doc.get('hs_gene_symbol', None)
 	elif prefix == 'dz':
-		name = doc['disease_name']
+		name = doc.get('disease_name', None)
 	else:
-		name = doc['drug_name']
+		name = doc.get('drug_name', None)
 
 	if type(name) == list: # predicted signatures
 		# extract name fields and convert to string
@@ -210,16 +210,41 @@ class DBSignature(Signature):
 		if hasattr(self, 'chdir'): return True
 		else: return False
 
+	def get_vectors_and_clear(self, cutoff=600):
+		v_cs = np.zeros(len(ALL_GENES), dtype=np.float32)
+
+
+		genes = self.chdir['genes'][:cutoff]
+
+		genes, uniq_idx = np.unique(genes, return_index=True)
+		vals = np.array(self.chdir['vals'][:cutoff])[uniq_idx]
+
+		v_cs[np.in1d(ALL_GENES, genes)] = vals
+
+		self.v_cs = sp.lil_matrix(v_cs)
+
+		up_genes_i = map(lambda x: x.upper(), genes[vals > 0])
+		dn_genes_i = map(lambda x: x.upper(), genes[vals < 0])
+
+		up_idx = np.in1d(ALL_GENES_I, up_genes_i, assume_unique=True)
+		dn_idx = np.in1d(ALL_GENES_I, dn_genes_i, assume_unique=True)
+		del self.chdir
+		return up_idx, dn_idx
+
+
 	def get_vector_indexes(self, cutoff=600):
 		'''
 		Get indexes of up and down genes in ALL_GENES_I
 		Used for construction of sparse matices in DBSignatureCollection.mat_*
 		'''	
 		genes_i = np.array(map(lambda x:x.upper(), self.chdir['genes'][:cutoff]))
-		vals = np.array(self.chdir['vals'][:cutoff])
+		genes_i, uniq_idx = np.unique(genes_i, return_index=True)
+		vals = np.array(self.chdir['vals'][:cutoff])[uniq_idx]
 		up_genes_i = genes_i[vals > 0]
 		dn_genes_i = genes_i[vals < 0]
-		return np.in1d(ALL_GENES_I, up_genes_i), np.in1d(ALL_GENES_I, dn_genes_i)
+		up_idx = np.in1d(ALL_GENES_I, up_genes_i, assume_unique=True)
+		dn_idx = np.in1d(ALL_GENES_I, dn_genes_i, assume_unique=True)
+		return up_idx, dn_idx
 
 	def init_cs_vectors(self, cutoff=600):
 		'''Init case sensitive vectors with CD values. 
@@ -370,12 +395,28 @@ class DBSignature(Signature):
 			elif uid.startswith('dz:'): key = 'disease_name'
 			else: key = 'drug_name'
 			# becas concept ids
-			cids = [':'.join(item['cid'].split(':')[:2]) for item in meta[key]]
+			cids = [':'.join(item.get('cid', ':').split(':')[:2]) for item in meta.get(key, [])]
 			url_root = 'http://bioinformatics.ua.pt/becas/api/concept/redirect/'
 			url = [url_root + cid for cid in cids]
 
 		return url	
 
+
+def wrapper_func(i, doc):
+	sig = DBSignature(None, doc=doc)
+	# sig.fill_top_genes()
+	# fill the sparse matrices
+	# up_idx, dn_idx = sig.get_vector_indexes()
+	# mat_up[i, up_idx] = 1
+	# mat_dn[i, dn_idx] = 1
+	# clear `chdir` field and add `v_cs` for exporting
+	# sig.clear(cutoff=600)
+	# if i % 5 == 0:
+	# 	print i
+	up_idx, dn_idx = sig.get_vectors_and_clear()
+
+	uid = doc['id']
+	return uid, sig, up_idx, dn_idx
 
 class DBSignatureCollection(dict):
 	'''
@@ -409,21 +450,30 @@ class DBSignatureCollection(dict):
 		mat_up = sp.lil_matrix(sparse_mat_shape, dtype=np.int8)
 		mat_dn = sp.lil_matrix(sparse_mat_shape, dtype=np.int8)
 
+
 		# Load signatures 
-		for i, doc in enumerate(cur):
-			sig = DBSignature(None, doc=doc)
-			# sig.fill_top_genes()
-			# fill the sparse matrices
-			up_idx, dn_idx = sig.get_vector_indexes()
+		tuple_list = Parallel(n_jobs=4, backend='threading', verbose=10)(
+			delayed(wrapper_func)(i, doc) for i, doc in enumerate(cur))
+
+		for i, (uid, sig, up_idx, dn_idx) in enumerate(tuple_list):
+			self[uid] = sig
 			mat_up[i, up_idx] = 1
 			mat_dn[i, dn_idx] = 1
-			# clear `chdir` field and add `v_cs` for exporting
-			sig.clear(cutoff=600)
-			# if i % 5 == 0:
-			# 	print i
 
-			uid = doc['id']
-			self[uid] = sig
+		# for i, doc in enumerate(cur):
+		# 	sig = DBSignature(None, doc=doc)
+		# 	# sig.fill_top_genes()
+		# 	# fill the sparse matrices
+		# 	up_idx, dn_idx = sig.get_vector_indexes()
+		# 	mat_up[i, up_idx] = 1
+		# 	mat_dn[i, dn_idx] = 1
+		# 	# clear `chdir` field and add `v_cs` for exporting
+		# 	sig.clear(cutoff=600)
+		# 	if i % 5 == 0:
+		# 		print i
+
+		# 	uid = doc['id']
+		# 	self[uid] = sig
 
 		# convert to CSR format for fast compuatation
 		self.mat_up = mat_up.tocsr()
