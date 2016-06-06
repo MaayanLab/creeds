@@ -56,13 +56,13 @@ def find_name(doc):
 	prefix = uid.split(':')[0]
 	if prefix == 'gene':
 		if doc['organism'] == 'human':
-			name = doc['hs_gene_symbol']
+			name = doc.get('hs_gene_symbol', None)
 			if name is None:
 				name = doc['mm_gene_symbol']
 		else:
 			name = doc.get('mm_gene_symbol', None)
 			if name is None:
-				name = doc['hs_gene_symbol']
+				name = doc.get('hs_gene_symbol', None)
 	elif prefix == 'dz':
 		name = doc['disease_name']
 	else:
