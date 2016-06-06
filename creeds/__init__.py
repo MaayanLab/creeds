@@ -1,5 +1,6 @@
 ## python API for the mongodb
 import os, sys, json
+import logging
 
 import clustergram
 from .crossdomain import crossdomain
@@ -36,24 +37,42 @@ conn = MongoClient(app.config['DATABASE_URI'])
 from .orm import *
 from .utils import *
 
+app.logger.setLevel(logging.INFO)
+
+if not app.debug:
+	# Add a logging handler for production to log out INFOs
+	logging_handler = logging.StreamHandler()
+	formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+	logging_handler.setFormatter(formatter)
+	app.logger.addHandler(logging_handler)
+	
+
 
 @app.before_first_request
 def load_globals():
 	# Load globals DBSignatureCollection instances
 	global d_dbsc
 	d_dbsc = {} # {name : DBSignatureCollection instance}
+	
+	app.logger.info('# signatures: %d, # genes(s): %d, # genes(i) : %d' \
+		% (len(ALL_UIDS), len(ALL_GENES), len(ALL_GENES_I)))
+
+	app.logger.info('Loading DBSignatureCollections')
+	app.logger.info('\t'.join(['Collection name','Number of signatures','Size(MB)']))
+
 	for params in app.config['DBSC_PARAMS']:
 		collection_name = params[1]
 		d_dbsc[collection_name] = DBSignatureCollection(*params)
+		app.logger.info('%s\t%d\t%.2f' % (collection_name, 
+			len(d_dbsc[collection_name]), 
+			sys.getsizeof(d_dbsc[collection_name])/1e6))
 
-
+	app.logger.info('DBSignatureCollections loaded')
+	
 	if app.config['MAKE_DOWNLOAD_FILES']:
 		for dbsc in d_dbsc.values():
 			dbsc.make_all_download_files()
 
-	print 'd_dbsc loaded:'
-	for collection_name, dbsc in d_dbsc.items():
-		print collection_name, len(dbsc)
 	return
 
 
@@ -191,4 +210,8 @@ def get_link():
 				url = sig.post_to_cds2(cutoff=2000)
 		return json.dumps(url)	
 
+
+@app.errorhandler(500)
+def internal_error(exception):
+	app.logger.error(exception)
 

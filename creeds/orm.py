@@ -33,8 +33,6 @@ ALL_UIDS = COLL.find(
 	]},
 	{'id': True}).distinct('id')
 
-print '# signatures: %d, # genes(s): %d, # genes(i) : %d' \
-	% (len(ALL_UIDS), len(ALL_GENES), len(ALL_GENES_I))
 
 
 ## load gene symbol to gene ID conversion dict
@@ -72,6 +70,15 @@ def find_name(doc):
 		# extract name fields and convert to string
 		name = [item['name'] for item in name]
 	return name
+
+
+def sparse_matrix_size(mat):
+	## get size of a sparse matrix
+	if type(mat) == sp.csr_matrix:
+		nbytes = mat.data.nbytes + mat.indptr.nbytes + mat.indices.nbytes
+	elif type(mat) == sp.lil_matrix:
+		nbytes = mat.data.nbytes + mat.rows.nbytes
+	return nbytes
 
 
 ################################ Classes ################################
@@ -249,10 +256,15 @@ class DBSignature(Signature):
 
 
 	def clear(self, cutoff=600):
-		'''Clear unnecessary fields to reduce RAM usage
+		'''Clear unnecessary fields to reduce RAM usage.
 		'''
 		self.init_cs_vectors(cutoff=cutoff)
 		del self.chdir
+
+	def __sizeof__(self):
+		size = sum(map(sys.getsizeof, [self.name, self.meta]))
+		size += sparse_matrix_size(self.v_cs)
+		return size
 
 	def to_json(self, meta_only=False):
 		## to export the document into json
@@ -407,6 +419,8 @@ class DBSignatureCollection(dict):
 			mat_dn[i, dn_idx] = 1
 			# clear `chdir` field and add `v_cs` for exporting
 			sig.clear(cutoff=600)
+			# if i % 5 == 0:
+			# 	print i
 
 			uid = doc['id']
 			self[uid] = sig
@@ -420,6 +434,16 @@ class DBSignatureCollection(dict):
 		self.categories = set(categories)
 		self.category_count = dict(Counter(categories))
 		self.get_download_file_meta()
+
+	def __sizeof__(self):
+		'''Get the approximate size of this object in MBs
+		'''
+		size = sparse_matrix_size(self.mat_up) + sparse_matrix_size(self.mat_dn)
+		size_buildins = sum(map(sys.getsizeof, [self.categories, self.category_count, self.uids]))
+		size_sigs = sum(map(sys.getsizeof, self.values()))
+
+		size += size_buildins + size_sigs
+		return size
 
 	def get_download_file_meta(self):
 		'''to store metadata for generated download files
