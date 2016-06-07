@@ -147,19 +147,39 @@ def search():
 		meta = data.get('meta', None)
 		direction = data.get('direction', 'similar')
 		db_version = data.get('db_version', 'v1.0')
+		query_params = dict(direction=direction, db_version=db_version)
+		client = data.get('client', 'api')
 
-		sig = Signature(name, meta, up_genes, dn_genes)
-		sig.init_vectors()
-
-		if type(db_version) != list:
-			uid_data = sig.get_query_results(d_dbsc[db_version], direction=direction)
-		else:
-			uid_data = sig.get_query_results([d_dbsc[v] for v in db_version], direction=direction)
-
-		if sig is not None:
-			return Response(json.dumps(uid_data), mimetype='application/json')
-		else:
+		sig = Signature(name, meta, up_genes, dn_genes, query_params)
+		if sig is None:
 			return ('', 400, '')
+		else:
+			# Save the user signature
+			h = sig.save()
+
+			if client == 'api': # perform the query only when client is api
+				sig.init_vectors()
+				uid_data = sig.get_query_results(d_dbsc)
+
+				return Response(json.dumps(uid_data), mimetype='application/json')
+
+			else: # return the hash of the signature to front-end
+				return Response(json.dumps(h), mimetype='application/json')
+
+
+@app.route(ENTER_POINT + '/result', methods=['GET'])
+@crossdomain(origin='*')
+def result():
+	## retrieve a Signature using a hash, perform query, then return the result
+	if request.method == 'GET':
+		h = request.args.get('id', None)
+		sig = Signature.from_hash(h)
+		if sig is None:
+			return ('', 400, '')
+		else:
+			sig.init_vectors()
+			uid_data = sig.get_query_results(d_dbsc)
+			return Response(json.dumps(uid_data), mimetype='application/json')
 
 
 @app.route(ENTER_POINT + '/download', methods=['GET'])

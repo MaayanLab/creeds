@@ -2,6 +2,7 @@
 ORMs for signature, signatures in the MongoDB and collection of signatures.
 '''
 import os, sys, json
+import hashlib
 from collections import Counter
 
 import numpy as np
@@ -19,6 +20,8 @@ from creeds import conn
 ################################ Global variables ################################
 COLL = conn['microtask_signatures'].signatures
 COLL_GENES = conn['microtask_signatures'].genes
+COLL_USER_SIGS = conn['microtask_signatures'].userSignatures
+COLL_USER_SIGS.create_index('id', unique=True, sparse=False)
 
 ALL_GENES = COLL_GENES.find_one({'case_sensitive': {'$exists':True}})['case_sensitive']
 ALL_GENES = np.array(ALL_GENES)
@@ -83,7 +86,8 @@ def sparse_matrix_size(mat):
 
 ################################ Classes ################################
 class Signature(object):
-	def __init__(self, name=None, meta=None, up_genes=None, dn_genes=None):
+	def __init__(self, name=None, meta=None, up_genes=None, dn_genes=None, 
+		query_params={'direction': 'similar', 'db_version':'v1.0'}):
 		## defaults:
 		if name is None: name = ''
 		if meta is None: meta = {}
@@ -94,7 +98,20 @@ class Signature(object):
 		self.meta = meta
 		self.up_genes = up_genes
 		self.dn_genes = dn_genes
+		self.query_params = query_params
 
+	def save(self):
+		'''Hash the attributes associate with self as well as query params,
+		and save to COLL_USER_SIGS
+		'''
+		d = {'name': self.name, 'meta': self.meta, 
+			'up_genes': self.up_genes, 'dn_genes': self.dn_genes,
+			'query_params': self.query_params}
+
+		h = hashlib.md5(json.dumps(d)).hexdigest()
+		d['id'] = h
+		COLL_USER_SIGS.update_one({'id': h}, {'$set': d}, upsert=True)
+		return h
 
 	def init_vectors(self):	
 		'''Init binary vectors representing of the siganture, 
@@ -136,11 +153,12 @@ class Signature(object):
 		uid_scores = zip(uids, scores)
 		return dict(uid_scores)
 
-	def get_query_results(self, db_sig_collection, direction='similar'):
+	def _get_query_results(self, db_sig_collection):
 		'''
 		Handle querying signatures from the DB with custom up/down genes,
 		return a list of objects
 		'''
+		direction = self.query_params['direction']
 
 		d_uid_score = self.calc_all_scores(db_sig_collection)
 
@@ -184,6 +202,26 @@ class Signature(object):
 			}
 			uid_data.append(meta)
 		return uid_data
+
+	def get_query_results(self, d_dbsc):
+		'''Wrapper for _get_query_results handling db_version
+		'''
+		db_version = self.query_params['db_version']
+		if type(db_version) != list:
+			uid_data = self._get_query_results(d_dbsc[db_version])
+		else:
+			uid_data = self._get_query_results([d_dbsc[v] for v in db_version])
+		return uid_data
+
+	@classmethod
+	def from_hash(cls, h):
+		'''To retrieve a Signature using a hash'''
+		if h is None:
+			return None
+		else:
+			doc = COLL_USER_SIGS.find_one({'id': h}, {'_id': False, 'id': False})
+			signature = Signature(**doc)
+			return signature
 
 
 class DBSignature(Signature):
