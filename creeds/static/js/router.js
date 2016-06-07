@@ -12,6 +12,7 @@ var Router = Backbone.Router.extend({
 	routes: {
 		'': 'home',
 		'similarity(/)(:searchStr)': 'similarity',
+		'query(/)(:id)': 'query',
 		'clustergram': 'clustergram',
 		'bubble': 'bubble',
 		'clusters': 'clusters',
@@ -33,11 +34,23 @@ var Router = Backbone.Router.extend({
 	},
 
 	similarity: function(searchStr){
+		// display string search result
 		$(this.el).load("similarity.html", function() {
 			removeActive();
 			$("#similarity").addClass('active');
 			if (searchStr){
 				doStrSearch(searchStr);	
+			}
+		});
+	},
+
+	query: function(id){
+		// display genes query result
+		$(this.el).load("similarity.html", function() {
+			removeActive();
+			$("#similarity").addClass("active");
+			if (id){
+				doQuery(id);
 			}
 		});
 	},

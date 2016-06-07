@@ -97,3 +97,122 @@ function displayStrSearchResult(results){
 	};
 	scrollToResult();    	
 }
+
+function scrollToResult() {
+	$('html, body').animate({
+		scrollTop: $("#searchResults").offset().top
+	}, 500);
+}
+
+
+function doQuery(id){
+	// wrapper for send GET request to /result endpoint and displayGeneSearchResult
+	$.getJSON(ENTER_POINT+'/result', {id: id}, function(results){
+		displayGeneSearchResult(results);
+	});
+}
+
+
+function displayGeneSearchResult (results) { // to display results using gene list search
+	d3.select('#searchResultsInner').remove();
+	d3.select("#searchResults").append('div')
+		.attr('id', 'searchResultsInner');	
+
+	headerLabels = ['ID', 'Name', 'GEO ID', 'Signed Jaccard Index ']
+	var table = $('<table>').addClass('table table-striped table-hover');
+
+	var thead = $('<thead>');
+	var tr = $('<tr>')
+
+	$.each(headerLabels,function(i, headerLabel) {
+		tr.append('<th>' + headerLabel + '</th>');
+	});
+
+	thead.append(tr)
+	table.append(thead);
+
+	$("#searchResultsInner").append(table);
+
+	uids = [];
+
+	var columnsDef = [
+		{ 
+			"data": "id",
+			"render": function(data, type, full, meta){
+				var profileUrl = ENTER_POINT + '/api?id=' + data;
+				if (data.startsWith('dz:')){
+					// prettify the results for displaying
+					data = 'disease:' + data.split(':')[1];
+				}
+				return '<a target="_blank" href="'+profileUrl+'">'+data+'</a>';
+			}
+		},
+	    {
+	    	"data": "name", 
+			"render": function(data, type, full, meta){
+				if (_.isArray(data[0])){
+					html = '';
+					for (var i = 0; i < data[0].length; i++) {
+						var url = data[1][i];
+						var name = data[0][i];
+						var a = '<a target="_blank" href="'+url+'">'+name+'</a><br>';
+						html += a;
+					};
+					html += ''
+					return html;
+
+				}else {
+					return '<a target="_blank" href="'+data[1]+'">'+data[0]+'</a>';	
+				}
+				
+			}
+		},
+	    { 
+	    	"data": "geo_id",
+	    	"render": function(data, type, full, meta){
+	    		return '<a target="_blank" href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='+data+'">'+data+'</a>';
+	    	}
+	    },
+		{ "data": "signed_jaccard" },
+	];
+
+	rctable = table.dataTable({
+		"data": results,
+		"columns": columnsDef,
+		"bSort": false,
+		"deferRender": true,
+		"sDom": 'T<"clear">lfrtip',
+		"oTableTools": {
+        	// to save table
+        	"sSwfPath": "js/swf/copy_csv_xls_pdf.swf",
+        	"aButtons": [
+        	"copy",
+        	"print",
+        	{
+        		"sExtends":    "collection",
+        		"sButtonText": 'Save <span class="caret" />',
+        		"aButtons":    [ "csv", "xls", "pdf" ]
+        	}
+        	],
+            // to make rows selectable
+            // "sRowSelect": "multi",
+            // "fnRowSelected": function ( row ) {
+            // 	var rData = rctable.fnGetData(row);
+            // 	uids.push(rData.id);
+            // },
+            // "fnRowDeselected": function (row) {
+            // 	var rData = rctable.fnGetData(row);
+            // 	// remove from uids
+            // 	var index = uids.indexOf(rData.id);
+            // 	if (index > -1) {
+            // 		uids.splice(index, 1);
+            // 	}
+            // },
+        },
+        "fnInitComplete": function(oSettings, json){ //DataTables has finished its initialisation.
+        	var infoIcon = $('<i title="Leverages the effect of directions between a pair of gene expression signatures. It has a range of [-1,1] where 1 represent completely same signatures and -1 represent signatures of reverse effects and 0 represent unrelated signatures." data-toggle="tooltip" data-placement="right" class="glyphicon glyphicon-info-sign"></i>');
+        	$('th').last().append(infoIcon);
+        },
+    });
+	scrollToResult();
+}
