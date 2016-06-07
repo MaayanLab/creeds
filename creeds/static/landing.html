@@ -1,6 +1,12 @@
 <link rel="stylesheet" type="text/css" href="lib/typeahead.css">
-<div class="container-fluid">
+<div class="container-fluid" id="landing-page">
+	<div id="description" class="row">
+		<h2 class="col-md-12 col-sm-12">
+			Crowd Extracted Expression of Differential Signatures
+		</h2>
+	</div>
 	<div class="row">
+
 		<!-- 1st col -->
 		<div class="col-md-4 col-sm-4">
 			<div class="panel panel-default">
@@ -8,7 +14,7 @@
 					<h3 class="panel-title">Search</h3>
 				</div>
 				<div class="panel-body">
-					<div class="row">
+					<div>
 						<h3>Metadata Signature Search</h3>
 						<p>Examples: <a class="exampleTerm">TP53</a>, <a class="exampleTerm">Breast cancer</a>, <a class="exampleTerm">Imatinib</a></p>
 						<div class="input-group">
@@ -16,72 +22,49 @@
 							<span class="input-group-btn">
 								<button id="sigNameBtn" class="btn btn-info" type="button">Search by term</button>
 							</span>
-						</div>						
+						</div>
 					</div>
 					<hr>
-					<div class="row">
+					<div>
 						<h3>Signature Search</h3>
-						<span class="help-block">Search signatures by up and down gene sets</span>
-						<p><a id="geneSearchEgBtn">Try an example</a></p>
-
+						<p class="help-block">Search signatures by up and down gene sets</p>
+						<p>
+							<a id="geneSearchEgBtn">Try an example</a>
+						</p>
 						<form>
-							<div class="row">
-								<div class="form-group col-xs-12">
-									<div class="col-xs-6">
-										<div class="row">
-											<label for="upGenes" class="col-xs-12 control-label">Up genes</label>
-										</div>
-										<div class="row">
-											<div class="col-xs-12">
-												<textarea class="form-control" id="upGenes" rows="10" placeholder="Up genes"></textarea>
-											</div>
-										</div>
-									</div>
-									<div class="col-xs-6">
-										<div class="row">
-											<label for="dnGenes" class="col-xs-12 control-label">Down genes</label>
-										</div>
-										<div class="row">
-											<div class="col-xs-12">
-												<textarea class="form-control" id="dnGenes" rows="10" placeholder="Down genes"></textarea>
-											</div>
-										</div>
+							<div>
+								<label for="upGenes" class="control-label">Up genes</label>
+								<textarea class="form-control" id="upGenes" rows="10" placeholder="Up genes"></textarea>
+							</div>
+							<div id="dnGenes-wrapper">
+								<label for="dnGenes" class="control-label">Down genes</label>
+								<textarea class="form-control" id="dnGenes" rows="10" placeholder="Down genes"></textarea>
+							</div>
+							<div class="form-group">
+								<div>
+									<label for="dbVersion" class="control-label">Database versions:</label>
+									<div class="checkbox dbVersion" aria-describedby="dbVersionHelp">
+										<label><input value="v1.0" type="checkbox" checked>v1.0</label>
+										<label><input value="DM" type="checkbox">v1.1</label>
+										<label><input value="v2.0" type="checkbox">v2.0</label>
 									</div>
 								</div>
-							</div>
-							<div class="row">
-								<div class="form-group col-xs-12">
-									<div class="col-xs-4">
-										<label for="dbVersion" class="control-label">Database versions:</label>
-										<div class="checkbox dbVersion" aria-describedby="dbVersionHelp">
-											<label><input value="v1.0" type="checkbox" checked>v1.0</label>
-											<label><input value="DM" type="checkbox">v1.1</label>
-											<label><input value="v2.0" type="checkbox">v2.0</label>
-										</div>
-										
-
-									</div>
-									<div class="col-xs-8">
-										<span id="dbVersionHelp" class="help-block">
-											<p>v1.0 contains the original crowdsourcing signatures.</p>
-											<p>v1.1 includes ~3,000 drug signatures generated in rats from the <a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE59927" target="_blank">Drug Matrix dataset</a>.</p>
-											<p>v2.0 includes ~14,000 automatically generated signatures by text classification models based on the descriptions associated with GEO studies and samples.</p>
-										</span>
-									</div>
+								<div>
+									<span id="dbVersionHelp" class="help-block">
+										<p>v1.0 contains the original crowdsourcing signatures.</p>
+										<p>v1.1 includes ~3,000 drug signatures generated in rats from the <a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE59927" target="_blank">Drug Matrix dataset</a>.</p>
+										<p>v2.0 includes ~14,000 automatically generated signatures by text classification models based on the descriptions associated with GEO studies and samples.</p>
+									</span>
 								</div>
 							</div>
 						</form>
 					</div>
-
-					<div class="row">
-						<div class="col-xs-12">
-							<div class="btn-group pull-right" role="group">
-								<button direction="similar" class="btn btn-info btn-sm geneSearchBtn">Search similar signatures</button>
-								<button direction="opposite" class="btn btn-info btn-sm geneSearchBtn">Search opposite signatures</button>
-							</div>
+					<div>
+						<div class="btn-group" role="group">
+							<button direction="similar" class="btn btn-info btn-sm geneSearchBtn">Search similar signatures</button>
+							<button direction="opposite" class="btn btn-info btn-sm geneSearchBtn">Search opposite signatures</button>
 						</div>
 					</div>
-
 				</div>
 			</div>
 		</div>
@@ -93,14 +76,14 @@
 					<h3 class="panel-title">Visualize</h3>
 				</div>
 				<div class="panel-body">
-					<div class="row">
+					<div>
 						<h3>Bubble Chart</h3>
 						<a href="#bubble">
 							<img src="img/creeds_bubble_chart.png" class="img-responsive" alt="Bubble chart view">
-						</a> 
+						</a>
 					</div>
 					<hr>
-					<div class="row">
+					<div>
 						<h3>Clustergram</h3>
 						<a href="#clusters">
 							<img src="img/creeds_clustergram.png" class="img-responsive" alt="Clustergram view">
@@ -117,28 +100,30 @@
 					<h3 class="panel-title">Access</h3>
 				</div>
 				<div class="panel-body">
-					<div class="row">
+					<div>
 						<h3>Downloads</h3>
-						<table class="table table-hover table-striped">
-							<thead>
+						<div class="table-responsive">
+							<table class="table table-hover table-striped">
+								<thead>
 								<tr>
-									<th>Dataset Name</th>
-									<th>Signature Category</th>
-									<th>Number of signatures</th>
-									<th>annotations.csv</th>
-									<th>json</th>
-									<th>gmt</th>
+									<th>Dataset</th>
+									<th>Category</th>
+									<th>Signatures</th>
+									<th>Annotations</th>
+									<th>JSON</th>
+									<th>GMT</th>
 								</tr>
-							</thead>
-						</table>
+								</thead>
+							</table>
+						</div>
 					</div>
 					<hr>
-					<div class="row">
+					<div>
 						<h3>API</h3>
-						<ul>
+						<ul class="list-unstyled">
 							<li><a href="#help">API documentation</a></li>
 							<li>
-								<a href="#help">Notebook tutorials</a>	
+								<a href="#help">Notebook tutorials</a>
 								<ul>
 									<li><a href="#help">IPython notebook</a></li>
 									<li><a href="#help">R Markdown</a></li>
@@ -146,13 +131,11 @@
 							</li>
 							<li><a href="#help">Contribution guide</a></li>
 						</ul>
-						
 					</div>
-
 				</div>
 			</div>
 		</div>
-	</div> 
+	</div>
 
 	<!-- to display search results -->
 <!-- 	<div class="row">
