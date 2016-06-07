@@ -39,7 +39,7 @@ ALL_UIDS = COLL.find(
 GENE_SYMBOLS = load_gene_symbol_dict()
 
 ## Fields in the mongodb for interal use only
-FIELDS_EXCLUDE = ['_id', 
+FIELDS_EXCLUDE = ['_id', 'time',
 	'limma', 'limma_sva', 'limma_norm', 'limma_combat',
 	'fold_changes', 'log2FC_norm',
 	'chdir', 'chdir_combat_exp2',
@@ -439,9 +439,9 @@ class DBSignatureCollection(dict):
 		self.name = name
 
 		if not limit:
-			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE)
+			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE, no_cursor_timeout=True)
 		else:
-			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE).limit(limit)
+			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE, no_cursor_timeout=True).limit(limit)
 		# to preserve orders
 		self.uids = cur.distinct('id')
 		
@@ -452,7 +452,7 @@ class DBSignatureCollection(dict):
 
 
 		# Load signatures 
-		tuple_list = Parallel(n_jobs=4, backend='threading', verbose=10)(
+		tuple_list = Parallel(n_jobs=16, backend='threading', verbose=10)(
 			delayed(wrapper_func)(i, doc) for i, doc in enumerate(cur))
 
 		for i, (uid, sig, up_idx, dn_idx) in enumerate(tuple_list):
