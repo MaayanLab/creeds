@@ -490,7 +490,7 @@ class DBSignatureCollection(dict):
 
 
 		# Load signatures 
-		tuple_list = Parallel(n_jobs=16, backend='threading', verbose=10)(
+		tuple_list = Parallel(n_jobs=-1, backend='threading', verbose=10)(
 			delayed(wrapper_func)(i, doc) for i, doc in enumerate(cur))
 
 		for i, (uid, sig, up_idx, dn_idx) in enumerate(tuple_list):
@@ -581,7 +581,7 @@ class DBSignatureCollection(dict):
 					del doc['entities']
 					for field in ['hs_gene_symbol', 'disease_name', 'drug_name', 'cell_type']:
 						if field in doc:
-							doc[field] = '|'.join([item['name'] for item in doc[field]])
+							doc[field] = '|'.join(filter(None, [item.get('name', None) for item in doc[field]]))
 					sigs_this_category_.append(doc)
 				sigs_this_category = sigs_this_category_ 
 
