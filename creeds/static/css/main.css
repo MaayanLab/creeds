@@ -1,12 +1,12 @@
 /*
-custom styles to overwrite default bootstrap
-*/
+ * Custom styles.
+ */
 
 /*
-
-Purple: #6f5499
-Blue:   #0275d8
-
+ * Colors used
+ * ----------------
+ * Purple   #6f5499
+ * Blue     #0275d8
  */
 
 @media (min-width: 979px) { 
@@ -68,6 +68,7 @@ a:active,
 a:visited,
 a:hover {
   color: #0275d8;
+  cursor: pointer;
 }
 
 .svgBorder {
@@ -186,7 +187,7 @@ a {
 
 #footer {
   background: #2a2730;
-  height: 250px;
+  height: 200px;
   margin-top: 20px;
   padding: 20px 0 30px 0;
 }
@@ -289,4 +290,26 @@ label, .control-label {
 
 #landing-page #dnGenes-wrapper {
   margin-top: 20px;
+}
+
+#landing-page textarea {
+  height: 150px;
+}
+
+#landing-page img {
+  border: 1px solid #eee;
+}
+
+
+/* Similarity page
+ * -------------------------------------------------------------------------- */
+#similarity-page #search-bar .input-group {
+  max-width: 400px;
+}
+
+#similarity-page #searchResults {
+  margin-top: 20px;
+}
+#similarity-page #searchResults dl {
+  margin-bottom: 0;
 }
