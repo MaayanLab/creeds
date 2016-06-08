@@ -542,7 +542,7 @@ class DBSignatureCollection(dict):
 		for category, num_sigs in self.category_count.items():
 			category_name = '%s %s' % (self.name_prefix, self.category2name[category])
 
-			filenames = {format: '%s-%s.%s' % (category_name, 
+			filenames = {format: '%s-%s.%s' % (self.category2name[category], 
 				self.name, format) for format in self.formats}
 			meta = {
 				'name': self.name,
