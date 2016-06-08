@@ -8,7 +8,8 @@ dn_genes = ['SCCPDH','KIF20A','FZD7','USP22','PIP4K2B','CRYZ','GNB5','EIF4EBP1',
 payload = {
     'up_genes': up_genes,
     'dn_genes': dn_genes,
-    'direction': 'similar'
+    'direction': 'similar',
+    'db_version': 'v1.0'
     }
 
 response = requests.post(CREEDS_URL + 'search', json=payload)

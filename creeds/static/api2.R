@@ -8,7 +8,8 @@ dn_genes <- c('SCCPDH','KIF20A','FZD7','USP22','PIP4K2B','CRYZ','GNB5','EIF4EBP1
 payload <- list(
 	up_genes = up_genes,
 	dn_genes = dn_genes,
-	direction= 'similar'
+	direction = 'similar',
+	db_version = 'v1.0'
 	)
 
 response <- POST(paste0(paste0(BASE_URL, 'search'), body=payload, encode='json')
