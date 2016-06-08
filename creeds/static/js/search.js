@@ -91,33 +91,20 @@ $(document).ready(function(){
 		} 
 
 		else if (upGenes != '' && dnGenes !='') {
-			$.blockUI({ css: { 
-	            border: 'none', 
-	            padding: '15px', 
-	            backgroundColor: '#000', 
-	            '-webkit-border-radius': '10px', 
-	            '-moz-border-radius': '10px', 
-	            opacity: .5, 
-	            color: '#fff' 
-	        } });
 	        var direction = $(this).attr('direction');
 			var postPayLoad = {"up_genes": upGenes.split('\n'), "dn_genes": dnGenes.split('\n'), 
 				"direction":direction, "db_version": dbVersion, "client": "webapp"};
 			$.ajax({
-
 				type: 'POST',
 				url: ENTER_POINT+'/search',
 				contentType : 'application/json',
 				data: JSON.stringify(postPayLoad),
 				dataType: 'json',
 				success: function(id){
-					// display result
-					$.unblockUI();
+					// redirect to result page
 					var baseUrl = window.location.origin + window.location.pathname + '#query';
 					var redirectUrl = baseUrl + '/' + id;
 					window.location.assign(redirectUrl);
-					// displayGeneSearchResult(results);
-					// submitSelectedBtn();
 				},				
 
 			});

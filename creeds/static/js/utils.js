@@ -107,8 +107,20 @@ function scrollToResult() {
 
 function doQuery(id){
 	// wrapper for send GET request to /result endpoint and displayGeneSearchResult
+	$.blockUI({ css: { 
+		            border: 'none', 
+		            padding: '15px', 
+		            backgroundColor: '#000', 
+		            '-webkit-border-radius': '10px', 
+		            '-moz-border-radius': '10px', 
+		            opacity: .5, 
+		            color: '#fff' 
+		        } });
+
 	$.getJSON(ENTER_POINT+'/result', {id: id}, function(results){
 		displayGeneSearchResult(results);
+		$.unblockUI();
+		$('[data-toggle="tooltip"]').tooltip();
 	});
 }
 

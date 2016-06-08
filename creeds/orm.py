@@ -462,19 +462,21 @@ class DBSignatureCollection(dict):
 	'''
 	formats = ['csv', 'json', 'gmt']
 	category2name = {
-		'gene': 'Single_gene_perturbations',
-		'dz': 'Disease_signatures',
-		'drug': 'Single_drug_perturbations',
+		'gene': 'single_gene_perturbations',
+		'dz': 'disease_signatures',
+		'drug': 'single_drug_perturbations',
 		}
 
 	outfn_path = os.path.dirname(os.path.realpath(__file__)) + '/static/downloads/'
 
-	def __init__(self, filter_, name, limit=None):
+	def __init__(self, filter_=None, name=None, limit=None, name_prefix=None):
 		'''
 		`filter_` should be a mongo query
 		'''
 		self.filter_ = filter_
-		self.name = name
+		self.name = name # 'v1.0', 'v1.1', 'p1.0'
+		self.name_prefix = name_prefix # 'Mannual', 'Drug Matrix', 'Automatated'
+
 
 		if not limit:
 			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE, no_cursor_timeout=True)
@@ -538,7 +540,7 @@ class DBSignatureCollection(dict):
 		'''
 		self.download_file_meta = []
 		for category, num_sigs in self.category_count.items():
-			category_name = self.category2name[category]
+			category_name = '%s %s' % (self.name_prefix, self.category2name[category])
 
 			filenames = {format: '%s-%s.%s' % (category_name, 
 				self.name, format) for format in self.formats}

@@ -1,6 +1,7 @@
 ## python API for the mongodb
 import os, sys, json
 import logging
+from collections import OrderedDict
 
 import clustergram
 from .crossdomain import crossdomain
@@ -52,7 +53,7 @@ if not app.debug:
 def load_globals():
 	# Load globals DBSignatureCollection instances
 	global d_dbsc
-	d_dbsc = {} # {name : DBSignatureCollection instance}
+	d_dbsc = OrderedDict() # {name : DBSignatureCollection instance}
 	
 	app.logger.info('# signatures: %d, # genes(s): %d, # genes(i) : %d' \
 		% (len(ALL_UIDS), len(ALL_GENES), len(ALL_GENES_I)))
@@ -61,8 +62,8 @@ def load_globals():
 	app.logger.info('\t'.join(['Collection name','Number of signatures','Size(MB)']))
 
 	for params in app.config['DBSC_PARAMS']:
-		collection_name = params[1]
-		d_dbsc[collection_name] = DBSignatureCollection(*params)
+		collection_name = params['name']
+		d_dbsc[collection_name] = DBSignatureCollection(**params)
 		app.logger.info('%s\t%d\t%.2f' % (collection_name, 
 			len(d_dbsc[collection_name]), 
 			sys.getsizeof(d_dbsc[collection_name])/1e6))

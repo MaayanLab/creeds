@@ -9,30 +9,30 @@ class Config(object):
 	DATABASE_URI = 'mongodb://127.0.0.1:27017/'
 	HOST = '127.0.0.1'
 	PORT = 5000
-	# list of parameters for DBSignatureCollection globals
+	# list of kwargs for DBSignatureCollection globals
 	DBSC_PARAMS = [
-		(
-			{'$and':[ 
+		{
+			'filter_': {'$and':[ 
 				{'chdir_sva_exp2': {'$exists': True}}, 
-				{'version': {'$in': ['1.0', '1.1']}},
+				{'version': '1.0'},
 				{"incorrect": {"$ne": True}},
 			]},
-			'v1.0'),
+			'name': 'v1.0', 'name_prefix': 'Manual'},
 
-		(
-			{'$and':[
+		{
+			'filter_': {'$and':[
 				{'chdir_sva_exp2': {'$exists': True}}, 
 				{'version': '1.2'},
 			]},
-			'DM'
-			),
-		(
-			{'$and':[
+			'name': 'DM', 'name_prefix': 'DrugMatrix'
+			},
+		{
+			'filter_': {'$and':[
 				{'chdir_sva_exp2': {'$exists': True}},
-				{'version': '2.0'}
+				{'version': '2.0'},
 			]},
-			'v2.0'
-			)
+			'name': 'p1.0', 'name_prefix': 'Automatic'
+			}
 	]
 	# whether to generate files for downloading from DBSC instances
 	MAKE_DOWNLOAD_FILES = True
@@ -49,60 +49,68 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(DevelopmentConfig):
 	DBSC_PARAMS = [
-		(
-			{'$and':[ 
+		{
+			'filter_': {'$and':[ 
 				{'chdir_sva_exp2': {'$exists': True}}, 
 				{'version': '1.0'},
 				{"incorrect": {"$ne": True}},
 				{'id': {'$in': ['gene:27', 'gene:3046', 'gene:2981', 'gene:1829']}}
 			]},
-			'v1.0'),
+			'name': 'v1.0', 'name_prefix': 'Manual'},
 
-		(
-			{'$and':[
+		{
+			'filter_': {'$and':[
 				{'chdir_sva_exp2': {'$exists': True}}, 
 				{'version': '1.2'},
 				{'id': {'$in': ['drug:DM0', 'drug:DM1', 'drug:DM10', 'drug:DM11', 'drug:DM12']}}
 			]},
-			'DM'
-			),
-		(
-			{'$and':[
+			'name': 'DM', 'name_prefix': 'DrugMatrix'
+			},
+		{
+			'filter_': {'$and':[
 				{'chdir_sva_exp2': {'$exists': True}},
 				{'version': '2.0'},
 				{'id': {'$in': ['gene:P9030', 'dz:P1814', 'drug:P2341']}}
 			]},
-			'v2.0'
-			)
+			'name': 'p1.0', 'name_prefix': 'Automatic'
+			}
 	]
-	MAKE_DOWNLOAD_FILES = True
-		
+
+
 
 class SpeedTestingConfig(DevelopmentConfig):
 	'''
 	Used for speed test.
 	'''
 	DBSC_PARAMS = [
-		(
-			{'$and':[ 
+		{
+			'filter_': {'$and':[ 
 				{'chdir_sva_exp2': {'$exists': True}}, 
 				{'version': '1.0'},
 				{"incorrect": {"$ne": True}},
+				{'id': {'$in': ['gene:27', 'gene:3046', 'gene:2981', 'gene:1829']}}
 			]},
-			'v1.0', 500),
+			'name': 'v1.0', 'name_prefix': 'Manual',
+			'limit': 300
+			},
 
-		(
-			{'$and':[
+		{
+			'filter_': {'$and':[
 				{'chdir_sva_exp2': {'$exists': True}}, 
 				{'version': '1.2'},
+				{'id': {'$in': ['drug:DM0', 'drug:DM1', 'drug:DM10', 'drug:DM11', 'drug:DM12']}}
 			]},
-			'DM', 100),
-		(
-			{'$and':[
+			'name': 'DM', 'name_prefix': 'DrugMatrix',
+			'limit': 100
+			},
+		{
+			'filter_': {'$and':[
 				{'chdir_sva_exp2': {'$exists': True}},
-				{'version': '2.0'}
+				{'version': '2.0'},
+				{'id': {'$in': ['gene:P9030', 'dz:P1814', 'drug:P2341']}}
 			]},
-			'v2.0', 300)
+			'name': 'p1.0', 'name_prefix': 'Automatic',
+			'limit': 300
+			}
 	]
-
 
