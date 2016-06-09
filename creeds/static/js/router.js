@@ -17,7 +17,8 @@ var Router = Backbone.Router.extend({
 		'bubble': 'bubble',
 		'clusters': 'clusters',
 		'downloads': 'downloads',
-		'help(/)(:target)': 'help'
+		'help(/)(:target)': 'help',
+		'contribute(/)(:target)': 'contribute'
 	},
 
 	home: function(){
@@ -93,6 +94,22 @@ var Router = Backbone.Router.extend({
 					}
 				});
 			});			
+		}
+	},
+
+	contribute: function(target){
+		if ($("#contribute-page").length){
+			if (target){
+				scrollTo(target);
+			}
+		}else {
+			$(this.el).load("contribute.html", function() {
+				removeActive();
+				$("#contribute").addClass('active');
+				if (target){
+					scrollTo(target);
+				}
+			});
 		}
 	},
 
