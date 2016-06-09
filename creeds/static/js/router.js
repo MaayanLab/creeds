@@ -17,7 +17,7 @@ var Router = Backbone.Router.extend({
 		'bubble': 'bubble',
 		'clusters': 'clusters',
 		'downloads': 'downloads',
-		'help': 'help'
+		'help(/)(:target)': 'help'
 	},
 
 	home: function(){
@@ -75,11 +75,26 @@ var Router = Backbone.Router.extend({
 		})
 	},
 
-	help: function() {
-		$(this.el).load("help.html", function() {
-			removeActive();
-			$("#help").addClass('active');
-		})
+	help: function(target) {
+		if ($("#help-page").length){ // current page is help page
+			if (target){
+				scrollTo(target);
+			}
+		}else {
+			$(this.el).load("help.html", function() {
+				removeActive();
+				$("#help").addClass('active');
+				$('html').on('custom', function(e, eventData){
+					console.log(eventData)
+					if (eventData === "api3_result.json"){
+						// the last code block loaded
+						if (target){
+							scrollTo(target);
+						}
+					}
+				});
+			});			
+		}
 	},
 
 });

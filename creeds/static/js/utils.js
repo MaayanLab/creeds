@@ -104,6 +104,11 @@ function scrollToResult() {
 	}, 500);
 }
 
+function scrollTo(selector) {
+	$('html, body').animate({
+		scrollTop: $(selector).offset().top
+	}, 500);
+}
 
 function doQuery(id){
 	// wrapper for send GET request to /result endpoint and displayGeneSearchResult

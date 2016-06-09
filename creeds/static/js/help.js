@@ -27,7 +27,8 @@ function loadScript(scriptPath, obj){
 			codeBlock.each(function(i, block) {
 				hljs.highlightBlock(block);
 			});
-
+			// trigger event on body for other script to listen to
+			$('html').trigger('custom', [scriptPath])
 		}
 	});
 }
