@@ -85,7 +85,6 @@ var Router = Backbone.Router.extend({
 				removeActive();
 				$("#help").addClass('active');
 				$('html').on('custom', function(e, eventData){
-					console.log(eventData)
 					if (eventData === "api3_result.json"){
 						// the last code block loaded
 						if (target){
