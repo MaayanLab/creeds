@@ -1,7 +1,10 @@
 FROM python:2.7
 
-# Get pip and install numpy dependencies
-RUN apt-get update && apt-get install -y libatlas-base-dev gfortran
+# Get pip and install numpy/scipy dependencies
+RUN apt-get update && apt-get install -y build-essential gfortran libatlas-base-dev
+
+# Update pip
+RUN pip install --upgrade pip
 
 # Copy the application folder inside the container
 ADD . /my_application
