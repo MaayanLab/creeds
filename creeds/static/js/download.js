@@ -25,7 +25,7 @@ var FileMetaView = Backbone.View.extend({
 
 var FileMetas = Backbone.Collection.extend({
 	model: FileMeta,
-	url: '/CREEDS/download',
+	url: ENTER_POINT + '/download',
 });
 
 // View for Collection of FileMetas
