@@ -1,7 +1,17 @@
 function doStrSearch(searchStr){
 	// wrapper for send GET request to string search API and displayStrSearchResult
+	$.blockUI({ css: { 
+		            border: 'none', 
+		            padding: '15px', 
+		            backgroundColor: '#000', 
+		            '-webkit-border-radius': '10px', 
+		            '-moz-border-radius': '10px', 
+		            opacity: .5, 
+		            color: '#fff' 
+		        } });	
 	$.getJSON(ENTER_POINT+'/search', {q: searchStr}, function(results){
 		displayStrSearchResult(results);
+		$.unblockUI();
 	});
 
 }
