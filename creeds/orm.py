@@ -563,8 +563,9 @@ class DBSignatureCollection(dict):
 			with open (outfn, 'w') as out:
 				for dict_data in sigs_this_category:
 					if type(dict_data['name']) == list: # join list to string for v2.0
-						term_up = '|'.join(dict_data['name']) + '-up'
-						term_dn = '|'.join(dict_data['name']) + '-dn'
+						names = filter(None, dict_data['name'])
+						term_up = '|'.join(names) + '-up'
+						term_dn = '|'.join(names) + '-dn'
 					else:
 						term_up = dict_data['name'] + '-up'
 						term_dn = dict_data['name'] + '-dn'

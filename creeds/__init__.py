@@ -1,5 +1,10 @@
 ## python API for the mongodb
 import os, sys, json
+# Reset timezone to EDT 
+import time
+os.environ['TZ'] = 'US/Eastern'
+time.tzset()
+
 import logging
 from collections import OrderedDict
 
