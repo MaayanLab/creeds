@@ -201,7 +201,8 @@ a {
 }
 
 #footer a,
-#footer p {
+#footer p, 
+#footer div {
   color: white;
 }
 #footer a:hover {
