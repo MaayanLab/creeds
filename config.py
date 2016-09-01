@@ -82,13 +82,14 @@ class SpeedTestingConfig(DevelopmentConfig):
 	'''
 	Used for speed test.
 	'''
+	DATABASE_URI = 'mongodb://146.203.54.131:27017/'
 	DBSC_PARAMS = [
 		{
 			'filter_': {'$and':[ 
 				{'chdir_sva_exp2': {'$exists': True}}, 
 				{'version': '1.0'},
 				{"incorrect": {"$ne": True}},
-				{'id': {'$in': ['gene:27', 'gene:3046', 'gene:2981', 'gene:1829']}}
+				# {'id': {'$in': ['gene:27', 'gene:3046', 'gene:2981', 'gene:1829']}}
 			]},
 			'name': 'v1.0', 'name_prefix': 'Manual',
 			'limit': 300
@@ -98,7 +99,7 @@ class SpeedTestingConfig(DevelopmentConfig):
 			'filter_': {'$and':[
 				{'chdir_sva_exp2': {'$exists': True}}, 
 				{'version': '1.2'},
-				{'id': {'$in': ['drug:DM0', 'drug:DM1', 'drug:DM10', 'drug:DM11', 'drug:DM12']}}
+				# {'id': {'$in': ['drug:DM0', 'drug:DM1', 'drug:DM10', 'drug:DM11', 'drug:DM12']}}
 			]},
 			'name': 'DM', 'name_prefix': 'DrugMatrix',
 			'limit': 100
@@ -107,7 +108,7 @@ class SpeedTestingConfig(DevelopmentConfig):
 			'filter_': {'$and':[
 				{'chdir_sva_exp2': {'$exists': True}},
 				{'version': '2.0'},
-				{'id': {'$in': ['gene:P9030', 'dz:P1814', 'drug:P2341']}}
+				# {'id': {'$in': ['gene:P9030', 'dz:P1814', 'drug:P2341']}}
 			]},
 			'name': 'p1.0', 'name_prefix': 'Automatic',
 			'limit': 300

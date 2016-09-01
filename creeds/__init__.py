@@ -43,14 +43,14 @@ conn = MongoClient(app.config['DATABASE_URI'])
 from .orm import *
 from .utils import *
 
-app.logger.setLevel(logging.INFO)
+# app.logger.setLevel(logging.INFO)
 
-if not app.debug:
+# if not app.debug:
 	# Add a logging handler for production to log out INFOs
-	logging_handler = logging.StreamHandler()
-	formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-	logging_handler.setFormatter(formatter)
-	app.logger.addHandler(logging_handler)
+	# logging_handler = logging.StreamHandler()
+	# formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+	# logging_handler.setFormatter(formatter)
+	# app.logger.addHandler(logging_handler)
 	
 
 
