@@ -1,6 +1,6 @@
 FROM python:2.7
 
-ENV CONFIG_OBJ="config.SpeedTestingConfig"
+ENV CONFIG_OBJ="config.ProductionConfig"
 
 # Get pip and install numpy/scipy dependencies
 RUN apt-get update && apt-get install -y \
