@@ -16,3 +16,4 @@ The site can also be accessed through http://amp.pharm.mssm.edu/creeds2/.
 
 ## In the News
 - [CROWDSOURCING FOR SCIENTIFIC DISCOVERY: MOUNT SINAI RESEARCHERS FIND NOVEL WAYS TO ANALYZE DATA FOR DRUG AND TARGET DISCOVERY](http://www.newswise.com/articles/crowdsourcing-for-scientific-discovery-mount-sinai-researchers-find-novel-ways-to-analyze-data-for-drug-and-target-discovery)
+- [Mount Sinai Crowdsources Analysis and Annotation of Gene Eexpression Profiles](http://www.clinicalomics.com/articles/mount-sinai-crowdsources-analysis-and-annotation-of-gene-expression-profiles/766)
