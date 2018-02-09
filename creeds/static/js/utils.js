@@ -61,7 +61,6 @@ function displayStrSearchResult(results){
 				break;
 		}
 
-
 		dl.append('dt').text('type');
 		dl.append('dd').append('span')
 			.attr('class', 'label')
@@ -104,6 +103,29 @@ function displayStrSearchResult(results){
 	    			.text(info[field]);
 	    	}
 	    }
+
+	    var iconSize = '15px';
+
+	    dl.append('dt').text('Enrichr for up-genes')
+	    dl.append('dd').append('img')
+	    	.style('cursor', 'pointer')
+	    	.attr('id', info['id'])
+	    	.attr('src', 'img/enrichr.png').attr('width',iconSize)
+			.on('click', function(){
+				var sig_id = d3.select(this).attr('id');
+				getGenesFromApiAndSendToEnrichr(sig_id, 'up_genes');
+			});
+
+	    dl.append('dt').text('Enrichr for down-genes')
+	    dl.append('dd').append('img')
+	    	.style('cursor', 'pointer')
+	    	.attr('id', info['id'])
+	    	.attr('src', 'img/enrichr.png').attr('width',iconSize)
+			.on('click', function(){
+				var sig_id = d3.select(this).attr('id');
+				getGenesFromApiAndSendToEnrichr(sig_id, 'down_genes');
+			});	    
+
 	};
 	scrollToResult();    	
 }
@@ -242,4 +264,56 @@ function displayGeneSearchResult (results) { // to display results using gene li
         },
     });
 	scrollToResult();
+}
+
+
+function enrich(options) { // http://amp.pharm.mssm.edu/Enrichr/#help
+    var defaultOptions = {
+    description: "",
+    popup: false
+  };
+
+  if (typeof options.description == 'undefined')
+    options.description = defaultOptions.description;
+  if (typeof options.popup == 'undefined')
+    options.popup = defaultOptions.popup;
+  if (typeof options.list == 'undefined')
+    alert('No genes defined.');
+
+  var form = document.createElement('form');
+  form.setAttribute('method', 'post');
+  form.setAttribute('action', 'http://amp.pharm.mssm.edu/Enrichr/enrich');
+  if (options.popup)
+    form.setAttribute('target', '_blank');
+  form.setAttribute('enctype', 'multipart/form-data');
+
+  var listField = document.createElement('input');
+  listField.setAttribute('type', 'hidden');
+  listField.setAttribute('name', 'list');
+  listField.setAttribute('value', options.list);
+  form.appendChild(listField);
+
+  var descField = document.createElement('input');
+  descField.setAttribute('type', 'hidden');
+  descField.setAttribute('name', 'description');
+  descField.setAttribute('value', options.description);
+  form.appendChild(descField);
+
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+}
+
+function getGenesFromApiAndSendToEnrichr(signature_id, direction) {
+	// retrieve the list of genes for a signature from the /api
+	// then send to Enrichr
+	$.getJSON(ENTER_POINT+'/api', {id: signature_id}, function(results){
+		var genes = _.map(results[direction], function(rec){
+			return rec[0];
+		});
+		var geo_id = results['geo_id'];
+		geneStr = genes.join('\n');
+		var docStr = [direction, geo_id, signature_id].join(' ');
+		enrich({list: geneStr, description: docStr, popup: true});
+	});
 }
