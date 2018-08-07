@@ -83,7 +83,7 @@ function displayStrSearchResult(results){
 	    	if(typeof(key) === 'string'){
 		    	dl.append('dt').text(key);
 		    	var value = info[key];
-		    	if (typeof(value) !== 'string' && value !== undefined){
+		    	if (typeof(value) !== 'string' && value !== undefined && value){
 		    		if (_.isObject(value[0])){ // array of objects for v2.0 signaturess
 		    			var texts = _.map(info[key], function(d){ return d['name']; });
 		    		} else {
