@@ -1,7 +1,7 @@
 '''
 Config objects.
 '''
-
+import os
 class Config(object):
 	"""Default configs"""
 	DEBUG = False
@@ -39,7 +39,7 @@ class Config(object):
 
 
 class ProductionConfig(Config):
-	DATABASE_URI = 'mongodb://146.203.54.131:27017/'
+	DATABASE_URI = os.environ['DATABASE_URI']
 	HOST = '0.0.0.0'
 
 

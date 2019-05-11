@@ -11,6 +11,7 @@ ADD . /my_application
 
 # Install required python packages
 RUN pip install -r /my_application/requirements.txt
+RUN pip install pandas==0.16.0
 
 # Expose ports
 EXPOSE 5000
