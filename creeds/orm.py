@@ -479,9 +479,9 @@ class DBSignatureCollection(dict):
 
 
 		if not limit:
-			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE, no_cursor_timeout=True)
+			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE)
 		else:
-			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE, no_cursor_timeout=True).limit(limit)
+			cur = COLL.find(self.filter_, PROJECTION_EXCLUDE).limit(limit)
 		# to preserve orders
 		self.uids = cur.distinct('id')
 		
