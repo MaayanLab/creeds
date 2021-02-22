@@ -1,5 +1,5 @@
 ## python API for the mongodb
-import os, sys, json
+import os, sys, json, pickle
 # Reset timezone to EDT 
 import time
 os.environ['TZ'] = 'US/Eastern'
@@ -52,10 +52,14 @@ if not app.debug:
 	logging_handler.setFormatter(formatter)
 	app.logger.addHandler(logging_handler)
 	
+app.logger.info('Loading DBSignatureCollections')
+with open(SCRIPT_PATH+'/static/downloads/d_dbsc.pickle', 'r') as fr:
+	d_dbsc = pickle.load(fr)
+app.logger.info('DBSignatureCollections loaded')
 
-
-@app.before_first_request
-def load_globals():
+def create_globals():
+	''' This function can be used to construct the data
+	'''
 	# Load globals DBSignatureCollection instances
 	global d_dbsc
 	d_dbsc = OrderedDict() # {name : DBSignatureCollection instance}
@@ -78,6 +82,9 @@ def load_globals():
 	if app.config['MAKE_DOWNLOAD_FILES']:
 		for dbsc in d_dbsc.values():
 			dbsc.make_all_download_files()
+
+	with open(SCRIPT_PATH+'/static/downloads/d_dbsc.pickle', 'w') as fw:
+		pickle.dump(d_dbsc, fw)
 
 	return
 
