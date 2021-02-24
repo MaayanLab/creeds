@@ -1,0 +1,72 @@
+[
+  {
+    "category": "Manual single_gene_perturbations",
+    "num_sigs": 2176,
+    "name": "v1.0",
+    "filenames": {
+      "json": "single_gene_perturbations-v1.0.json",
+      "csv": "single_gene_perturbations-v1.0.csv",
+      "gmt": "single_gene_perturbations-v1.0.gmt"
+    }
+  },
+  {
+    "category": "Manual disease_signatures",
+    "num_sigs": 828,
+    "name": "v1.0",
+    "filenames": {
+      "json": "disease_signatures-v1.0.json",
+      "csv": "disease_signatures-v1.0.csv",
+      "gmt": "disease_signatures-v1.0.gmt"
+    }
+  },
+  {
+    "category": "Manual single_drug_perturbations",
+    "num_sigs": 875,
+    "name": "v1.0",
+    "filenames": {
+      "json": "single_drug_perturbations-v1.0.json",
+      "csv": "single_drug_perturbations-v1.0.csv",
+      "gmt": "single_drug_perturbations-v1.0.gmt"
+    }
+  },
+  {
+    "category": "DrugMatrix single_drug_perturbations",
+    "num_sigs": 3938,
+    "name": "DM",
+    "filenames": {
+      "json": "single_drug_perturbations-DM.json",
+      "csv": "single_drug_perturbations-DM.csv",
+      "gmt": "single_drug_perturbations-DM.gmt"
+    }
+  },
+  {
+    "category": "Automatic single_gene_perturbations",
+    "num_sigs": 8620,
+    "name": "p1.0",
+    "filenames": {
+      "json": "single_gene_perturbations-p1.0.json",
+      "csv": "single_gene_perturbations-p1.0.csv",
+      "gmt": "single_gene_perturbations-p1.0.gmt"
+    }
+  },
+  {
+    "category": "Automatic disease_signatures",
+    "num_sigs": 1430,
+    "name": "p1.0",
+    "filenames": {
+      "json": "disease_signatures-p1.0.json",
+      "csv": "disease_signatures-p1.0.csv",
+      "gmt": "disease_signatures-p1.0.gmt"
+    }
+  },
+  {
+    "category": "Automatic single_drug_perturbations",
+    "num_sigs": 4295,
+    "name": "p1.0",
+    "filenames": {
+      "json": "single_drug_perturbations-p1.0.json",
+      "csv": "single_drug_perturbations-p1.0.csv",
+      "gmt": "single_drug_perturbations-p1.0.gmt"
+    }
+  }
+]

@@ -1,0 +1,90 @@
+/* stylize header */
+h1 {
+  font-size: 45px;
+  font-weight: 300;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+/*stylize footer */
+footer {
+  margin-left: 200px;
+  text-align: center;
+  background-color: #f5f5f5;
+  font-size: 13px;
+  padding-left:10px;
+  padding-right:10px;
+}
+
+/* for highlighting row/col labels on hover*/
+text.active {
+  font-weight: bold;
+}
+
+/* default svg size for fixed svg option*/
+#svg_div{
+  width:600px;
+  height:600px;
+}
+
+/* stylize the sidebar instructions */
+#clust_instruct_container{
+  display: block;
+  position:absolute;
+  width:200px;
+  padding-right: 0px;
+  margin-left: 10px;
+}
+/* stylize instructions */
+.viz_instruct_text{
+  width:99%;
+  margin: 0 auto;
+  color:#333;
+  text-align: justify;
+  font-size: 12px;
+  font-weight: 300;
+  padding-left: 0px;
+}
+
+/* title */
+#viz_website_title{
+  font-size: 25px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+/* ordering buttons */
+#toggle_order{
+  /*reduced width sidebar 
+  margin-left used to be 45*/
+  margin-left: 15px;
+  margin-top: 20px;
+  margin-bottom:5px;
+}
+
+.order_name{
+  font-size: 11px;
+}
+
+/* container for gene search box */
+#gene_search_container{
+  margin-top: 10px;
+  margin-left: 0px;
+  display: none:;
+}
+
+/* gene search box */
+#gene_search_box{
+  width:200px;
+}
+
+/* gene search button */
+#gene_search_button{
+  margin-top:4px;
+}
+
+/*reduce the padding on the buttons*/
+.btn{
+  padding-top:2px;
+  padding-bottom:2px;
+}

@@ -1,0 +1,6 @@
+table {
+  table-layout:fixed;
+}
+#minimize-sidebar {
+	cursor: pointer;
+}

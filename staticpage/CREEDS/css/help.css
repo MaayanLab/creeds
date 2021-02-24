@@ -1,0 +1,39 @@
+.parameters {
+	font-size: 14px;
+}
+
+.parameters > tbody > tr > td {
+	border-top: 0;
+	padding: 2px;
+}
+
+.parameters > tbody > tr > td:nth-child(1) {
+	font-weight: bold;
+}
+
+.json {
+	height: 250px;
+	overflow-y: scroll;
+}
+
+.fixed {
+    position: fixed;
+}
+/* sidebar */
+.sidebar {
+    padding-left: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+/* nested links */
+.sidebar .nav .nav>li>a {
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 30px;
+    font-size: 12px;
+}
+
+.sidebar .nav>.active>a { 
+	text-decoration: none;
+	background-color: #eeeeee;
+}
